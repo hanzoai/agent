@@ -153,7 +153,7 @@ def test_tool_call_output_item_constructs_function_call_output_dict():
 
 
 # The following tests ensure that every possible output item type defined by
-# OpenAI's API can be converted back into an input item dict via
+# Hanzo AI's API can be converted back into an input item dict via
 # ModelResponse.to_input_items. The output and input schema for each item are
 # intended to be symmetric, so given any ResponseOutputItem, its model_dump
 # should produce a dict that can satisfy the corresponding TypedDict input

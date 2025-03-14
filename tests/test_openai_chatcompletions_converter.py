@@ -1,4 +1,4 @@
-# Copyright (c) OpenAI
+# Copyright (c) Hanzo AI
 #
 # Licensed under the MIT License.
 # See LICENSE file in the project root for full license information.
@@ -8,12 +8,12 @@ Unit tests for the internal `_Converter` class defined in
 `agents.models.openai_chatcompletions`. The converter is responsible for
 translating between internal "item" structures (e.g., `ResponseOutputMessage`
 and related types from `openai.types.responses`) and the ChatCompletion message
-structures defined by the OpenAI client library.
+structures defined by the Hanzo AI client library.
 
 These tests exercise both conversion directions:
 
 - `_Converter.message_to_output_items` turns a `ChatCompletionMessage` (as
-  returned by the OpenAI API) into a list of `ResponseOutputItem` instances.
+  returned by the Hanzo AI API) into a list of `ResponseOutputItem` instances.
 
 - `_Converter.items_to_messages` takes in either a simple string prompt, or a
   list of input/output items such as `ResponseOutputMessage` and

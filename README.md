@@ -1,6 +1,6 @@
-# OpenAI Agents SDK
+# Hanzo AI Agent SDK
 
-The OpenAI Agents SDK is a lightweight yet powerful framework for building multi-agent workflows.
+The Hanzo AI Agent SDK is a lightweight yet powerful framework for building multi-agent workflows.
 
 <img src="https://cdn.openai.com/API/docs/images/orchestration.png" alt="Image of the Agents Tracing UI" style="max-height: 803px;">
 
@@ -13,7 +13,7 @@ The OpenAI Agents SDK is a lightweight yet powerful framework for building multi
 
 Explore the [examples](examples) directory to see the SDK in action, and read our [documentation](https://openai.github.io/openai-agents-python/) for more details.
 
-Notably, our SDK [is compatible](https://openai.github.io/openai-agents-python/models/) with any model providers that support the OpenAI Chat Completions API format.
+Notably, our SDK [is compatible](https://openai.github.io/openai-agents-python/models/) with any model providers that support the Open AI Chat Completions API format.
 
 ## Get started
 
@@ -24,16 +24,16 @@ python -m venv env
 source env/bin/activate
 ```
 
-2. Install Agents SDK
+2. Install Hanzo AI SDK
 
 ```
-pip install openai-agents
+pip install hanzoai
 ```
 
 ## Hello world example
 
 ```python
-from agents import Agent, Runner
+from hanzoai import Agent, Runner
 
 agent = Agent(name="Assistant", instructions="You are a helpful assistant")
 
@@ -138,11 +138,11 @@ As a result, the mental model for the agent loop is:
 
 ## Common agent patterns
 
-The Agents SDK is designed to be highly flexible, allowing you to model a wide range of LLM workflows including deterministic flows, iterative loops, and more. See examples in [`examples/agent_patterns`](examples/agent_patterns).
+The Agent SDK is designed to be highly flexible, allowing you to model a wide range of LLM workflows including deterministic flows, iterative loops, and more. See examples in [`examples/agent_patterns`](examples/agent_patterns).
 
 ## Tracing
 
-The Agents SDK automatically traces your agent runs, making it easy to track and debug the behavior of your agents. Tracing is extensible by design, supporting custom spans and a wide variety of external destinations, including [Logfire](https://logfire.pydantic.dev/docs/integrations/llms/openai/#openai-agents), [AgentOps](https://docs.agentops.ai/v1/integrations/agentssdk), [Braintrust](https://braintrust.dev/docs/guides/traces/integrations#openai-agents-sdk), [Scorecard](https://docs.scorecard.io/docs/documentation/features/tracing#openai-agents-sdk-integration), and [Keywords AI](https://docs.keywordsai.co/integration/development-frameworks/openai-agent). For more details about how to customize or disable tracing, see [Tracing](http://openai.github.io/openai-agents-python/tracing).
+The Agent SDK automatically traces your agent runs, making it easy to track and debug the behavior of your agents. Tracing is extensible by design, supporting custom spans and a wide variety of external destinations, including [Logfire](https://logfire.pydantic.dev/docs/integrations/llms/openai/#openai-agents), [AgentOps](https://docs.agentops.ai/v1/integrations/agentssdk), [Braintrust](https://braintrust.dev/docs/guides/traces/integrations#openai-agents-sdk), [Scorecard](https://docs.scorecard.io/docs/documentation/features/tracing#openai-agents-sdk-integration), and [Keywords AI](https://docs.keywordsai.co/integration/development-frameworks/openai-agent). For more details about how to customize or disable tracing, see [Tracing](http://openai.github.io/openai-agents-python/tracing).
 
 ## Development (only needed if you need to edit the SDK/examples)
 
@@ -175,4 +175,4 @@ We'd like to acknowledge the excellent work of the open-source community, especi
 -   [Griffe](https://github.com/mkdocstrings/griffe)
 -   [uv](https://github.com/astral-sh/uv) and [ruff](https://github.com/astral-sh/ruff)
 
-We're committed to continuing to build the Agents SDK as an open source framework so others in the community can expand on our approach.
+We're committed to continuing to build the Agent SDK as an open source framework so others in the community can expand on our approach.

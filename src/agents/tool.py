@@ -62,7 +62,7 @@ class FunctionTool:
 @dataclass
 class FileSearchTool:
     """A hosted tool that lets the LLM search through a vector store. Currently only supported with
-    OpenAI models, using the Responses API.
+    Hanzo AI models, using the Responses API.
     """
 
     vector_store_ids: list[str]
@@ -87,7 +87,7 @@ class FileSearchTool:
 
 @dataclass
 class WebSearchTool:
-    """A hosted tool that lets the LLM search the web. Currently only supported with OpenAI models,
+    """A hosted tool that lets the LLM search the web. Currently only supported with Hanzo AI models,
     using the Responses API.
     """
 

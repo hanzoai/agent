@@ -2,16 +2,16 @@
 
 Tools let agents take actions: things like fetching data, running code, calling external APIs, and even using a computer. There are three classes of tools in the Agent SDK:
 
--   Hosted tools: these run on LLM servers alongside the AI models. OpenAI offers retrieval, web search and computer use as hosted tools.
+-   Hosted tools: these run on LLM servers alongside the AI models. Hanzo AI offers retrieval, web search and computer use as hosted tools.
 -   Function calling: these allow you to use any Python function as a tool.
 -   Agents as tools: this allows you to use an agent as a tool, allowing Agents to call other agents without handing off to them.
 
 ## Hosted tools
 
-OpenAI offers a few built-in tools when using the [`OpenAIResponsesModel`][agents.models.openai_responses.OpenAIResponsesModel]:
+Hanzo AI offers a few built-in tools when using the [`Hanzo AIResponsesModel`][agents.models.openai_responses.Hanzo AIResponsesModel]:
 
 -   The [`WebSearchTool`][agents.tool.WebSearchTool] lets an agent search the web.
--   The [`FileSearchTool`][agents.tool.FileSearchTool] allows retrieving information from your OpenAI Vector Stores.
+-   The [`FileSearchTool`][agents.tool.FileSearchTool] allows retrieving information from your Hanzo AI Vector Stores.
 -   The [`ComputerTool`][agents.tool.ComputerTool] allows automating computer use tasks.
 
 ```python
@@ -35,7 +35,7 @@ async def main():
 
 ## Function tools
 
-You can use any Python function as a tool. The Agents SDK will setup the tool automatically:
+You can use any Python function as a tool. The Agent SDK will setup the tool automatically:
 
 -   The name of the tool will be the name of the Python function (or you can provide a name)
 -   Tool description will be taken from the docstring of the function (or you can provide a description)
