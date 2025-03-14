@@ -52,7 +52,7 @@ print(result.final_output)
 ## Handoffs example
 
 ```python
-from agents import Agent, Runner
+from hanzoai import Agent, Runner
 import asyncio
 
 spanish_agent = Agent(
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 
-from agents import Agent, Runner, function_tool
+from hanzoai import Agent, Runner, function_tool
 
 
 @function_tool
