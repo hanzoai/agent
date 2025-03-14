@@ -2,7 +2,7 @@ import logging
 import sys
 from typing import Literal
 
-from openai import AsyncOpenAI
+from openai import AsyncHanzo AI
 
 from . import _config
 from .agent import Agent
@@ -41,9 +41,9 @@ from .items import (
 from .lifecycle import AgentHooks, RunHooks
 from .model_settings import ModelSettings
 from .models.interface import Model, ModelProvider, ModelTracing
-from .models.openai_chatcompletions import OpenAIChatCompletionsModel
-from .models.openai_provider import OpenAIProvider
-from .models.openai_responses import OpenAIResponsesModel
+from .models.openai_chatcompletions import Hanzo AIChatCompletionsModel
+from .models.openai_provider import Hanzo AIProvider
+from .models.openai_responses import Hanzo AIResponsesModel
 from .result import RunResult, RunResultStreaming
 from .run import RunConfig, Runner
 from .run_context import RunContextWrapper, TContext
@@ -93,26 +93,26 @@ from .usage import Usage
 
 
 def set_default_openai_key(key: str, use_for_tracing: bool = True) -> None:
-    """Set the default OpenAI API key to use for LLM requests (and optionally tracing(). This is
+    """Set the default Hanzo AI API key to use for LLM requests (and optionally tracing(). This is
     only necessary if the OPENAI_API_KEY environment variable is not already set.
 
     If provided, this key will be used instead of the OPENAI_API_KEY environment variable.
 
     Args:
-        key: The OpenAI key to use.
-        use_for_tracing: Whether to also use this key to send traces to OpenAI. Defaults to True
+        key: The Hanzo AI key to use.
+        use_for_tracing: Whether to also use this key to send traces to Hanzo AI. Defaults to True
             If False, you'll either need to set the OPENAI_API_KEY environment variable or call
             set_tracing_export_api_key() with the API key you want to use for tracing.
     """
     _config.set_default_openai_key(key, use_for_tracing)
 
 
-def set_default_openai_client(client: AsyncOpenAI, use_for_tracing: bool = True) -> None:
-    """Set the default OpenAI client to use for LLM requests and/or tracing. If provided, this
-    client will be used instead of the default OpenAI client.
+def set_default_openai_client(client: AsyncHanzo AI, use_for_tracing: bool = True) -> None:
+    """Set the default Hanzo AI client to use for LLM requests and/or tracing. If provided, this
+    client will be used instead of the default Hanzo AI client.
 
     Args:
-        client: The OpenAI client to use.
+        client: The Hanzo AI client to use.
         use_for_tracing: Whether to use the API key from this client for uploading traces. If False,
             you'll either need to set the OPENAI_API_KEY environment variable or call
             set_tracing_export_api_key() with the API key you want to use for tracing.
@@ -121,7 +121,7 @@ def set_default_openai_client(client: AsyncOpenAI, use_for_tracing: bool = True)
 
 
 def set_default_openai_api(api: Literal["chat_completions", "responses"]) -> None:
-    """Set the default API to use for OpenAI LLM requests. By default, we will use the responses API
+    """Set the default API to use for Hanzo AI LLM requests. By default, we will use the responses API
     but you can set this to use the chat completions API instead.
     """
     _config.set_default_openai_api(api)
@@ -141,9 +141,9 @@ __all__ = [
     "ModelProvider",
     "ModelTracing",
     "ModelSettings",
-    "OpenAIChatCompletionsModel",
-    "OpenAIProvider",
-    "OpenAIResponsesModel",
+    "Hanzo AIChatCompletionsModel",
+    "Hanzo AIProvider",
+    "Hanzo AIResponsesModel",
     "AgentOutputSchema",
     "Computer",
     "AsyncComputer",

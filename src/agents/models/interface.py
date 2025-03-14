@@ -49,7 +49,7 @@ class Model(abc.ABC):
 
         Args:
             system_instructions: The system instructions to use.
-            input: The input items to the model, in OpenAI Responses format.
+            input: The input items to the model, in Hanzo AI Responses format.
             model_settings: The model settings to use.
             tools: The tools available to the model.
             output_schema: The output schema to use.
@@ -76,7 +76,7 @@ class Model(abc.ABC):
 
         Args:
             system_instructions: The system instructions to use.
-            input: The input items to the model, in OpenAI Responses format.
+            input: The input items to the model, in Hanzo AI Responses format.
             model_settings: The model settings to use.
             tools: The tools available to the model.
             output_schema: The output schema to use.
@@ -84,7 +84,7 @@ class Model(abc.ABC):
             tracing: Tracing configuration.
 
         Returns:
-            An iterator of response stream events, in OpenAI Responses format.
+            An iterator of response stream events, in Hanzo AI Responses format.
         """
         pass
 

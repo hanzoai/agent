@@ -1,6 +1,6 @@
 ---
 name: Custom model providers
-about: Questions or bugs about using non-OpenAI models
+about: Questions or bugs about using non-Hanzo AI models
 title: ''
 labels: bug
 assignees: ''
@@ -16,7 +16,7 @@ assignees: ''
 A clear and concise description of what the question or bug is.
 
 ### Debug information
-- Agents SDK version: (e.g. `v0.0.3`)
+- Agent SDK version: (e.g. `v0.0.3`)
 - Python version (e.g. Python 3.10)
 
 ### Repro steps

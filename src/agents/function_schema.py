@@ -202,7 +202,7 @@ def function_schema(
         use_docstring_info: If True, uses the docstring to generate the description and parameter
             descriptions.
         strict_json_schema: Whether the JSON schema is in strict mode. If True, we'll ensure that
-            the schema adheres to the "strict" standard the OpenAI API expects. We **strongly**
+            the schema adheres to the "strict" standard the Hanzo AI API expects. We **strongly**
             recommend setting this to True, as it increases the likelihood of the LLM providing
             correct JSON input.
 

@@ -1,6 +1,6 @@
 # Custom LLM providers
 
-The examples in this directory demonstrate how you might use a non-OpenAI LLM provider. To run them, first set a base URL, API key and model.
+The examples in this directory demonstrate how you might use a non-Hanzo AI LLM provider. To run them, first set a base URL, API key and model.
 
 ```bash
 export EXAMPLE_BASE_URL="..."

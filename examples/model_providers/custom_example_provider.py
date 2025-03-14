@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 import os
 
-from openai import AsyncOpenAI
+from openai import AsyncHanzo AI
 
 from agents import (
     Agent,
     Model,
     ModelProvider,
-    OpenAIChatCompletionsModel,
+    Hanzo AIChatCompletionsModel,
     RunConfig,
     Runner,
     function_tool,
@@ -26,9 +26,9 @@ if not BASE_URL or not API_KEY or not MODEL_NAME:
     )
 
 
-"""This example uses a custom provider for some calls to Runner.run(), and direct calls to OpenAI for
+"""This example uses a custom provider for some calls to Runner.run(), and direct calls to Hanzo AI for
 others. Steps:
-1. Create a custom OpenAI client.
+1. Create a custom Hanzo AI client.
 2. Create a ModelProvider that uses the custom client.
 3. Use the ModelProvider in calls to Runner.run(), only when we want to use the custom LLM provider.
 
@@ -36,13 +36,13 @@ Note that in this example, we disable tracing under the assumption that you don'
 from platform.openai.com. If you do have one, you can either set the `OPENAI_API_KEY` env var
 or call set_tracing_export_api_key() to set a tracing specific key.
 """
-client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY)
+client = AsyncHanzo AI(base_url=BASE_URL, api_key=API_KEY)
 set_tracing_disabled(disabled=True)
 
 
 class CustomModelProvider(ModelProvider):
     def get_model(self, model_name: str | None) -> Model:
-        return OpenAIChatCompletionsModel(model=model_name or MODEL_NAME, openai_client=client)
+        return Hanzo AIChatCompletionsModel(model=model_name or MODEL_NAME, openai_client=client)
 
 
 CUSTOM_MODEL_PROVIDER = CustomModelProvider()
@@ -65,7 +65,7 @@ async def main():
     )
     print(result.final_output)
 
-    # If you uncomment this, it will use OpenAI directly, not the custom provider
+    # If you uncomment this, it will use Hanzo AI directly, not the custom provider
     # result = await Runner.run(
     #     agent,
     #     "What's the weather in Tokyo?",

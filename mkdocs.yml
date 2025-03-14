@@ -1,4 +1,4 @@
-site_name: OpenAI Agents SDK
+site_name: Hanzo AI Agent SDK
 theme:
     name: material
     features:
