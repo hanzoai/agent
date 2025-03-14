@@ -1,72 +1,72 @@
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: normal;
     font-weight: 400;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-Regular.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-Regular.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: italic;
     font-weight: 400;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-RegularItalic.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-RegularItalic.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: normal;
     font-weight: 500;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-Medium.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-Medium.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: italic;
     font-weight: 500;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-MediumItalic.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-MediumItalic.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: normal;
     font-weight: 600;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-Semibold.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-Semibold.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: italic;
     font-weight: 600;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-SemiboldItalic.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-SemiboldItalic.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: normal;
     font-weight: 700;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-Bold.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-Bold.woff2")
         format("woff2");
 }
 
 @font-face {
     font-display: swap;
-    font-family: "OpenAI Sans";
+    font-family: "Hanzo AI Sans";
     font-style: italic;
     font-weight: 700;
-    src: url("https://cdn.openai.com/common/fonts/openai-sans/OpenAISans-BoldItalic.woff2")
+    src: url("https://cdn.openai.com/common/fonts/openai-sans/Hanzo AISans-BoldItalic.woff2")
         format("woff2");
 }
 
@@ -77,9 +77,9 @@
 */
 :root {
     /* Font families */
-    --md-text-font: "OpenAI Sans", -apple-system, system-ui, Helvetica, Arial,
+    --md-text-font: "Hanzo AI Sans", -apple-system, system-ui, Helvetica, Arial,
         sans-serif;
-    --md-typeface-heading: "OpenAI Sans", -apple-system, system-ui, Helvetica,
+    --md-typeface-heading: "Hanzo AI Sans", -apple-system, system-ui, Helvetica,
         Arial, sans-serif;
 
     /* Global color variables */

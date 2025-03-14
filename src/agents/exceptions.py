@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 
 class AgentsException(Exception):
-    """Base class for all exceptions in the Agents SDK."""
+    """Base class for all exceptions in the Agent SDK."""
 
 
 class MaxTurnsExceeded(AgentsException):

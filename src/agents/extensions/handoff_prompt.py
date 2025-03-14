@@ -2,7 +2,7 @@
 # similar instructions in any agents that use handoffs.
 RECOMMENDED_PROMPT_PREFIX = (
     "# System context\n"
-    "You are part of a multi-agent system called the Agents SDK, designed to make agent "
+    "You are part of a multi-agent system called the Agent SDK, designed to make agent "
     "coordination and execution easy. Agents uses two primary abstraction: **Agents** and "
     "**Handoffs**. An agent encompasses instructions and tools and can hand off a "
     "conversation to another agent when appropriate. "

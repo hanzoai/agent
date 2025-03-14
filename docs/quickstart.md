@@ -18,15 +18,15 @@ Do this every time you start a new terminal session.
 source .venv/bin/activate
 ```
 
-### Install the Agents SDK
+### Install the Agent SDK
 
 ```bash
 pip install openai-agents # or `uv add openai-agents`, etc
 ```
 
-### Set an OpenAI API key
+### Set an Hanzo AI API key
 
-If you don't have one, follow [these instructions](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key) to create an OpenAI API key.
+If you don't have one, follow [these instructions](https://platform.openai.com/docs/quickstart#create-and-export-an-api-key) to create an Hanzo AI API key.
 
 ```bash
 export OPENAI_API_KEY=sk-...
@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
 ## View your traces
 
-To review what happened during your agent run, navigate to the [Trace viewer in the OpenAI Dashboard](https://platform.openai.com/traces) to view traces of your agent runs.
+To review what happened during your agent run, navigate to the [Trace viewer in the Hanzo AI Dashboard](https://platform.openai.com/traces) to view traces of your agent runs.
 
 ## Next steps
 

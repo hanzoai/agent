@@ -10,17 +10,17 @@ from agents import set_default_openai_key
 set_default_openai_key("sk-...")
 ```
 
-Alternatively, you can also configure an OpenAI client to be used. By default, the SDK creates an `AsyncOpenAI` instance, using the API key from the environment variable or the default key set above. You can change this by using the [set_default_openai_client()][agents.set_default_openai_client] function.
+Alternatively, you can also configure an Hanzo AI client to be used. By default, the SDK creates an `AsyncHanzo AI` instance, using the API key from the environment variable or the default key set above. You can change this by using the [set_default_openai_client()][agents.set_default_openai_client] function.
 
 ```python
-from openai import AsyncOpenAI
+from openai import AsyncHanzo AI
 from agents import set_default_openai_client
 
-custom_client = AsyncOpenAI(base_url="...", api_key="...")
+custom_client = AsyncHanzo AI(base_url="...", api_key="...")
 set_default_openai_client(custom_client)
 ```
 
-Finally, you can also customize the OpenAI API that is used. By default, we use the OpenAI Responses API. You can override this to use the Chat Completions API by using the [set_default_openai_api()][agents.set_default_openai_api] function.
+Finally, you can also customize the Hanzo AI API that is used. By default, we use the Hanzo AI Responses API. You can override this to use the Chat Completions API by using the [set_default_openai_api()][agents.set_default_openai_api] function.
 
 ```python
 from agents import set_default_openai_api
@@ -30,7 +30,7 @@ set_default_openai_api("chat_completions")
 
 ## Tracing
 
-Tracing is enabled by default. It uses the OpenAI API keys from the section above by default (i.e. the environment variable or the default key you set). You can specifically set the API key used for tracing by using the [`set_tracing_export_api_key`][agents.set_tracing_export_api_key] function.
+Tracing is enabled by default. It uses the Hanzo AI API keys from the section above by default (i.e. the environment variable or the default key you set). You can specifically set the API key used for tracing by using the [`set_tracing_export_api_key`][agents.set_tracing_export_api_key] function.
 
 ```python
 from agents import set_tracing_export_api_key

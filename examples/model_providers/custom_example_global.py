@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from openai import AsyncOpenAI
+from openai import AsyncHanzo AI
 
 from agents import (
     Agent,
@@ -24,7 +24,7 @@ if not BASE_URL or not API_KEY or not MODEL_NAME:
 
 """This example uses a custom provider for all requests by default. We do three things:
 1. Create a custom client.
-2. Set it as the default OpenAI client, and don't use it for tracing.
+2. Set it as the default Hanzo AI client, and don't use it for tracing.
 3. Set the default API as Chat Completions, as most LLM providers don't yet support Responses API.
 
 Note that in this example, we disable tracing under the assumption that you don't have an API key
@@ -32,7 +32,7 @@ from platform.openai.com. If you do have one, you can either set the `OPENAI_API
 or call set_tracing_export_api_key() to set a tracing specific key.
 """
 
-client = AsyncOpenAI(
+client = AsyncHanzo AI(
     base_url=BASE_URL,
     api_key=API_KEY,
 )

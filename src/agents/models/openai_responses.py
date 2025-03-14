@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, overload
 
-from openai import NOT_GIVEN, APIStatusError, AsyncOpenAI, AsyncStream, NotGiven
+from openai import NOT_GIVEN, APIStatusError, AsyncHanzo AI, AsyncStream, NotGiven
 from openai.types import ChatModel
 from openai.types.responses import (
     Response,
@@ -44,15 +44,15 @@ IncludeLiteral = Literal[
 ]
 
 
-class OpenAIResponsesModel(Model):
+class Hanzo AIResponsesModel(Model):
     """
-    Implementation of `Model` that uses the OpenAI Responses API.
+    Implementation of `Model` that uses the Hanzo AI Responses API.
     """
 
     def __init__(
         self,
         model: str | ChatModel,
-        openai_client: AsyncOpenAI,
+        openai_client: AsyncHanzo AI,
     ) -> None:
         self.model = model
         self._client = openai_client
@@ -244,9 +244,9 @@ class OpenAIResponsesModel(Model):
             text=response_format,
         )
 
-    def _get_client(self) -> AsyncOpenAI:
+    def _get_client(self) -> AsyncHanzo AI:
         if self._client is None:
-            self._client = AsyncOpenAI()
+            self._client = AsyncHanzo AI()
         return self._client
 
 

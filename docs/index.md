@@ -1,6 +1,6 @@
-# OpenAI Agents SDK
+# Hanzo AI Agent SDK
 
-The [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) enables you to build agentic AI apps in a lightweight, easy-to-use package with very few abstractions. It's a production-ready upgrade of our previous experimentation for agents, [Swarm](https://github.com/openai/swarm/tree/main). The Agents SDK has a very small set of primitives:
+The [Hanzo AI Agent SDK](https://github.com/openai/openai-agents-python) enables you to build agentic AI apps in a lightweight, easy-to-use package with very few abstractions. It's a production-ready upgrade of our previous experimentation for agents, [Swarm](https://github.com/openai/swarm/tree/main). The Agent SDK has a very small set of primitives:
 
 -   **Agents**, which are LLMs equipped with instructions and tools
 -   **Handoffs**, which allow agents to delegate to other agents for specific tasks
@@ -8,7 +8,7 @@ The [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) enables 
 
 In combination with Python, these primitives are powerful enough to express complex relationships between tools and agents, and allow you to build real-world applications without a steep learning curve. In addition, the SDK comes with built-in **tracing** that lets you visualize and debug your agentic flows, as well as evaluate them and even fine-tune models for your application.
 
-## Why use the Agents SDK
+## Why use the Agent SDK
 
 The SDK has two driving design principles:
 
@@ -22,7 +22,7 @@ Here are the main features of the SDK:
 -   Handoffs: A powerful feature to coordinate and delegate between multiple agents.
 -   Guardrails: Run input validations and checks in parallel to your agents, breaking early if the checks fail.
 -   Function tools: Turn any Python function into a tool, with automatic schema generation and Pydantic-powered validation.
--   Tracing: Built-in tracing that lets you visualize, debug and monitor your workflows, as well as use the OpenAI suite of evaluation, fine-tuning and distillation tools.
+-   Tracing: Built-in tracing that lets you visualize, debug and monitor your workflows, as well as use the Hanzo AI suite of evaluation, fine-tuning and distillation tools.
 
 ## Installation
 
