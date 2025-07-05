@@ -34,4 +34,24 @@ serve-docs:
 .PHONY: deploy-docs
 deploy-docs:
 	uv run mkdocs gh-deploy --force --verbose
+
+.PHONY: test-backend
+test-backend:
+	@echo "Testing Hanzo Agent SDK with local backend..."
+	@echo "Make sure Router is running at http://localhost:4000"
+	@echo "----------------------------------------"
+	uv run python test_hanzo_backend.py
+
+.PHONY: example-backend
+example-backend:
+	@echo "Running Hanzo backend integration example..."
+	uv run python examples/hanzo_backend_example.py
+
+.PHONY: setup-backend
+setup-backend:
+	@echo "Setting up Hanzo backend environment..."
+	@echo "export HANZO_ROUTER_URL=http://localhost:4000/v1"
+	@echo "export HANZO_API_KEY=sk-1234"
+	@echo "----------------------------------------"
+	@echo "Add these to your shell profile or .env file"
 	
