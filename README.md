@@ -1,15 +1,29 @@
 # Hanzo AI Agent SDK
 
-The Hanzo AI Agent SDK is a lightweight yet powerful framework for building multi-agent workflows.
+A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration, inspired by [AgentKit](https://github.com/inngest/agent-kit).
 
 <img src="https://cdn.openai.com/API/docs/images/orchestration.png" alt="Image of the Agents Tracing UI" style="max-height: 803px;">
 
+## ✨ Features
+
+- 🤖 **Multi-Agent Networks**: Build systems where multiple specialized agents collaborate
+- 🧠 **Intelligent Routing**: Semantic, rule-based, and load-balanced routing strategies  
+- 🛠️ **Powerful Tools**: Enhanced tool system with MCP (Model Context Protocol) support
+- 📊 **Shared State**: Agents can share information through network state
+- 🔄 **Orchestration**: Define complex workflows with parallel, conditional, and loop steps
+- 💾 **Memory System**: Long-term memory with vector search and reflection capabilities
+- ⚡ **UI Streaming**: Real-time updates for building responsive interfaces
+- 🔍 **Observability**: Built-in tracing and monitoring via Hanzo Cloud dashboard
+- 🌐 **Backend Flexibility**: Use with Hanzo Router for 100+ LLM providers
+
 ### Core concepts:
 
-1. [**Agents**](https://openai.github.io/openai-agents-python/agents): LLMs configured with instructions, tools, guardrails, and handoffs
-2. [**Handoffs**](https://openai.github.io/openai-agents-python/handoffs/): Allow agents to transfer control to other agents for specific tasks
-3. [**Guardrails**](https://openai.github.io/openai-agents-python/guardrails/): Configurable safety checks for input and output validation
-4. [**Tracing**](https://openai.github.io/openai-agents-python/tracing/): Built-in tracking of agent runs, allowing you to view, debug and optimize your workflows
+1. [**Agents**](docs/agents.md): LLMs configured with instructions, tools, and memory
+2. [**Networks**](docs/networks-and-orchestration.md): Multi-agent systems with intelligent routing
+3. [**Workflows**](docs/networks-and-orchestration.md#orchestration-and-workflows): Orchestrate complex multi-step processes
+4. [**State & Memory**](docs/networks-and-orchestration.md#state-management): Shared state and long-term memory
+5. [**Tools**](docs/tools.md): Enhanced tool system with MCP support
+6. [**Tracing**](docs/tracing.md): Built-in tracking and observability
 
 Explore the [examples](examples) directory to see the SDK in action, and read our [documentation](https://openai.github.io/openai-agents-python/) for more details.
 
@@ -30,7 +44,9 @@ source env/bin/activate
 pip install hanzoai
 ```
 
-## Hello world example
+## Quick Examples
+
+### Simple Agent
 
 ```python
 from hanzoai import Agent, Runner
@@ -45,9 +61,62 @@ print(result.final_output)
 # Infinite loop's dance.
 ```
 
-(_If running this, ensure you set the `OPENAI_API_KEY` environment variable_)
+### Multi-Agent Network
 
-(_For Jupyter notebook users, see [hello_world_jupyter.py](examples/basic/hello_world_jupyter.py)_)
+```python
+from agents import Agent, create_network
+from agents.routers import SemanticRouter
+
+# Create specialized agents
+researcher = Agent(
+    name="Researcher",
+    instructions="You find and analyze information.",
+    tools=[search_tool, analyze_tool]
+)
+
+writer = Agent(
+    name="Writer",
+    instructions="You create content based on research.",
+    tools=[format_tool]
+)
+
+# Create a network
+network = create_network(
+    agents=[researcher, writer],
+    router=SemanticRouter(),
+    default_model="gpt-4"
+)
+
+# Run the network
+result = await network.run("Research and write about quantum computing")
+```
+
+### Orchestrated Workflow
+
+```python
+from agents import create_workflow, Step
+
+workflow = create_workflow(
+    name="Content Pipeline",
+    steps=[
+        Step.agent("researcher", "Research {topic}"),
+        Step.parallel([
+            Step.agent("writer", "Write introduction"),
+            Step.agent("writer", "Write main content")
+        ]),
+        Step.agent("reviewer", "Review and edit"),
+        Step.conditional(
+            condition=lambda state: state.get("quality_score") < 8,
+            true_step=Step.agent("writer", "Revise based on feedback"),
+            false_step=Step.transform(lambda x: {"status": "published"})
+        )
+    ]
+)
+
+result = await workflow.run({"topic": "AI Safety"})
+```
+
+(_Configure backend with `HANZO_ROUTER_URL` and `HANZO_API_KEY` environment variables_)
 
 ## Handoffs example
 
