@@ -29,6 +29,9 @@ class NetworkConfig:
     name: str = "Agent Network"
     """Name of the network for tracing and logging."""
     
+    default_model: str = "gpt-3.5-turbo"
+    """Default model to use for agents in the network."""
+    
     state_store: StateStore | None = None
     """State store for sharing data between agents. Defaults to InMemoryStateStore."""
     
@@ -369,3 +372,48 @@ class NetworkHooks(RunHooks):
             node.status = NodeStatus.COMPLETED
             
             logger.debug(f"Network agent '{agent.name}' completed")
+
+
+def create_network(
+    agents: List[Agent],
+    router: Router | None = None,
+    state_store: StateStore | None = None,
+    default_model: str = "gpt-3.5-turbo",
+    name: str = "default_network",
+    enable_parallel_execution: bool = True,
+) -> AgentNetwork:
+    """Create a new agent network.
+    
+    Args:
+        agents: List of agents to include in the network
+        router: Router to use for agent selection
+        state_store: State store for shared state
+        default_model: Default model to use
+        name: Name of the network
+        enable_parallel_execution: Whether to enable parallel execution
+        
+    Returns:
+        AgentNetwork instance
+    """
+    if router is None:
+        from .router import SemanticRouter
+        router = SemanticRouter()
+        
+    if state_store is None:
+        from ..state import InMemoryStateStore
+        state_store = InMemoryStateStore()
+    
+    config = NetworkConfig(
+        name=name,
+        default_model=default_model,
+        state_store=state_store,
+        enable_parallel_execution=enable_parallel_execution,
+    )
+    
+    network = AgentNetwork(config=config, router=router)
+    
+    # Add all agents to the network
+    for agent in agents:
+        network.add_agent(agent)
+        
+    return network

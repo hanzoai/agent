@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from .memory import MemoryEntry
+from .types import MemoryEntry
 from ..logger import logger
 
 

@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from .memory import MemoryEntry, MemoryType
+from .types import MemoryEntry, MemoryType
 from ..logger import logger
 
 

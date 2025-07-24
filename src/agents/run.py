@@ -34,7 +34,7 @@ from .lifecycle import RunHooks
 from .logger import logger
 from .model_settings import ModelSettings
 from .models.interface import ModelProvider
-from .models.openai_provider import Hanzo AIProvider
+from .models.openai_provider import OpenAIProvider
 from .result import RunResult, RunResultStreaming
 from .run_context import RunContextWrapper, TContext
 from .stream_events import AgentUpdatedStreamEvent, RawResponsesStreamEvent
@@ -54,8 +54,8 @@ class RunConfig:
     agent. The model_provider passed in below must be able to resolve this model name.
     """
 
-    model_provider: ModelProvider = field(default_factory=Hanzo AIProvider)
-    """The model provider to use when looking up string model names. Defaults to Hanzo AI."""
+    model_provider: ModelProvider = field(default_factory=OpenAIProvider)
+    """The model provider to use when looking up string model names. Defaults to OpenAI."""
 
     model_settings: ModelSettings | None = None
     """Configure global model settings. Any non-null values will override the agent-specific model

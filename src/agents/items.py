@@ -30,16 +30,16 @@ if TYPE_CHECKING:
     from .agent import Agent
 
 TResponse = Response
-"""A type alias for the Response type from the Hanzo AI SDK."""
+"""A type alias for the Response type from the OpenAI SDK."""
 
 TResponseInputItem = ResponseInputItemParam
-"""A type alias for the ResponseInputItemParam type from the Hanzo AI SDK."""
+"""A type alias for the ResponseInputItemParam type from the OpenAI SDK."""
 
 TResponseOutputItem = ResponseOutputItem
-"""A type alias for the ResponseOutputItem type from the Hanzo AI SDK."""
+"""A type alias for the ResponseOutputItem type from the OpenAI SDK."""
 
 TResponseStreamEvent = ResponseStreamEvent
-"""A type alias for the ResponseStreamEvent type from the Hanzo AI SDK."""
+"""A type alias for the ResponseStreamEvent type from the OpenAI SDK."""
 
 T = TypeVar("T", bound=Union[TResponseOutputItem, TResponseInputItem])
 
