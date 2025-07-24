@@ -142,7 +142,7 @@ class RunResultStreaming(RunResultBase):
 
     async def stream_events(self) -> AsyncIterator[StreamEvent]:
         """Stream deltas for new items as they are generated. We're using the types from the
-        Hanzo AI Responses API, so these are semantic events: each event has a `type` field that
+        OpenAI Responses API, so these are semantic events: each event has a `type` field that
         describes the type of the event, along with the data for that event.
 
         This will raise:

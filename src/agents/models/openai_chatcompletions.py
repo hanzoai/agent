@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
-from openai import NOT_GIVEN, AsyncHanzo AI, AsyncStream, NotGiven
+from openai import NOT_GIVEN, AsyncOpenAI, AsyncStream, NotGiven
 from openai.types import ChatModel
 from openai.types.chat import (
     ChatCompletion,
@@ -87,11 +87,11 @@ class _StreamingState:
     function_calls: dict[int, ResponseFunctionToolCall] = field(default_factory=dict)
 
 
-class Hanzo AIChatCompletionsModel(Model):
+class OpenAIChatCompletionsModel(Model):
     def __init__(
         self,
         model: str | ChatModel,
-        openai_client: AsyncHanzo AI,
+        openai_client: AsyncOpenAI,
     ) -> None:
         self.model = model
         self._client = openai_client
@@ -549,9 +549,9 @@ class Hanzo AIChatCompletionsModel(Model):
         )
         return response, ret
 
-    def _get_client(self) -> AsyncHanzo AI:
+    def _get_client(self) -> AsyncOpenAI:
         if self._client is None:
-            self._client = AsyncHanzo AI()
+            self._client = AsyncOpenAI()
         return self._client
 
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from openai import AsyncHanzo AI
+from openai import AsyncOpenAI
 
 _default_openai_key: str | None = None
-_default_openai_client: AsyncHanzo AI | None = None
+_default_openai_client: AsyncOpenAI | None = None
 _use_responses_by_default: bool = True
 
 
@@ -16,12 +16,12 @@ def get_default_openai_key() -> str | None:
     return _default_openai_key
 
 
-def set_default_openai_client(client: AsyncHanzo AI) -> None:
+def set_default_openai_client(client: AsyncOpenAI) -> None:
     global _default_openai_client
     _default_openai_client = client
 
 
-def get_default_openai_client() -> AsyncHanzo AI | None:
+def get_default_openai_client() -> AsyncOpenAI | None:
     return _default_openai_client
 
 

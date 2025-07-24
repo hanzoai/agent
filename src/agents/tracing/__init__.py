@@ -83,7 +83,7 @@ def set_tracing_disabled(disabled: bool) -> None:
 
 def set_tracing_export_api_key(api_key: str) -> None:
     """
-    Set the Hanzo AI API key for the backend exporter.
+    Set the OpenAI API key for the backend exporter.
     """
     default_exporter().set_api_key(api_key)
 

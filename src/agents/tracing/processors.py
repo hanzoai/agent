@@ -41,9 +41,9 @@ class BackendSpanExporter(TracingExporter):
         Args:
             api_key: The API key for the "Authorization" header. Defaults to
                 `os.environ["OPENAI_API_KEY"]` if not provided.
-            organization: The Hanzo AI organization to use. Defaults to
+            organization: The OpenAI organization to use. Defaults to
                 `os.environ["OPENAI_ORG_ID"]` if not provided.
-            project: The Hanzo AI project to use. Defaults to
+            project: The OpenAI project to use. Defaults to
                 `os.environ["OPENAI_PROJECT_ID"]` if not provided.
             endpoint: The HTTP endpoint to which traces/spans are posted.
             max_retries: Maximum number of retries upon failures.
@@ -62,10 +62,10 @@ class BackendSpanExporter(TracingExporter):
         self._client = httpx.Client(timeout=httpx.Timeout(timeout=60, connect=5.0))
 
     def set_api_key(self, api_key: str):
-        """Set the Hanzo AI API key for the exporter.
+        """Set the OpenAI API key for the exporter.
 
         Args:
-            api_key: The Hanzo AI API key to use. This is the same key used by the Hanzo AI Python
+            api_key: The OpenAI API key to use. This is the same key used by the OpenAI Python
                 client.
         """
         self.api_key = api_key
@@ -84,7 +84,7 @@ class BackendSpanExporter(TracingExporter):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "Hanzo AI-Beta": "traces=v1",
+            "OpenAI-Beta": "traces=v1",
         }
 
         # Exponential backoff loop

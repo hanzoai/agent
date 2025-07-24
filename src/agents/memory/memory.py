@@ -3,101 +3,17 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from ..agent import Agent
 from ..items import TResponseInputItem, ItemHelpers
 from ..logger import logger
 from ..run_context import RunContextWrapper, TContext
+from .types import MemoryEntry, MemoryType
 from .store import MemoryStore, InMemoryMemoryStore
 from .retriever import MemoryRetriever, SemanticRetriever
 
 
-class MemoryType(Enum):
-    """Type of memory entry."""
-    
-    CONVERSATION = "conversation"
-    """Conversation history."""
-    
-    FACT = "fact"
-    """Factual information."""
-    
-    PROCEDURE = "procedure"
-    """Procedural knowledge."""
-    
-    EPISODE = "episode"
-    """Episodic memory."""
-    
-    REFLECTION = "reflection"
-    """Agent's reflections."""
-
-
-@dataclass
-class MemoryEntry:
-    """A single memory entry."""
-    
-    id: str
-    """Unique identifier for the memory."""
-    
-    type: MemoryType
-    """Type of memory."""
-    
-    content: str
-    """The memory content."""
-    
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    """Additional metadata."""
-    
-    timestamp: float = field(default_factory=time.time)
-    """When the memory was created."""
-    
-    agent_name: str | None = None
-    """Agent that created this memory."""
-    
-    importance: float = 1.0
-    """Importance score (0.0 to 1.0)."""
-    
-    access_count: int = 0
-    """Number of times accessed."""
-    
-    last_accessed: float | None = None
-    """Last access timestamp."""
-    
-    embedding: List[float] | None = None
-    """Vector embedding for semantic search."""
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "id": self.id,
-            "type": self.type.value,
-            "content": self.content,
-            "metadata": self.metadata,
-            "timestamp": self.timestamp,
-            "agent_name": self.agent_name,
-            "importance": self.importance,
-            "access_count": self.access_count,
-            "last_accessed": self.last_accessed,
-            "embedding": self.embedding,
-        }
-        
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> MemoryEntry:
-        """Create from dictionary."""
-        return cls(
-            id=data["id"],
-            type=MemoryType(data["type"]),
-            content=data["content"],
-            metadata=data.get("metadata", {}),
-            timestamp=data.get("timestamp", time.time()),
-            agent_name=data.get("agent_name"),
-            importance=data.get("importance", 1.0),
-            access_count=data.get("access_count", 0),
-            last_accessed=data.get("last_accessed"),
-            embedding=data.get("embedding"),
-        )
 
 
 class Memory:

@@ -5,7 +5,7 @@ workflow management, execution tracking, and UI streaming support.
 """
 
 from .orchestrator import Orchestrator, OrchestrationConfig
-from .workflow import Workflow, WorkflowStep, StepType
+from .workflow import Workflow, WorkflowStep, StepType, Step
 from .executor import WorkflowExecutor, ExecutionResult
 from .ui_stream import UIStreamer, StreamUpdate, UpdateType
 
@@ -15,6 +15,7 @@ __all__ = [
     "Workflow",
     "WorkflowStep",
     "StepType",
+    "Step",
     "WorkflowExecutor",
     "ExecutionResult",
     "UIStreamer",
