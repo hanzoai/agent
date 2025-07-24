@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import httpx
-from openai import AsyncHanzo AI, DefaultAsyncHttpxClient
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 
 from . import _openai_shared
 from .interface import Model, ModelProvider
-from .openai_chatcompletions import Hanzo AIChatCompletionsModel
-from .openai_responses import Hanzo AIResponsesModel
+from .openai_chatcompletions import OpenAIChatCompletionsModel
+from .openai_responses import OpenAIResponsesModel
 
 DEFAULT_MODEL: str = "gpt-4o"
 
@@ -23,13 +23,13 @@ def shared_http_client() -> httpx.AsyncClient:
     return _http_client
 
 
-class Hanzo AIProvider(ModelProvider):
+class OpenAIProvider(ModelProvider):
     def __init__(
         self,
         *,
         api_key: str | None = None,
         base_url: str | None = None,
-        openai_client: AsyncHanzo AI | None = None,
+        openai_client: AsyncOpenAI | None = None,
         organization: str | None = None,
         project: str | None = None,
         use_responses: bool | None = None,
@@ -38,7 +38,7 @@ class Hanzo AIProvider(ModelProvider):
             assert api_key is None and base_url is None, (
                 "Don't provide api_key or base_url if you provide openai_client"
             )
-            self._client: AsyncHanzo AI | None = openai_client
+            self._client: AsyncOpenAI | None = openai_client
         else:
             self._client = None
             self._stored_api_key = api_key
@@ -51,11 +51,11 @@ class Hanzo AIProvider(ModelProvider):
         else:
             self._use_responses = _openai_shared.get_use_responses_by_default()
 
-    # We lazy load the client in case you never actually use Hanzo AIProvider(). Otherwise
-    # AsyncHanzo AI() raises an error if you don't have an API key set.
-    def _get_client(self) -> AsyncHanzo AI:
+    # We lazy load the client in case you never actually use OpenAIProvider(). Otherwise
+    # AsyncOpenAI() raises an error if you don't have an API key set.
+    def _get_client(self) -> AsyncOpenAI:
         if self._client is None:
-            self._client = _openai_shared.get_default_openai_client() or AsyncHanzo AI(
+            self._client = _openai_shared.get_default_openai_client() or AsyncOpenAI(
                 api_key=self._stored_api_key or _openai_shared.get_default_openai_key(),
                 base_url=self._stored_base_url,
                 organization=self._stored_organization,
@@ -72,7 +72,7 @@ class Hanzo AIProvider(ModelProvider):
         client = self._get_client()
 
         return (
-            Hanzo AIResponsesModel(model=model_name, openai_client=client)
+            OpenAIResponsesModel(model=model_name, openai_client=client)
             if self._use_responses
-            else Hanzo AIChatCompletionsModel(model=model_name, openai_client=client)
+            else OpenAIChatCompletionsModel(model=model_name, openai_client=client)
         )

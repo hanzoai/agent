@@ -395,3 +395,130 @@ class Workflow:
                     lines.append(f"    {step_id} -->|false| {if_false}")
                     
         return "\n".join(lines)
+
+
+class Step:
+    """Helper class for creating workflow steps."""
+    
+    @staticmethod
+    def agent(agent_name: str, prompt: str, **kwargs) -> WorkflowStep:
+        """Create an agent execution step.
+        
+        Args:
+            agent_name: Name of the agent to run
+            prompt: Input prompt for the agent
+            **kwargs: Additional configuration
+            
+        Returns:
+            WorkflowStep configured for agent execution
+        """
+        config = {
+            "agent_name": agent_name,
+            "prompt": prompt,
+            **kwargs
+        }
+        return WorkflowStep(
+            name=f"Run {agent_name}",
+            type=StepType.AGENT,
+            config=config
+        )
+    
+    @staticmethod
+    def parallel(steps: List[WorkflowStep]) -> WorkflowStep:
+        """Create a parallel execution step.
+        
+        Args:
+            steps: Steps to run in parallel
+            
+        Returns:
+            WorkflowStep configured for parallel execution
+        """
+        return WorkflowStep(
+            name="Parallel Steps",
+            type=StepType.PARALLEL,
+            config={"steps": steps}
+        )
+    
+    @staticmethod
+    def conditional(
+        condition: Callable[[Any], bool],
+        if_true: WorkflowStep,
+        if_false: WorkflowStep | None = None
+    ) -> WorkflowStep:
+        """Create a conditional execution step.
+        
+        Args:
+            condition: Function to evaluate condition
+            if_true: Step to run if condition is true
+            if_false: Step to run if condition is false
+            
+        Returns:
+            WorkflowStep configured for conditional execution
+        """
+        return WorkflowStep(
+            name="Conditional",
+            type=StepType.CONDITIONAL,
+            config={
+                "condition": condition,
+                "if_true": if_true.id,
+                "if_false": if_false.id if if_false else None
+            }
+        )
+    
+    @staticmethod
+    def loop(
+        over: str | Callable[[Any], List[Any]],
+        body: WorkflowStep,
+        max_iterations: int | None = None
+    ) -> WorkflowStep:
+        """Create a loop execution step.
+        
+        Args:
+            over: Data path or function to get items
+            body: Step to run for each item
+            max_iterations: Maximum iterations
+            
+        Returns:
+            WorkflowStep configured for loop execution
+        """
+        return WorkflowStep(
+            name="Loop",
+            type=StepType.LOOP,
+            config={
+                "over": over,
+                "body": body.id,
+                "max_iterations": max_iterations
+            }
+        )
+    
+    @staticmethod
+    def transform(transform: Callable[[Any], Any]) -> WorkflowStep:
+        """Create a data transformation step.
+        
+        Args:
+            transform: Transformation function
+            
+        Returns:
+            WorkflowStep configured for transformation
+        """
+        return WorkflowStep(
+            name="Transform",
+            type=StepType.TRANSFORM,
+            config={"transform": transform}
+        )
+    
+    @staticmethod
+    def wait(duration: float) -> WorkflowStep:
+        """Create a wait step.
+        
+        Args:
+            duration: Duration to wait in seconds
+            
+        Returns:
+            WorkflowStep configured for waiting
+        """
+        return WorkflowStep(
+            name=f"Wait {duration}s",
+            type=StepType.WAIT,
+            config={"duration": duration}
+        )

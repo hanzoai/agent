@@ -19,7 +19,7 @@ def ensure_strict_json_schema(
     schema: dict[str, Any],
 ) -> dict[str, Any]:
     """Mutates the given JSON schema to ensure it conforms to the `strict` standard
-    that the Hanzo AI API expects.
+    that the OpenAI API expects.
     """
     if schema == {}:
         return _EMPTY_SCHEMA
