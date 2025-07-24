@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from agents.models import _openai_shared
-from agents.models.openai_chatcompletions import Hanzo AIChatCompletionsModel
-from agents.models.openai_responses import Hanzo AIResponsesModel
+from agents.models.openai_chatcompletions import HanzoAIChatCompletionsModel
+from agents.models.openai_responses import HanzoAIResponsesModel
 from agents.tracing import set_trace_processors
 from agents.tracing.setup import GLOBAL_TRACE_PROVIDER
 
@@ -49,7 +49,7 @@ def disable_real_model_clients(monkeypatch, request):
     def failing_version(*args, **kwargs):
         pytest.fail("Real models should not be used in tests!")
 
-    monkeypatch.setattr(Hanzo AIResponsesModel, "get_response", failing_version)
-    monkeypatch.setattr(Hanzo AIResponsesModel, "stream_response", failing_version)
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "get_response", failing_version)
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "stream_response", failing_version)
+    monkeypatch.setattr(HanzoAIResponsesModel, "get_response", failing_version)
+    monkeypatch.setattr(HanzoAIResponsesModel, "stream_response", failing_version)
+    monkeypatch.setattr(HanzoAIChatCompletionsModel, "get_response", failing_version)
+    monkeypatch.setattr(HanzoAIChatCompletionsModel, "stream_response", failing_version)
