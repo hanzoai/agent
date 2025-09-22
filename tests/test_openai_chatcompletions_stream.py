@@ -19,8 +19,8 @@ from openai.types.responses import (
 
 from agents.model_settings import ModelSettings
 from agents.models.interface import ModelTracing
-from agents.models.openai_chatcompletions import Hanzo AIChatCompletionsModel
-from agents.models.openai_provider import Hanzo AIProvider
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+from agents.models.openai_provider import OpenAIProvider
 
 
 @pytest.mark.allow_call_model_methods
@@ -68,8 +68,8 @@ async def test_stream_response_yields_events_for_text_content(monkeypatch) -> No
         )
         return resp, fake_stream()
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     output_events = []
     async for event in model.stream_response(
         system_instructions=None,
@@ -157,8 +157,8 @@ async def test_stream_response_yields_events_for_refusal_content(monkeypatch) ->
         )
         return resp, fake_stream()
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     output_events = []
     async for event in model.stream_response(
         system_instructions=None,
@@ -244,8 +244,8 @@ async def test_stream_response_yields_events_for_tool_call(monkeypatch) -> None:
         )
         return resp, fake_stream()
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     output_events = []
     async for event in model.stream_response(
         system_instructions=None,

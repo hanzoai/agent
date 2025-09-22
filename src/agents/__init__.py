@@ -44,6 +44,7 @@ from .models.interface import Model, ModelProvider, ModelTracing
 from .models.openai_chatcompletions import OpenAIChatCompletionsModel
 from .models.openai_provider import OpenAIProvider
 from .models.openai_responses import OpenAIResponsesModel
+from .models.hanzo_node_provider import HanzoNodeProvider, create_hanzo_node_provider
 from .result import RunResult, RunResultStreaming
 from .run import RunConfig, Runner
 from .run_context import RunContextWrapper, TContext
@@ -193,6 +194,8 @@ __all__ = [
     "OpenAIChatCompletionsModel",
     "OpenAIProvider",
     "OpenAIResponsesModel",
+    "HanzoNodeProvider",
+    "create_hanzo_node_provider",
     "AgentOutputSchema",
     "Computer",
     "AsyncComputer",

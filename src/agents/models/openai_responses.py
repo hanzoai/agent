@@ -149,8 +149,17 @@ class OpenAIResponsesModel(Model):
                 )
 
                 final_response: Response | None = None
+                sequence_number = 0
 
                 async for chunk in stream:
+                    # Ensure sequence_number is present for compatibility with newer SDKs
+                    if getattr(chunk, "sequence_number", None) is None:
+                        try:
+                            chunk = chunk.model_copy(update={"sequence_number": sequence_number})
+                        except Exception:
+                            # If model_copy isn't available, fall back to yielding as-is
+                            pass
+                    sequence_number += 1
                     if isinstance(chunk, ResponseCompletedEvent):
                         final_response = chunk.response
                     yield chunk
