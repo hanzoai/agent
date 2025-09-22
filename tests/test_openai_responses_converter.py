@@ -1,4 +1,4 @@
-# Copyright (c) Hanzo AI
+# Copyright (c) OpenAI
 #
 # Licensed under the MIT License.
 # See LICENSE file in the project root for full license information.
@@ -7,7 +7,7 @@
 Unit tests for the `Converter` class defined in
 `agents.models.openai_responses`. The converter is responsible for
 translating various agent tool types and output schemas into the parameter
-structures expected by the Hanzo AI Responses API.
+structures expected by the OpenAI Responses API.
 
 We test the following aspects:
 

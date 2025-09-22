@@ -42,6 +42,42 @@ class Memory:
         self.auto_compress = auto_compress
         self.compress_threshold = compress_threshold
         
+    # Backwards-compatible aliases for tests and existing code
+    async def add(
+        self,
+        content: str,
+        type: MemoryType = MemoryType.CONVERSATION,
+        agent_name: str | None = None,
+        importance: float = 1.0,
+        metadata: Dict[str, Any] | None = None,
+    ) -> MemoryEntry:
+        return await self.remember(
+            content=content,
+            type=type,
+            agent_name=agent_name,
+            importance=importance,
+            metadata=metadata,
+        )
+
+    async def search(
+        self,
+        query: str | None = None,
+        limit: int = 10,
+        type: MemoryType | None = None,
+        agent_name: str | None = None,
+        min_importance: float = 0.0,
+    ) -> List[MemoryEntry]:
+        return await self.recall(
+            query=query,
+            type=type,
+            agent_name=agent_name,
+            limit=limit,
+            min_importance=min_importance,
+        )
+
+    async def get_all(self) -> List[MemoryEntry]:
+        return await self.store.list()
+        
     async def remember(
         self,
         content: str,
@@ -76,6 +112,12 @@ class Memory:
             importance=importance,
             metadata=metadata or {},
         )
+        
+        # Ensure we don't exceed the max_entries after adding
+        if self.auto_compress:
+            count_after = await self.store.count()
+            if count_after > self.max_entries:
+                await self._compress_memories()
         
         logger.debug(f"Stored memory: {entry.id} ({type.value})")
         
