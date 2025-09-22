@@ -1,8 +1,8 @@
 import pytest
-from openai import AsyncHanzo AI
+from openai import AsyncOpenAI
 from openai.types.responses import ResponseCompletedEvent
 
-from agents import ModelSettings, ModelTracing, Hanzo AIResponsesModel, trace
+from agents import ModelSettings, ModelTracing, OpenAIResponsesModel, trace
 from agents.tracing.span_data import ResponseSpanData
 from tests import fake_model
 
@@ -39,7 +39,7 @@ class DummyResponse:
 async def test_get_response_creates_trace(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Mock _fetch_response to return a dummy response with a known id
         async def dummy_fetch_response(
@@ -67,7 +67,7 @@ async def test_get_response_creates_trace(monkeypatch):
 async def test_non_data_tracing_doesnt_set_response_id(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Mock _fetch_response to return a dummy response with a known id
         async def dummy_fetch_response(
@@ -92,7 +92,7 @@ async def test_non_data_tracing_doesnt_set_response_id(monkeypatch):
 async def test_disable_tracing_does_not_create_span(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Mock _fetch_response to return a dummy response with a known id
         async def dummy_fetch_response(
@@ -116,7 +116,7 @@ async def test_disable_tracing_does_not_create_span(monkeypatch):
 async def test_stream_response_creates_trace(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Define a dummy fetch function that returns an async stream with a dummy response
         async def dummy_fetch_response(
@@ -151,7 +151,7 @@ async def test_stream_response_creates_trace(monkeypatch):
 async def test_stream_non_data_tracing_doesnt_set_response_id(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Define a dummy fetch function that returns an async stream with a dummy response
         async def dummy_fetch_response(
@@ -185,7 +185,7 @@ async def test_stream_non_data_tracing_doesnt_set_response_id(monkeypatch):
 async def test_stream_disabled_tracing_doesnt_create_span(monkeypatch):
     with trace(workflow_name="test"):
         # Create an instance of the model
-        model = Hanzo AIResponsesModel(model="test-model", openai_client=AsyncHanzo AI(api_key="test"))
+        model = OpenAIResponsesModel(model="test-model", openai_client=AsyncOpenAI(api_key="test"))
 
         # Define a dummy fetch function that returns an async stream with a dummy response
         async def dummy_fetch_response(

@@ -20,7 +20,7 @@ from agents.network import create_network, SemanticRouter, RuleBasedRouter, Load
 from agents.state import InMemoryStateStore, FileStateStore
 from agents.memory import Memory, MemoryEntry, MemoryType
 from agents.orchestration import Workflow, Step
-from agents.tool import tool
+from agents import function_tool as tool
 from agents.exceptions import MaxTurnsExceeded
 
 

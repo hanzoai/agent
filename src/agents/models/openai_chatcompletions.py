@@ -192,6 +192,7 @@ class OpenAIChatCompletionsModel(Model):
 
             usage: CompletionUsage | None = None
             state = _StreamingState()
+            sequence_number = 0
 
             async for chunk in stream:
                 if not state.started:
@@ -199,7 +200,9 @@ class OpenAIChatCompletionsModel(Model):
                     yield ResponseCreatedEvent(
                         response=response,
                         type="response.created",
+                        sequence_number=sequence_number,
                     )
+                    sequence_number += 1
 
                 # The usage is only available in the last chunk
                 usage = chunk.usage
@@ -234,7 +237,9 @@ class OpenAIChatCompletionsModel(Model):
                             item=assistant_item,
                             output_index=0,
                             type="response.output_item.added",
+                            sequence_number=sequence_number,
                         )
+                        sequence_number += 1
                         yield ResponseContentPartAddedEvent(
                             content_index=state.text_content_index_and_output[0],
                             item_id=FAKE_RESPONSES_ID,
@@ -245,7 +250,9 @@ class OpenAIChatCompletionsModel(Model):
                                 annotations=[],
                             ),
                             type="response.content_part.added",
+                            sequence_number=sequence_number,
                         )
+                        sequence_number += 1
                     # Emit the delta for this segment of content
                     yield ResponseTextDeltaEvent(
                         content_index=state.text_content_index_and_output[0],
@@ -253,7 +260,10 @@ class OpenAIChatCompletionsModel(Model):
                         item_id=FAKE_RESPONSES_ID,
                         output_index=0,
                         type="response.output_text.delta",
+                        logprobs=[],
+                        sequence_number=sequence_number,
                     )
+                    sequence_number += 1
                     # Accumulate the text into the response part
                     state.text_content_index_and_output[1].text += delta.content
 
@@ -278,7 +288,9 @@ class OpenAIChatCompletionsModel(Model):
                             item=assistant_item,
                             output_index=0,
                             type="response.output_item.added",
+                            sequence_number=sequence_number,
                         )
+                        sequence_number += 1
                         yield ResponseContentPartAddedEvent(
                             content_index=state.refusal_content_index_and_output[0],
                             item_id=FAKE_RESPONSES_ID,
@@ -289,7 +301,9 @@ class OpenAIChatCompletionsModel(Model):
                                 annotations=[],
                             ),
                             type="response.content_part.added",
+                            sequence_number=sequence_number,
                         )
+                        sequence_number += 1
                     # Emit the delta for this segment of refusal
                     yield ResponseRefusalDeltaEvent(
                         content_index=state.refusal_content_index_and_output[0],
@@ -297,7 +311,9 @@ class OpenAIChatCompletionsModel(Model):
                         item_id=FAKE_RESPONSES_ID,
                         output_index=0,
                         type="response.refusal.delta",
+                        sequence_number=sequence_number,
                     )
+                    sequence_number += 1
                     # Accumulate the refusal string in the output part
                     state.refusal_content_index_and_output[1].refusal += delta.refusal
 
@@ -334,7 +350,9 @@ class OpenAIChatCompletionsModel(Model):
                     output_index=0,
                     part=state.text_content_index_and_output[1],
                     type="response.content_part.done",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
 
             if state.refusal_content_index_and_output:
                 function_call_starting_index += 1
@@ -345,7 +363,9 @@ class OpenAIChatCompletionsModel(Model):
                     output_index=0,
                     part=state.refusal_content_index_and_output[1],
                     type="response.content_part.done",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
 
             # Actually send events for the function calls
             for function_call in state.function_calls.values():
@@ -360,14 +380,18 @@ class OpenAIChatCompletionsModel(Model):
                     ),
                     output_index=function_call_starting_index,
                     type="response.output_item.added",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
                 # Then, yield the args
                 yield ResponseFunctionCallArgumentsDeltaEvent(
                     delta=function_call.arguments,
                     item_id=FAKE_RESPONSES_ID,
                     output_index=function_call_starting_index,
                     type="response.function_call_arguments.delta",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
                 # Finally, the ResponseOutputItemDone
                 yield ResponseOutputItemDoneEvent(
                     item=ResponseFunctionToolCall(
@@ -379,7 +403,9 @@ class OpenAIChatCompletionsModel(Model):
                     ),
                     output_index=function_call_starting_index,
                     type="response.output_item.done",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
 
             # Finally, send the Response completed event
             outputs: list[ResponseOutputItem] = []
@@ -402,7 +428,9 @@ class OpenAIChatCompletionsModel(Model):
                     item=assistant_msg,
                     output_index=0,
                     type="response.output_item.done",
+                    sequence_number=sequence_number,
                 )
+                sequence_number += 1
 
             for function_call in state.function_calls.values():
                 outputs.append(function_call)
@@ -415,11 +443,14 @@ class OpenAIChatCompletionsModel(Model):
                     output_tokens=usage.completion_tokens,
                     total_tokens=usage.total_tokens,
                     output_tokens_details=OutputTokensDetails(
-                        reasoning_tokens=usage.completion_tokens_details.reasoning_tokens
-                        if usage.completion_tokens_details
-                        and usage.completion_tokens_details.reasoning_tokens
-                        else 0
+                        reasoning_tokens=(
+                            usage.completion_tokens_details.reasoning_tokens
+                            if getattr(usage, "completion_tokens_details", None)
+                            and getattr(usage.completion_tokens_details, "reasoning_tokens", None)
+                            else 0
+                        )
                     ),
+                    input_tokens_details={"cached_tokens": 0}
                 )
                 if usage
                 else None
@@ -428,6 +459,7 @@ class OpenAIChatCompletionsModel(Model):
             yield ResponseCompletedEvent(
                 response=final_response,
                 type="response.completed",
+                sequence_number=sequence_number,
             )
             if tracing.include_data():
                 span_generation.span_data.output = [final_response.model_dump()]

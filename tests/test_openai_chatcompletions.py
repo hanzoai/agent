@@ -26,8 +26,8 @@ from agents import (
     ModelResponse,
     ModelSettings,
     ModelTracing,
-    Hanzo AIChatCompletionsModel,
-    Hanzo AIProvider,
+    OpenAIChatCompletionsModel,
+    OpenAIProvider,
     generation_span,
 )
 from agents.models.fake_id import FAKE_RESPONSES_ID
@@ -56,8 +56,8 @@ async def test_get_response_with_text_message(monkeypatch) -> None:
     async def patched_fetch_response(self, *args, **kwargs):
         return chat
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     resp: ModelResponse = await model.get_response(
         system_instructions=None,
         input="",
@@ -104,8 +104,8 @@ async def test_get_response_with_refusal(monkeypatch) -> None:
     async def patched_fetch_response(self, *args, **kwargs):
         return chat
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     resp: ModelResponse = await model.get_response(
         system_instructions=None,
         input="",
@@ -153,8 +153,8 @@ async def test_get_response_with_tool_call(monkeypatch) -> None:
     async def patched_fetch_response(self, *args, **kwargs):
         return chat
 
-    monkeypatch.setattr(Hanzo AIChatCompletionsModel, "_fetch_response", patched_fetch_response)
-    model = Hanzo AIProvider(use_responses=False).get_model("gpt-4")
+    monkeypatch.setattr(OpenAIChatCompletionsModel, "_fetch_response", patched_fetch_response)
+    model = OpenAIProvider(use_responses=False).get_model("gpt-4")
     resp: ModelResponse = await model.get_response(
         system_instructions=None,
         input="",
@@ -177,9 +177,9 @@ async def test_get_response_with_tool_call(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_fetch_response_non_stream(monkeypatch) -> None:
     """
-    Verify that `_fetch_response` builds the correct Hanzo AI API call when not
+    Verify that `_fetch_response` builds the correct OpenAI API call when not
     streaming and returns the ChatCompletion object directly. We supply a
-    dummy ChatCompletion through a stubbed Hanzo AI client and inspect the
+    dummy ChatCompletion through a stubbed OpenAI client and inspect the
     captured kwargs.
     """
 
@@ -208,7 +208,7 @@ async def test_fetch_response_non_stream(monkeypatch) -> None:
     )
     completions = DummyCompletions()
     dummy_client = DummyClient(completions)
-    model = Hanzo AIChatCompletionsModel(model="gpt-4", openai_client=dummy_client)  # type: ignore
+    model = OpenAIChatCompletionsModel(model="gpt-4", openai_client=dummy_client)  # type: ignore
     # Execute the private fetch with a system instruction and simple string input.
     with generation_span(disabled=True) as span:
         result = await model._fetch_response(
@@ -223,7 +223,7 @@ async def test_fetch_response_non_stream(monkeypatch) -> None:
             stream=False,
         )
     assert result is chat
-    # Ensure expected args were passed through to Hanzo AI client.
+    # Ensure expected args were passed through to OpenAI client.
     kwargs = completions.kwargs
     assert kwargs["stream"] is False
     assert kwargs["model"] == "gpt-4"
@@ -241,7 +241,7 @@ async def test_fetch_response_non_stream(monkeypatch) -> None:
 async def test_fetch_response_stream(monkeypatch) -> None:
     """
     When `stream=True`, `_fetch_response` should return a bare `Response`
-    object along with the underlying async stream. The Hanzo AI client call
+    object along with the underlying async stream. The OpenAI client call
     should include `stream_options` to request usage-delimited chunks.
     """
 
@@ -264,7 +264,7 @@ async def test_fetch_response_stream(monkeypatch) -> None:
 
     completions = DummyCompletions()
     dummy_client = DummyClient(completions)
-    model = Hanzo AIChatCompletionsModel(model="gpt-4", openai_client=dummy_client)  # type: ignore
+    model = OpenAIChatCompletionsModel(model="gpt-4", openai_client=dummy_client)  # type: ignore
     with generation_span(disabled=True) as span:
         response, stream = await model._fetch_response(
             system_instructions=None,
@@ -277,7 +277,7 @@ async def test_fetch_response_stream(monkeypatch) -> None:
             tracing=ModelTracing.DISABLED,
             stream=True,
         )
-    # Check Hanzo AI client was called for streaming
+    # Check OpenAI client was called for streaming
     assert completions.kwargs["stream"] is True
     assert completions.kwargs["stream_options"] == {"include_usage": True}
     # Response is a proper openai Response
