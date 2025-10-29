@@ -31,8 +31,38 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hanzoai/sdk"
-Repository = "https://github.com/hanzoai/sdk"
+Homepage = "https://github.com/hanzoai/agent"
+Repository = "https://github.com/hanzoai/agent"
+
+[project.optional-dependencies]
+# Web3 integration - wallet, transactions, on-chain identity
+web3 = [
+    "web3>=6.0.0,<7",
+    "eth-account>=0.10.0,<1",
+    "eth-utils>=2.0.0,<5",
+]
+
+# TEE support - Intel SGX, AMD SEV, NVIDIA H100 attestation
+tee = [
+    "cryptography>=41.0.0,<50",
+]
+
+# Marketplace - agent service discovery and economic primitives
+marketplace = [
+    "aiohttp>=3.9.0,<4",
+    "redis>=5.0.0,<6",
+]
+
+# CLI integration
+cli = [
+    "click>=8.1.0,<9",
+    "rich>=13.0.0,<14",
+]
+
+# All extensions
+full = [
+    "hanzoai[web3,tee,marketplace,cli]",
+]
 
 [dependency-groups]
 dev = [

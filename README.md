@@ -16,6 +16,13 @@ A powerful Python framework for building AI agents and multi-agent systems with 
 - 🔍 **Observability**: Built-in tracing and monitoring via Hanzo Cloud dashboard
 - 🌐 **Backend Flexibility**: Use with Hanzo Router for 100+ LLM providers
 
+### Optional Extensions:
+
+- 💎 **Web3 Integration** (`[web3]`): Wallet management, transactions, on-chain identity
+- 🔒 **TEE Support** (`[tee]`): Intel SGX, AMD SEV, NVIDIA H100 attestation and confidential computing
+- 🛒 **Marketplace** (`[marketplace]`): Decentralized agent service discovery and economics
+- 💻 **CLI** (`[cli]`): Command-line interface integration
+
 ### Core concepts:
 
 1. [**Agents**](docs/agents.md): LLMs configured with instructions, tools, and memory
@@ -40,8 +47,24 @@ source env/bin/activate
 
 2. Install Hanzo AI SDK
 
-```
+```bash
+# Basic installation
 pip install hanzoai
+
+# With Web3 support
+pip install "hanzoai[web3]"
+
+# With TEE support
+pip install "hanzoai[tee]"
+
+# With Marketplace support
+pip install "hanzoai[marketplace]"
+
+# With CLI support
+pip install "hanzoai[cli]"
+
+# Full installation (all extensions)
+pip install "hanzoai[full]"
 ```
 
 ## Quick Examples
@@ -245,3 +268,71 @@ We'd like to acknowledge the excellent work of the open-source community, especi
 -   [uv](https://github.com/astral-sh/uv) and [ruff](https://github.com/astral-sh/ruff)
 
 We're committed to continuing to build the Agent SDK as an open source framework so others in the community can expand on our approach.
+
+## Extension Examples
+
+### Web3 Agent
+
+```python
+from agents import Agent, Runner
+from agents.extensions.web3 import Web3Agent, AgentWallet
+
+# Create wallet for agent
+wallet = AgentWallet.from_mnemonic("your mnemonic here")
+
+# Create Web3-enabled agent
+trader = Web3Agent(
+    name="Crypto Trader",
+    instructions="You are a cryptocurrency trading agent",
+    wallet=wallet
+)
+
+# Agent can now use wallet tools
+result = await Runner.run(trader, "Check my ETH balance")
+```
+
+### TEE (Confidential) Agent
+
+```python
+from agents import Agent, Runner
+from agents.extensions.tee import ConfidentialAgent, TEEProvider
+
+# Create agent that runs in TEE
+confidential_agent = ConfidentialAgent(
+    name="Secure Agent",
+    instructions="You handle sensitive data",
+    tee_provider=TEEProvider.INTEL_SGX
+)
+
+# Generate attestation
+attestation = await confidential_agent.generate_attestation()
+print(f"Attestation: {attestation.quote}")
+```
+
+### Marketplace Agent
+
+```python
+from agents import Agent
+from agents.extensions.marketplace import AgentMarketplace, ServiceOffer, ServiceType
+
+# Create agent that offers services
+service_agent = Agent(
+    name="Research Agent",
+    instructions="You conduct research"
+)
+
+# Create service offer
+offer = ServiceOffer(
+    id="research-1",
+    agent_address="0x...",
+    agent_name="Research Agent",
+    service_type=ServiceType.RESEARCH,
+    price_eth=0.01,
+    description="Comprehensive research services"
+)
+
+# Register on marketplace
+marketplace = AgentMarketplace()
+await marketplace.register_offer(offer)
+```
+
