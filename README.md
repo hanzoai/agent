@@ -1,6 +1,6 @@
 # Hanzo AI Agent SDK
 
-A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration, inspired by [AgentKit](https://github.com/inngest/agent-kit).
+A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration.
 
 <img src="https://cdn.openai.com/API/docs/images/orchestration.png" alt="Image of the Agents Tracing UI" style="max-height: 803px;">
 
