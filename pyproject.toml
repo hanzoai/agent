@@ -59,9 +59,15 @@ cli = [
     "rich>=13.0.0,<14",
 ]
 
+# ZAP protocol support - Zero-copy Agent Protocol for MCP aggregation
+zap = [
+    # No additional dependencies - ZAP uses stdlib asyncio for transport
+    # Cap'n Proto support is optional for zero-copy performance
+]
+
 # All extensions
 full = [
-    "hanzoai[web3,tee,marketplace,cli]",
+    "hanzoai[web3,tee,marketplace,cli,zap]",
 ]
 
 [dependency-groups]
