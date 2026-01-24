@@ -141,6 +141,25 @@ from .orchestration import (
     UpdateType,
 )
 
+# ZAP protocol integration
+from .zap import (
+    ZapClient,
+    ZapConnectionError,
+    ZapProtocolError,
+    ZapAgent,
+    ZapAgentConfig,
+    create_zap_agent,
+    ZapToolProvider,
+    ZapToolRegistry,
+    create_zap_tools,
+    create_canonical_tools,
+    ConsensusAgent,
+    ConsensusDecision,
+    ParticipantResponse,
+    consensus_decide,
+    gateway_consensus,
+)
+
 
 def set_default_openai_key(key: str, use_for_tracing: bool = True) -> None:
     """Set the default OpenAI API key to use for LLM requests (and optionally tracing(). This is
@@ -320,4 +339,20 @@ __all__ = [
     "UIStreamer",
     "StreamUpdate",
     "UpdateType",
+    # ZAP protocol exports
+    "ZapClient",
+    "ZapConnectionError",
+    "ZapProtocolError",
+    "ZapAgent",
+    "ZapAgentConfig",
+    "create_zap_agent",
+    "ZapToolProvider",
+    "ZapToolRegistry",
+    "create_zap_tools",
+    "create_canonical_tools",
+    "ConsensusAgent",
+    "ConsensusDecision",
+    "ParticipantResponse",
+    "consensus_decide",
+    "gateway_consensus",
 ]
