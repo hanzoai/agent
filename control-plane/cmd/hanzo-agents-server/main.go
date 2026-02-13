@@ -413,8 +413,12 @@ func loadConfig(configFile string) (*config.Config, error) {
 		}
 	}
 
-	fmt.Printf("Loaded config - Storage mode: %s, HanzoAgents Port: %d, UI Mode: %s, UI Enabled: %t, DID Enabled: %t\n",
-		cfg.Storage.Mode, cfg.HanzoAgents.Port, cfg.UI.Mode, cfg.UI.Enabled, cfg.Features.DID.Enabled)
+	// Apply cloud config defaults and env overrides
+	cfg.Cloud.Defaults()
+	cfg.Cloud.ApplyEnvOverrides()
+
+	fmt.Printf("Loaded config - Storage mode: %s, HanzoAgents Port: %d, UI Mode: %s, UI Enabled: %t, DID Enabled: %t, Cloud Enabled: %t\n",
+		cfg.Storage.Mode, cfg.HanzoAgents.Port, cfg.UI.Mode, cfg.UI.Enabled, cfg.Features.DID.Enabled, cfg.Cloud.Enabled)
 
 	return &cfg, nil
 }
