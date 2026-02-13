@@ -142,3 +142,18 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Go build artifacts
+control-plane/hanzo-agents-server
+control-plane/build-single-binary
+control-plane/coverage*.out
+control-plane/coverage*.txt
+
+# Node.js
+node_modules/
+control-plane/web/client/dist/
+control-plane/web/client/node_modules/
+
+# IDE
+.idea/
+.hanzo/
