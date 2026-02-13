@@ -16,10 +16,10 @@ import (
 )
 
 // CreateServiceContainer creates and wires up all services for the CLI commands
-func CreateServiceContainer(cfg *config.Config, hanzo-agentsHome string) *framework.ServiceContainer {
+func CreateServiceContainer(cfg *config.Config, hanzoAgentsHome string) *framework.ServiceContainer {
 	// Create infrastructure components
 	fileSystem := storage.NewFileSystemAdapter()
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.json")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.json")
 	registryStorage := storage.NewLocalRegistryStorage(fileSystem, registryPath)
 	processManager := process.NewProcessManager()
 	portManager := process.NewPortManager()
@@ -34,8 +34,8 @@ func CreateServiceContainer(cfg *config.Config, hanzo-agentsHome string) *framew
 	}
 
 	// Create services
-	packageService := services.NewPackageService(registryStorage, fileSystem, hanzo-agentsHome)
-	agentService := services.NewAgentService(processManager, portManager, registryStorage, nil, hanzo-agentsHome) // nil agentClient for now
+	packageService := services.NewPackageService(registryStorage, fileSystem, hanzoAgentsHome)
+	agentService := services.NewAgentService(processManager, portManager, registryStorage, nil, hanzoAgentsHome) // nil agentClient for now
 	devService := services.NewDevService(processManager, portManager, fileSystem)
 
 	// Create DID services if enabled
@@ -73,8 +73,8 @@ func CreateServiceContainer(cfg *config.Config, hanzo-agentsHome string) *framew
 
 			// Generate af server ID based on hanzo-agents home directory
 			// This ensures each hanzo-agents instance has a unique ID while being deterministic
-			hanzo-agentsServerID := generateHanzoAgentsServerID(hanzo-agentsHome)
-			if err := didService.Initialize(hanzo-agentsServerID); err != nil {
+			hanzoAgentsServerID := generateHanzoAgentsServerID(hanzoAgentsHome)
+			if err := didService.Initialize(hanzoAgentsServerID); err != nil {
 				logger.Logger.Warn().Err(err).Msg("failed to initialize DID service")
 				didService = nil
 			} else {
@@ -106,20 +106,20 @@ func CreateServiceContainer(cfg *config.Config, hanzo-agentsHome string) *framew
 }
 
 // CreateServiceContainerWithDefaults creates a service container with default configuration
-func CreateServiceContainerWithDefaults(hanzo-agentsHome string) *framework.ServiceContainer {
+func CreateServiceContainerWithDefaults(hanzoAgentsHome string) *framework.ServiceContainer {
 	// Use default config for now
 	cfg := &config.Config{} // This will be enhanced when config is properly structured
-	return CreateServiceContainer(cfg, hanzo-agentsHome)
+	return CreateServiceContainer(cfg, hanzoAgentsHome)
 }
 
 // generateHanzoAgentsServerID creates a deterministic af server ID based on the hanzo-agents home directory.
 // This ensures each hanzo-agents instance has a unique ID while being deterministic for the same installation.
-func generateHanzoAgentsServerID(hanzo-agentsHome string) string {
+func generateHanzoAgentsServerID(hanzoAgentsHome string) string {
 	// Use the absolute path of hanzo-agents home to generate a deterministic ID
-	absPath, err := filepath.Abs(hanzo-agentsHome)
+	absPath, err := filepath.Abs(hanzoAgentsHome)
 	if err != nil {
 		// Fallback to the original path if absolute path fails
-		absPath = hanzo-agentsHome
+		absPath = hanzoAgentsHome
 	}
 
 	// Create a hash of the hanzo-agents home path to generate a unique but deterministic ID
@@ -127,7 +127,7 @@ func generateHanzoAgentsServerID(hanzo-agentsHome string) string {
 
 	// Use first 16 characters of the hex hash as the af server ID
 	// This provides uniqueness while keeping the ID manageable
-	hanzo-agentsServerID := hex.EncodeToString(hash[:])[:16]
+	hanzoAgentsServerID := hex.EncodeToString(hash[:])[:16]
 
-	return hanzo-agentsServerID
+	return hanzoAgentsServerID
 }

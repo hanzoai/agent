@@ -45,8 +45,8 @@ func (ds *DefaultDevService) RunInDevMode(path string, options domain.DevOptions
 	}
 
 	// Check if hanzo-agents.yaml exists
-	hanzo-agentsYamlPath := filepath.Join(absPath, "hanzo-agents.yaml")
-	if !ds.fileSystem.Exists(hanzo-agentsYamlPath) {
+	hanzoAgentsYamlPath := filepath.Join(absPath, "hanzo-agents.yaml")
+	if !ds.fileSystem.Exists(hanzoAgentsYamlPath) {
 		return fmt.Errorf("no hanzo-agents.yaml found in %s", absPath)
 	}
 

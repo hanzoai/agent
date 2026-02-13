@@ -44,10 +44,10 @@ func setupTestStorage(t *testing.T) (storage.StorageProvider, context.Context) {
 func TestDIDRegistryInitializeAndLookup(t *testing.T) {
 	provider, ctx := setupTestStorage(t)
 
-	hanzo-agentsID := "hanzo-agents-1"
+	hanzoAgentsID := "hanzo-agents-1"
 	now := time.Now().UTC().Truncate(time.Second)
 
-	require.NoError(t, provider.StoreHanzoAgentsServerDID(ctx, hanzo-agentsID, "did:hanzo-agents:root", []byte("seed"), now, now))
+	require.NoError(t, provider.StoreHanzoAgentsServerDID(ctx, hanzoAgentsID, "did:hanzo-agents:root", []byte("seed"), now, now))
 
 	components := []storage.ComponentDIDRequest{
 		{
@@ -66,34 +66,34 @@ func TestDIDRegistryInitializeAndLookup(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, provider.StoreAgentDIDWithComponents(ctx, "agent-1", "did:agent:1", hanzo-agentsID, "{}", 0, components))
+	require.NoError(t, provider.StoreAgentDIDWithComponents(ctx, "agent-1", "did:agent:1", hanzoAgentsID, "{}", 0, components))
 
 	registry := NewDIDRegistryWithStorage(provider)
 	require.NoError(t, registry.Initialize())
 
-	loaded, err := registry.GetRegistry(hanzo-agentsID)
+	loaded, err := registry.GetRegistry(hanzoAgentsID)
 	require.NoError(t, err)
 	require.NotNil(t, loaded)
 	require.Contains(t, loaded.AgentNodes, "agent-1")
 
 	// Validate reasoner lookup
-	reasonerID, err := registry.FindDIDByComponent(hanzo-agentsID, "reasoner", "reasoner.fn")
+	reasonerID, err := registry.FindDIDByComponent(hanzoAgentsID, "reasoner", "reasoner.fn")
 	require.NoError(t, err)
 	require.Equal(t, "did:reasoner:1", reasonerID.DID)
 
 	// Validate skill lookup
-	skillID, err := registry.FindDIDByComponent(hanzo-agentsID, "skill", "skill.fn")
+	skillID, err := registry.FindDIDByComponent(hanzoAgentsID, "skill", "skill.fn")
 	require.NoError(t, err)
 	require.Equal(t, "did:skill:1", skillID.DID)
 
 	// Update status and ensure it is persisted in-memory
-	require.NoError(t, registry.UpdateAgentStatus(hanzo-agentsID, "agent-1", types.AgentDIDStatusActive))
+	require.NoError(t, registry.UpdateAgentStatus(hanzoAgentsID, "agent-1", types.AgentDIDStatusActive))
 
-	loadedAfterUpdate, err := registry.GetRegistry(hanzo-agentsID)
+	loadedAfterUpdate, err := registry.GetRegistry(hanzoAgentsID)
 	require.NoError(t, err)
 	require.Equal(t, types.AgentDIDStatusActive, loadedAfterUpdate.AgentNodes["agent-1"].Status)
 
-	packageResult, err := registry.GetAgentDIDs(hanzo-agentsID, "agent-1")
+	packageResult, err := registry.GetAgentDIDs(hanzoAgentsID, "agent-1")
 	require.NoError(t, err)
 	require.Equal(t, "did:agent:1", packageResult.AgentDID.DID)
 	require.Contains(t, packageResult.ReasonerDIDs, "reasoner.fn")

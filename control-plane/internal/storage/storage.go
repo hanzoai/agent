@@ -148,12 +148,12 @@ type StorageProvider interface {
 	ListDIDs(ctx context.Context) ([]*types.DIDRegistryEntry, error)
 
 	// HanzoAgents Server DID operations
-	StoreHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error
-	GetHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID string) (*types.HanzoAgentsServerDIDInfo, error)
+	StoreHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error
+	GetHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID string) (*types.HanzoAgentsServerDIDInfo, error)
 	ListHanzoAgentsServerDIDs(ctx context.Context) ([]*types.HanzoAgentsServerDIDInfo, error)
 
 	// Agent DID operations
-	StoreAgentDID(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int) error
+	StoreAgentDID(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int) error
 	GetAgentDID(ctx context.Context, agentID string) (*types.AgentDIDInfo, error)
 	ListAgentDIDs(ctx context.Context) ([]*types.AgentDIDInfo, error)
 
@@ -163,7 +163,7 @@ type StorageProvider interface {
 	ListComponentDIDs(ctx context.Context, agentDID string) ([]*types.ComponentDIDInfo, error)
 
 	// Multi-step DID operations with transaction safety
-	StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int, components []ComponentDIDRequest) error
+	StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int, components []ComponentDIDRequest) error
 
 	// Execution VC operations
 	StoreExecutionVC(ctx context.Context, vcID, executionID, workflowID, sessionID, issuerDID, targetDID, callerDID, inputHash, outputHash, status string, vcDocument []byte, signature string, storageURI string, documentSizeBytes int64) error

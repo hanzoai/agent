@@ -61,7 +61,7 @@ type HanzoAgentsServer struct {
 	didService      *services.DIDService
 	vcService       *services.VCService
 	didRegistry     *services.DIDRegistry
-	hanzo-agentsHome  string
+	hanzoAgentsHome  string
 	// Cleanup service
 	cleanupService        *handlers.ExecutionCleanupService
 	payloadStore          services.PayloadStore
@@ -75,14 +75,14 @@ type HanzoAgentsServer struct {
 
 // NewHanzoAgentsServer creates a new instance of the HanzoAgentsServer.
 func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
-	// Define hanzo-agentsHome at the very top
-	hanzo-agentsHome := os.Getenv("HANZO_AGENTS_HOME")
-	if hanzo-agentsHome == "" {
+	// Define hanzoAgentsHome at the very top
+	hanzoAgentsHome := os.Getenv("HANZO_AGENTS_HOME")
+	if hanzoAgentsHome == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return nil, err
 		}
-		hanzo-agentsHome = filepath.Join(homeDir, ".hanzo-agents")
+		hanzoAgentsHome = filepath.Join(homeDir, ".hanzo-agents")
 	}
 
 	dirs, err := utils.EnsureDataDirectories()
@@ -99,20 +99,20 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 	Router := gin.Default()
 
 	// Sync installed.yaml to database for package visibility
-	_ = SyncPackagesFromRegistry(hanzo-agentsHome, storageProvider)
+	_ = SyncPackagesFromRegistry(hanzoAgentsHome, storageProvider)
 
 	// Initialize agent client for communication with agent nodes
 	agentClient := communication.NewHTTPAgentClient(storageProvider, 5*time.Second)
 
 	// Create infrastructure components for AgentService
 	fileSystem := infrastorage.NewFileSystemAdapter()
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.json")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.json")
 	registryStorage := infrastorage.NewLocalRegistryStorage(fileSystem, registryPath)
 	processManager := process.NewProcessManager()
 	portManager := process.NewPortManager()
 
 	// Create AgentService
-	agentService := coreservices.NewAgentService(processManager, portManager, registryStorage, agentClient, hanzo-agentsHome)
+	agentService := coreservices.NewAgentService(processManager, portManager, registryStorage, agentClient, hanzoAgentsHome)
 
 	// Initialize StatusManager for unified status management
 	statusManagerConfig := services.StatusManagerConfig{
@@ -199,16 +199,16 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		}
 
 		// Generate af server ID based on hanzo-agents home directory
-		hanzo-agentsServerID := generateHanzoAgentsServerID(hanzo-agentsHome)
+		hanzoAgentsServerID := generateHanzoAgentsServerID(hanzoAgentsHome)
 
 		// Initialize af server DID with dynamic ID
-		fmt.Printf("🧠 Initializing af server DID (ID: %s)...\n", hanzo-agentsServerID)
-		if err := didService.Initialize(hanzo-agentsServerID); err != nil {
+		fmt.Printf("🧠 Initializing af server DID (ID: %s)...\n", hanzoAgentsServerID)
+		if err := didService.Initialize(hanzoAgentsServerID); err != nil {
 			return nil, fmt.Errorf("failed to initialize af server DID: %w", err)
 		}
 
 		// Validate that af server DID was successfully created
-		registry, err := didService.GetRegistry(hanzo-agentsServerID)
+		registry, err := didService.GetRegistry(hanzoAgentsServerID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate af server DID creation: %w", err)
 		}
@@ -285,7 +285,7 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		didService:            didService,
 		vcService:             vcService,
 		didRegistry:           didRegistry,
-		hanzo-agentsHome:        hanzo-agentsHome,
+		hanzoAgentsHome:        hanzoAgentsHome,
 		cleanupService:        cleanupService,
 		payloadStore:          payloadStore,
 		webhookDispatcher:        webhookDispatcher,
@@ -340,7 +340,7 @@ func (s *HanzoAgentsServer) Start() error {
 	events.StartNodeHeartbeat(30 * time.Second)
 
 	if s.registryWatcherCancel == nil {
-		cancel, err := StartPackageRegistryWatcher(context.Background(), s.hanzo-agentsHome, s.storage)
+		cancel, err := StartPackageRegistryWatcher(context.Background(), s.hanzoAgentsHome, s.storage)
 		if err != nil {
 			logger.Logger.Error().Err(err).Msg("failed to start package registry watcher")
 		} else {
@@ -758,7 +758,7 @@ func (s *HanzoAgentsServer) setupRoutes() {
 				agents.POST("/:agentId/config", configHandler.SetConfigHandler)
 
 				// Environment file endpoints
-				envHandler := ui.NewEnvHandler(s.storage, s.agentService, s.hanzo-agentsHome)
+				envHandler := ui.NewEnvHandler(s.storage, s.agentService, s.hanzoAgentsHome)
 				agents.GET("/:agentId/env", envHandler.GetEnvHandler)
 				agents.PUT("/:agentId/env", envHandler.PutEnvHandler)
 				agents.PATCH("/:agentId/env", envHandler.PatchEnvHandler)
@@ -1007,7 +1007,7 @@ func (s *HanzoAgentsServer) setupRoutes() {
 			// Add af server DID endpoint
 			agentAPI.GET("/did/hanzo-agents-server", func(c *gin.Context) {
 				// Get af server ID dynamically
-				hanzo-agentsServerID, err := s.didService.GetHanzoAgentsServerID()
+				hanzoAgentsServerID, err := s.didService.GetHanzoAgentsServerID()
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"error":   "Failed to get af server ID",
@@ -1017,7 +1017,7 @@ func (s *HanzoAgentsServer) setupRoutes() {
 				}
 
 				// Get the actual af server DID from the registry
-				registry, err := s.didService.GetRegistry(hanzo-agentsServerID)
+				registry, err := s.didService.GetRegistry(hanzoAgentsServerID)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"error":   "Failed to get af server DID",
@@ -1148,12 +1148,12 @@ func (s *HanzoAgentsServer) setupRoutes() {
 
 // generateHanzoAgentsServerID creates a deterministic af server ID based on the hanzo-agents home directory.
 // This ensures each hanzo-agents instance has a unique ID while being deterministic for the same installation.
-func generateHanzoAgentsServerID(hanzo-agentsHome string) string {
+func generateHanzoAgentsServerID(hanzoAgentsHome string) string {
 	// Use the absolute path of hanzo-agents home to generate a deterministic ID
-	absPath, err := filepath.Abs(hanzo-agentsHome)
+	absPath, err := filepath.Abs(hanzoAgentsHome)
 	if err != nil {
 		// Fallback to the original path if absolute path fails
-		absPath = hanzo-agentsHome
+		absPath = hanzoAgentsHome
 	}
 
 	// Create a hash of the hanzo-agents home path to generate a unique but deterministic ID
@@ -1161,7 +1161,7 @@ func generateHanzoAgentsServerID(hanzo-agentsHome string) string {
 
 	// Use first 16 characters of the hex hash as the af server ID
 	// This provides uniqueness while keeping the ID manageable
-	hanzo-agentsServerID := hex.EncodeToString(hash[:])[:16]
+	hanzoAgentsServerID := hex.EncodeToString(hash[:])[:16]
 
-	return hanzo-agentsServerID
+	return hanzoAgentsServerID
 }

@@ -36,8 +36,8 @@ func setupVCTestEnvironment(t *testing.T) (*VCService, *DIDService, storage.Stor
 	}
 
 	didService := NewDIDService(didCfg, ks, registry)
-	hanzo-agentsID := "hanzo-agents-vc-test"
-	require.NoError(t, didService.Initialize(hanzo-agentsID))
+	hanzoAgentsID := "hanzo-agents-vc-test"
+	require.NoError(t, didService.Initialize(hanzoAgentsID))
 
 	vcService := NewVCService(didCfg, didService, provider)
 	require.NoError(t, vcService.Initialize())

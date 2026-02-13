@@ -216,14 +216,14 @@ func TestNewAgentService(t *testing.T) {
 	portManager := newMockPortManager()
 	registryStorage := newMockRegistryStorage()
 	agentClient := newMockAgentClient()
-	hanzo-agentsHome := "/tmp/test-hanzo-agents"
+	hanzoAgentsHome := "/tmp/test-hanzo-agents"
 
 	service := NewAgentService(
 		processManager,
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	)
 
 	assert.NotNil(t, service)
@@ -233,13 +233,13 @@ func TestNewAgentService(t *testing.T) {
 	assert.Equal(t, portManager, as.portManager)
 	assert.Equal(t, registryStorage, as.registryStorage)
 	assert.Equal(t, agentClient, as.agentClient)
-	assert.Equal(t, hanzo-agentsHome, as.hanzo-agentsHome)
+	assert.Equal(t, hanzoAgentsHome, as.hanzoAgentsHome)
 }
 
 func TestRunAgent_Success(t *testing.T) {
 	// Setup
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	// Create test registry with an installed agent
 	registry := &packages.InstallationRegistry{
@@ -258,7 +258,7 @@ func TestRunAgent_Success(t *testing.T) {
 			},
 		},
 	}
-	createTestRegistry(t, hanzo-agentsHome, registry)
+	createTestRegistry(t, hanzoAgentsHome, registry)
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -270,7 +270,7 @@ func TestRunAgent_Success(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	// Mock port manager to return a free port
@@ -310,7 +310,7 @@ func TestRunAgent_Success(t *testing.T) {
 
 func TestRunAgent_AgentNotInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -322,7 +322,7 @@ func TestRunAgent_AgentNotInstalled(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	options := domain.RunOptions{Port: 0}
@@ -334,7 +334,7 @@ func TestRunAgent_AgentNotInstalled(t *testing.T) {
 
 func TestRunAgent_AlreadyRunning(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	port := 8001
 	pid := 12345
@@ -356,7 +356,7 @@ func TestRunAgent_AlreadyRunning(t *testing.T) {
 			},
 		},
 	}
-	createTestRegistry(t, hanzo-agentsHome, registry)
+	createTestRegistry(t, hanzoAgentsHome, registry)
 
 	processManager := newMockProcessManager()
 	// Mock process manager to report process as running
@@ -378,7 +378,7 @@ func TestRunAgent_AlreadyRunning(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	options := domain.RunOptions{Port: 0}
@@ -413,7 +413,7 @@ func TestRunAgent_AlreadyRunning(t *testing.T) {
 
 func TestStopAgent_Success(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	port := 8001
 	pid := 12345
@@ -435,7 +435,7 @@ func TestStopAgent_Success(t *testing.T) {
 			},
 		},
 	}
-	createTestRegistry(t, hanzo-agentsHome, registry)
+	createTestRegistry(t, hanzoAgentsHome, registry)
 
 	processManager := newMockProcessManager()
 	processManager.statusFunc = func(pid int) (interfaces.ProcessInfo, error) {
@@ -465,7 +465,7 @@ func TestStopAgent_Success(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	err := service.StopAgent("test-agent")
@@ -483,7 +483,7 @@ func TestStopAgent_Success(t *testing.T) {
 
 func TestStopAgent_NotInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -495,7 +495,7 @@ func TestStopAgent_NotInstalled(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	err := service.StopAgent("nonexistent-agent")
@@ -505,7 +505,7 @@ func TestStopAgent_NotInstalled(t *testing.T) {
 
 func TestGetAgentStatus_Success(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	port := 8001
 	pid := 12345
@@ -527,7 +527,7 @@ func TestGetAgentStatus_Success(t *testing.T) {
 			},
 		},
 	}
-	createTestRegistry(t, hanzo-agentsHome, registry)
+	createTestRegistry(t, hanzoAgentsHome, registry)
 
 	processManager := newMockProcessManager()
 	processManager.statusFunc = func(pid int) (interfaces.ProcessInfo, error) {
@@ -548,7 +548,7 @@ func TestGetAgentStatus_Success(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	status, err := service.GetAgentStatus("test-agent")
@@ -563,7 +563,7 @@ func TestGetAgentStatus_Success(t *testing.T) {
 
 func TestGetAgentStatus_NotInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -575,7 +575,7 @@ func TestGetAgentStatus_NotInstalled(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	_, err := service.GetAgentStatus("nonexistent-agent")
@@ -585,7 +585,7 @@ func TestGetAgentStatus_NotInstalled(t *testing.T) {
 
 func TestReconcileProcessState_ProcessNotRunning(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	port := 8001
 	pid := 12345
@@ -619,7 +619,7 @@ func TestReconcileProcessState_ProcessNotRunning(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	actuallyRunning, wasReconciled := service.reconcileProcessState(pkg, "test-agent")
@@ -714,7 +714,7 @@ func TestReconcileProcessState_NoPID(t *testing.T) {
 
 func TestListRunningAgents(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	port1 := 8001
 	pid1 := 12345
@@ -750,7 +750,7 @@ func TestListRunningAgents(t *testing.T) {
 			},
 		},
 	}
-	createTestRegistry(t, hanzo-agentsHome, registry)
+	createTestRegistry(t, hanzoAgentsHome, registry)
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -762,7 +762,7 @@ func TestListRunningAgents(t *testing.T) {
 		portManager,
 		registryStorage,
 		agentClient,
-		hanzo-agentsHome,
+		hanzoAgentsHome,
 	).(*DefaultAgentService)
 
 	runningAgents, err := service.ListRunningAgents()

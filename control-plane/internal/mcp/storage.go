@@ -48,9 +48,9 @@ func NewYAMLConfigStorage(projectDir string) *YAMLConfigStorage {
 	}
 }
 
-// hanzo-agentsYAML represents the structure of the hanzo-agents.yaml file.
+// hanzoAgentsYAML represents the structure of the hanzo-agents.yaml file.
 // We only care about the mcp_servers part for this storage.
-type hanzo-agentsYAML struct {
+type hanzoAgentsYAML struct {
 	Dependencies struct {
 		MCPServers map[string]*MCPServerConfig `yaml:"mcp_servers,omitempty"`
 	} `yaml:"dependencies,omitempty"`
@@ -58,12 +58,12 @@ type hanzo-agentsYAML struct {
 	OtherFields map[string]interface{} `yaml:",inline"`
 }
 
-func (s *YAMLConfigStorage) loadHanzoAgentsYAML() (*hanzo-agentsYAML, error) {
+func (s *YAMLConfigStorage) loadHanzoAgentsYAML() (*hanzoAgentsYAML, error) {
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// If hanzo-agents.yaml doesn't exist, return an empty structure
-			return &hanzo-agentsYAML{
+			return &hanzoAgentsYAML{
 				Dependencies: struct {
 					MCPServers map[string]*MCPServerConfig `yaml:"mcp_servers,omitempty"`
 				}{
@@ -75,7 +75,7 @@ func (s *YAMLConfigStorage) loadHanzoAgentsYAML() (*hanzo-agentsYAML, error) {
 		return nil, fmt.Errorf("failed to read hanzo-agents.yaml: %w", err)
 	}
 
-	var cfg hanzo-agentsYAML
+	var cfg hanzoAgentsYAML
 	// Initialize maps to avoid nil panics if sections are missing
 	cfg.Dependencies.MCPServers = make(map[string]*MCPServerConfig)
 	cfg.OtherFields = make(map[string]interface{})
@@ -86,7 +86,7 @@ func (s *YAMLConfigStorage) loadHanzoAgentsYAML() (*hanzo-agentsYAML, error) {
 	return &cfg, nil
 }
 
-func (s *YAMLConfigStorage) saveHanzoAgentsYAML(cfg *hanzo-agentsYAML) error {
+func (s *YAMLConfigStorage) saveHanzoAgentsYAML(cfg *hanzoAgentsYAML) error {
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal hanzo-agents.yaml: %w", err)

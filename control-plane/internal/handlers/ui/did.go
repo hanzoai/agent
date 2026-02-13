@@ -53,7 +53,7 @@ func (h *DIDHandler) GetNodeDIDHandler(c *gin.Context) {
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := h.didService.GetHanzoAgentsServerID()
+	hanzoAgentsServerID, err := h.didService.GetHanzoAgentsServerID()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"has_did":        false,
@@ -66,7 +66,7 @@ func (h *DIDHandler) GetNodeDIDHandler(c *gin.Context) {
 	}
 
 	// Get DID registry for the af server (not the node)
-	registry, err := h.didService.GetRegistry(hanzo-agentsServerID)
+	registry, err := h.didService.GetRegistry(hanzoAgentsServerID)
 	if err != nil || registry == nil {
 		c.JSON(http.StatusOK, gin.H{
 			"has_did":        false,

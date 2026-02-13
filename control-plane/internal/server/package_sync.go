@@ -48,9 +48,9 @@ type InstalledPackage struct {
 }
 
 // SyncPackagesFromRegistry ensures all packages in installed.yaml are present in the database.
-func SyncPackagesFromRegistry(hanzo-agentsHome string, storageProvider packageStorage) error {
+func SyncPackagesFromRegistry(hanzoAgentsHome string, storageProvider packageStorage) error {
 	ctx := context.Background()
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	data, err := os.ReadFile(registryPath)
 	if err != nil {
 		return nil // No registry, nothing to sync
@@ -96,13 +96,13 @@ func SyncPackagesFromRegistry(hanzo-agentsHome string, storageProvider packageSt
 }
 
 // StartPackageRegistryWatcher watches the installed.yaml registry and keeps storage in sync.
-func StartPackageRegistryWatcher(parentCtx context.Context, hanzo-agentsHome string, storageProvider packageStorage) (context.CancelFunc, error) {
+func StartPackageRegistryWatcher(parentCtx context.Context, hanzoAgentsHome string, storageProvider packageStorage) (context.CancelFunc, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry watcher: %w", err)
 	}
 
-	registryDir := hanzo-agentsHome
+	registryDir := hanzoAgentsHome
 	if err := watcher.Add(registryDir); err != nil {
 		watcher.Close()
 		return nil, fmt.Errorf("failed to watch registry directory %s: %w", registryDir, err)
@@ -123,7 +123,7 @@ func StartPackageRegistryWatcher(parentCtx context.Context, hanzo-agentsHome str
 	go func() {
 		defer watcher.Close()
 		defer close(syncCh)
-		registryFile := filepath.Join(hanzo-agentsHome, "installed.yaml")
+		registryFile := filepath.Join(hanzoAgentsHome, "installed.yaml")
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -163,7 +163,7 @@ func StartPackageRegistryWatcher(parentCtx context.Context, hanzo-agentsHome str
 					return
 				}
 				time.Sleep(250 * time.Millisecond)
-				if err := SyncPackagesFromRegistry(hanzo-agentsHome, storageProvider); err != nil {
+				if err := SyncPackagesFromRegistry(hanzoAgentsHome, storageProvider); err != nil {
 					logger.Logger.Error().Err(err).Msg("failed to sync packages from registry")
 				} else {
 					logger.Logger.Debug().Msg("registry sync completed")

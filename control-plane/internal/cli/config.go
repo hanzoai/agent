@@ -51,10 +51,10 @@ Examples:
 
 func runConfigCommand(cmd *cobra.Command, args []string) {
 	packageName := args[0]
-	hanzo-agentsHome := getHanzoAgentsHomeDir()
+	hanzoAgentsHome := getHanzoAgentsHomeDir()
 
 	configManager := &PackageConfigManager{
-		HanzoAgentsHome: hanzo-agentsHome,
+		HanzoAgentsHome: hanzoAgentsHome,
 	}
 
 	if configList {

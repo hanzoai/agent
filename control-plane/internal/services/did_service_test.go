@@ -27,14 +27,14 @@ func setupDIDTestEnvironment(t *testing.T) (*DIDService, *DIDRegistry, storage.S
 
 	service := NewDIDService(cfg, ks, registry)
 
-	hanzo-agentsID := "hanzo-agents-test"
-	require.NoError(t, service.Initialize(hanzo-agentsID))
+	hanzoAgentsID := "hanzo-agents-test"
+	require.NoError(t, service.Initialize(hanzoAgentsID))
 
-	return service, registry, provider, ctx, hanzo-agentsID
+	return service, registry, provider, ctx, hanzoAgentsID
 }
 
 func TestDIDServiceRegisterAgentAndResolve(t *testing.T) {
-	service, registry, provider, ctx, hanzo-agentsID := setupDIDTestEnvironment(t)
+	service, registry, provider, ctx, hanzoAgentsID := setupDIDTestEnvironment(t)
 
 	req := &types.DIDRegistrationRequest{
 		AgentNodeID: "agent-alpha",
@@ -49,7 +49,7 @@ func TestDIDServiceRegisterAgentAndResolve(t *testing.T) {
 	require.Contains(t, resp.IdentityPackage.ReasonerDIDs, "reasoner.fn")
 	require.Contains(t, resp.IdentityPackage.SkillDIDs, "skill.fn")
 
-	storedRegistry, err := registry.GetRegistry(hanzo-agentsID)
+	storedRegistry, err := registry.GetRegistry(hanzoAgentsID)
 	require.NoError(t, err)
 	require.NotNil(t, storedRegistry)
 	require.Contains(t, storedRegistry.AgentNodes, "agent-alpha")
@@ -89,11 +89,11 @@ func TestDIDServiceValidateRegistryFailure(t *testing.T) {
 	err = service.validateHanzoAgentsServerRegistry()
 	require.Error(t, err)
 
-	hanzo-agentsID := "hanzo-agents-validate"
-	require.NoError(t, service.Initialize(hanzo-agentsID))
+	hanzoAgentsID := "hanzo-agents-validate"
+	require.NoError(t, service.Initialize(hanzoAgentsID))
 	require.NoError(t, service.validateHanzoAgentsServerRegistry())
 
-	stored, err := registry.GetRegistry(hanzo-agentsID)
+	stored, err := registry.GetRegistry(hanzoAgentsID)
 	require.NoError(t, err)
 	require.NotNil(t, stored)
 	require.False(t, stored.CreatedAt.IsZero())
@@ -102,10 +102,10 @@ func TestDIDServiceValidateRegistryFailure(t *testing.T) {
 }
 
 func TestDIDService_ResolveDID_RootDID(t *testing.T) {
-	service, registry, _, _, hanzo-agentsID := setupDIDTestEnvironment(t)
+	service, registry, _, _, hanzoAgentsID := setupDIDTestEnvironment(t)
 
 	// Get the root DID from registry
-	storedRegistry, err := registry.GetRegistry(hanzo-agentsID)
+	storedRegistry, err := registry.GetRegistry(hanzoAgentsID)
 	require.NoError(t, err)
 	require.NotNil(t, storedRegistry)
 	require.NotEmpty(t, storedRegistry.RootDID)
@@ -558,11 +558,11 @@ func TestDIDService_RegisterAgent_DisabledSystem(t *testing.T) {
 }
 
 func TestDIDService_GetHanzoAgentsServerID(t *testing.T) {
-	service, _, _, _, hanzo-agentsID := setupDIDTestEnvironment(t)
+	service, _, _, _, hanzoAgentsID := setupDIDTestEnvironment(t)
 
 	serverID, err := service.GetHanzoAgentsServerID()
 	require.NoError(t, err)
-	require.Equal(t, hanzo-agentsID, serverID)
+	require.Equal(t, hanzoAgentsID, serverID)
 }
 
 func TestDIDService_GetHanzoAgentsServerID_NotInitialized(t *testing.T) {

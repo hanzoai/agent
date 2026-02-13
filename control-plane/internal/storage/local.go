@@ -5531,17 +5531,17 @@ func (ls *LocalStorage) GetWorkflowExecutionEventBus() *events.EventBus[*types.W
 }
 
 // HanzoAgents Server DID operations
-func (ls *LocalStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
+func (ls *LocalStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
 	// Check context cancellation early
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("context cancelled during store af server DID: %w", err)
 	}
 
 	// Validate input parameters
-	if hanzo-agentsServerID == "" {
+	if hanzoAgentsServerID == "" {
 		return &ValidationError{
 			Field:   "hanzo_agents_server_id",
-			Value:   hanzo-agentsServerID,
+			Value:   hanzoAgentsServerID,
 			Reason:  "af server ID cannot be empty",
 			Context: "StoreHanzoAgentsServerDID",
 		}
@@ -5592,7 +5592,7 @@ func (ls *LocalStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzo-age
                                         total_dids = did_registry.total_dids
                         `
 		}
-		_, execErr := tx.ExecContext(ctx, query, hanzo-agentsServerID, rootDID, masterSeed, createdAt, lastKeyRotation)
+		_, execErr := tx.ExecContext(ctx, query, hanzoAgentsServerID, rootDID, masterSeed, createdAt, lastKeyRotation)
 		if execErr != nil {
 			return fmt.Errorf("failed to store af server DID: %w", execErr)
 		}
@@ -5608,19 +5608,19 @@ func (ls *LocalStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzo-age
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	log.Printf("Successfully stored af server DID: hanzo_agents_server_id=%s, root_did=%s", hanzo-agentsServerID, rootDID)
+	log.Printf("Successfully stored af server DID: hanzo_agents_server_id=%s, root_did=%s", hanzoAgentsServerID, rootDID)
 	return nil
 }
 
 // StoreAgentDIDWithComponents stores an agent DID along with its component DIDs in a single transaction
-func (ls *LocalStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int, components []ComponentDIDRequest) error {
+func (ls *LocalStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int, components []ComponentDIDRequest) error {
 	// Check context cancellation early
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("context cancelled during store agent DID with components: %w", err)
 	}
 
 	// Pre-storage validation
-	if err := ls.validateHanzoAgentsServerExists(ctx, hanzo-agentsServerDID); err != nil {
+	if err := ls.validateHanzoAgentsServerExists(ctx, hanzoAgentsServerDID); err != nil {
 		return fmt.Errorf("pre-storage validation failed: %w", err)
 	}
 
@@ -5643,11 +5643,11 @@ func (ls *LocalStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID
 			) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 		derivationPath := fmt.Sprintf("m/44'/0'/0'/%d", derivationIndex)
-		_, execErr := tx.ExecContext(ctx, query, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK, derivationPath, time.Now(), "active")
+		_, execErr := tx.ExecContext(ctx, query, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK, derivationPath, time.Now(), "active")
 		if execErr != nil {
 			if strings.Contains(execErr.Error(), "UNIQUE constraint failed") || strings.Contains(execErr.Error(), "agent_dids") {
 				return &DuplicateDIDError{
-					DID:  fmt.Sprintf("agent:%s@%s", agentID, hanzo-agentsServerDID),
+					DID:  fmt.Sprintf("agent:%s@%s", agentID, hanzoAgentsServerDID),
 					Type: "agent",
 				}
 			}
@@ -5656,7 +5656,7 @@ func (ls *LocalStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID
 					Table:           "agent_dids",
 					Column:          "hanzo_agents_server_id",
 					ReferencedTable: "did_registry",
-					ReferencedValue: hanzo-agentsServerDID,
+					ReferencedValue: hanzoAgentsServerDID,
 					Operation:       "INSERT",
 				}
 			}
@@ -5722,7 +5722,7 @@ func (ls *LocalStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID
 	return nil
 }
 
-func (ls *LocalStorage) GetHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
+func (ls *LocalStorage) GetHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
 	// Check context cancellation early
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("context cancelled during get af server DID: %w", err)
@@ -5732,7 +5732,7 @@ func (ls *LocalStorage) GetHanzoAgentsServerDID(ctx context.Context, hanzo-agent
 		SELECT hanzo_agents_server_id, root_did, master_seed_encrypted, created_at, last_key_rotation
 		FROM did_registry WHERE hanzo_agents_server_id = ?
 	`
-	row := ls.db.QueryRowContext(ctx, query, hanzo-agentsServerID)
+	row := ls.db.QueryRowContext(ctx, query, hanzoAgentsServerID)
 	info := &types.HanzoAgentsServerDIDInfo{}
 
 	err := row.Scan(&info.HanzoAgentsServerID, &info.RootDID, &info.MasterSeed, &info.CreatedAt, &info.LastKeyRotation)
@@ -5871,11 +5871,11 @@ func (ls *LocalStorage) ListDIDs(ctx context.Context) ([]*types.DIDRegistryEntry
 }
 
 // validateHanzoAgentsServerExists checks if a af server registry exists
-func (ls *LocalStorage) validateHanzoAgentsServerExists(ctx context.Context, hanzo-agentsServerID string) error {
-	if hanzo-agentsServerID == "" {
+func (ls *LocalStorage) validateHanzoAgentsServerExists(ctx context.Context, hanzoAgentsServerID string) error {
+	if hanzoAgentsServerID == "" {
 		return &ValidationError{
 			Field:   "hanzo_agents_server_id",
-			Value:   hanzo-agentsServerID,
+			Value:   hanzoAgentsServerID,
 			Reason:  "af server ID cannot be empty",
 			Context: "pre-storage validation",
 		}
@@ -5883,14 +5883,14 @@ func (ls *LocalStorage) validateHanzoAgentsServerExists(ctx context.Context, han
 
 	query := `SELECT 1 FROM did_registry WHERE hanzo_agents_server_id = ? LIMIT 1`
 	var exists int
-	err := ls.db.QueryRowContext(ctx, query, hanzo-agentsServerID).Scan(&exists)
+	err := ls.db.QueryRowContext(ctx, query, hanzoAgentsServerID).Scan(&exists)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &ForeignKeyConstraintError{
 				Table:           "agent_dids",
 				Column:          "hanzo_agents_server_id",
 				ReferencedTable: "did_registry",
-				ReferencedValue: hanzo-agentsServerID,
+				ReferencedValue: hanzoAgentsServerID,
 				Operation:       "INSERT",
 			}
 		}
@@ -5971,14 +5971,14 @@ func (ls *LocalStorage) retryOnConstraintFailure(ctx context.Context, operation 
 }
 
 // Agent DID operations
-func (ls *LocalStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int) error {
+func (ls *LocalStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int) error {
 	// Check context cancellation early
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("context cancelled during store agent DID: %w", err)
 	}
 
 	// Pre-storage validation
-	if err := ls.validateHanzoAgentsServerExists(ctx, hanzo-agentsServerDID); err != nil {
+	if err := ls.validateHanzoAgentsServerExists(ctx, hanzoAgentsServerDID); err != nil {
 		return fmt.Errorf("pre-storage validation failed: %w", err)
 	}
 
@@ -6028,13 +6028,13 @@ func (ls *LocalStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, ha
 			) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 		derivationPath := fmt.Sprintf("m/44'/0'/0'/%d", derivationIndex)
-		_, execErr := tx.ExecContext(ctx, query, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK, derivationPath, time.Now(), "active")
+		_, execErr := tx.ExecContext(ctx, query, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK, derivationPath, time.Now(), "active")
 		if execErr != nil {
 			// Check if this is a unique constraint violation (duplicate agent DID)
 			if strings.Contains(execErr.Error(), "UNIQUE constraint failed") || strings.Contains(execErr.Error(), "agent_dids") {
-				log.Printf("Duplicate agent DID entry detected: agent_id=%s, hanzo_agents_server_id=%s", agentID, hanzo-agentsServerDID)
+				log.Printf("Duplicate agent DID entry detected: agent_id=%s, hanzo_agents_server_id=%s", agentID, hanzoAgentsServerDID)
 				return &DuplicateDIDError{
-					DID:  fmt.Sprintf("agent:%s@%s", agentID, hanzo-agentsServerDID),
+					DID:  fmt.Sprintf("agent:%s@%s", agentID, hanzoAgentsServerDID),
 					Type: "agent",
 				}
 			}
@@ -6044,7 +6044,7 @@ func (ls *LocalStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, ha
 					Table:           "agent_dids",
 					Column:          "hanzo_agents_server_id",
 					ReferencedTable: "did_registry",
-					ReferencedValue: hanzo-agentsServerDID,
+					ReferencedValue: hanzoAgentsServerDID,
 					Operation:       "INSERT",
 				}
 			}

@@ -18,7 +18,7 @@ import (
 type EnvHandler struct {
 	storage        storage.StorageProvider
 	agentService   interfaces.AgentService
-	hanzo-agentsHome string
+	hanzoAgentsHome string
 }
 
 // DELETE /api/ui/v1/agents/:agentId/env/:key
@@ -241,11 +241,11 @@ type EnvResponse struct {
 }
 
 // NewEnvHandler creates a new EnvHandler.
-func NewEnvHandler(storage storage.StorageProvider, agentService interfaces.AgentService, hanzo-agentsHome string) *EnvHandler {
+func NewEnvHandler(storage storage.StorageProvider, agentService interfaces.AgentService, hanzoAgentsHome string) *EnvHandler {
 	return &EnvHandler{
 		storage:        storage,
 		agentService:   agentService,
-		hanzo-agentsHome: hanzo-agentsHome,
+		hanzoAgentsHome: hanzoAgentsHome,
 	}
 }
 
