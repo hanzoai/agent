@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hanzo-agents.controlPlane.fullname" . }}
+  labels:
+    {{- include "hanzo-agents.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.controlPlane.service.type }}
+  selector:
+    {{- include "hanzo-agents.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: control-plane
+  ports:
+    - name: http
+      port: {{ .Values.controlPlane.service.port }}
+      targetPort: http
+    - name: grpc
+      port: {{ include "hanzo-agents.controlPlane.grpcPort" . }}
+      targetPort: grpc
