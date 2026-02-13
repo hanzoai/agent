@@ -21,19 +21,19 @@ import (
 type DefaultPackageService struct {
 	registryStorage interfaces.RegistryStorage
 	fileSystem      interfaces.FileSystemAdapter
-	hanzo-agentsHome  string
+	hanzoAgentsHome  string
 }
 
 // NewPackageService creates a new package service instance
 func NewPackageService(
 	registryStorage interfaces.RegistryStorage,
 	fileSystem interfaces.FileSystemAdapter,
-	hanzo-agentsHome string,
+	hanzoAgentsHome string,
 ) interfaces.PackageService {
 	return &DefaultPackageService{
 		registryStorage: registryStorage,
 		fileSystem:      fileSystem,
-		hanzo-agentsHome:  hanzo-agentsHome,
+		hanzoAgentsHome:  hanzoAgentsHome,
 	}
 }
 
@@ -42,7 +42,7 @@ func (ps *DefaultPackageService) InstallPackage(source string, options domain.In
 	// Check if it's a Git URL (GitHub, GitLab, Bitbucket, etc.)
 	if packages.IsGitURL(source) {
 		installer := &packages.GitInstaller{
-			HanzoAgentsHome: ps.hanzo-agentsHome,
+			HanzoAgentsHome: ps.hanzoAgentsHome,
 			Verbose:        options.Verbose,
 		}
 		return installer.InstallFromGit(source, options.Force)
@@ -77,7 +77,7 @@ func (ps *DefaultPackageService) installLocalPackage(sourcePath string, force bo
 	}
 
 	// 3. Copy package to global location
-	destPath := filepath.Join(ps.hanzo-agentsHome, "packages", metadata.Name)
+	destPath := filepath.Join(ps.hanzoAgentsHome, "packages", metadata.Name)
 	spinner = ps.newSpinner("Setting up environment")
 	spinner.Start()
 	if err := ps.copyPackage(sourcePath, destPath); err != nil {
@@ -188,7 +188,7 @@ func (ps *DefaultPackageService) stopAgentNode(agentNode *packages.InstalledPack
 
 // saveRegistry saves the installation registry
 func (ps *DefaultPackageService) saveRegistry(registry *packages.InstallationRegistry) error {
-	registryPath := filepath.Join(ps.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(ps.hanzoAgentsHome, "installed.yaml")
 
 	data, err := yaml.Marshal(registry)
 	if err != nil {
@@ -239,7 +239,7 @@ func (ps *DefaultPackageService) GetPackageInfo(name string) (*domain.InstalledP
 // loadRegistryDirect loads the registry using direct file system access
 // TODO: Eventually replace with registryStorage interface usage
 func (ps *DefaultPackageService) loadRegistryDirect() (*packages.InstallationRegistry, error) {
-	registryPath := filepath.Join(ps.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(ps.hanzoAgentsHome, "installed.yaml")
 
 	registry := &packages.InstallationRegistry{
 		Installed: make(map[string]packages.InstalledPackage),
@@ -422,7 +422,7 @@ func (ps *DefaultPackageService) parsePackageMetadata(sourcePath string) (*packa
 
 // isPackageInstalled checks if a package is already installed
 func (ps *DefaultPackageService) isPackageInstalled(packageName string) bool {
-	registryPath := filepath.Join(ps.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(ps.hanzoAgentsHome, "installed.yaml")
 	registry := &packages.InstallationRegistry{
 		Installed: make(map[string]packages.InstalledPackage),
 	}
@@ -557,7 +557,7 @@ func (ps *DefaultPackageService) hasRequirementsFile(packagePath string) bool {
 
 // updateRegistry updates the installation registry with the new package
 func (ps *DefaultPackageService) updateRegistry(metadata *packages.PackageMetadata, sourcePath, destPath string) error {
-	registryPath := filepath.Join(ps.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(ps.hanzoAgentsHome, "installed.yaml")
 
 	// Load existing registry or create new one
 	registry := &packages.InstallationRegistry{
@@ -584,7 +584,7 @@ func (ps *DefaultPackageService) updateRegistry(metadata *packages.PackageMetada
 			Port:      nil,
 			PID:       nil,
 			StartedAt: nil,
-			LogFile:   filepath.Join(ps.hanzo-agentsHome, "logs", metadata.Name+".log"),
+			LogFile:   filepath.Join(ps.hanzoAgentsHome, "logs", metadata.Name+".log"),
 		},
 	}
 

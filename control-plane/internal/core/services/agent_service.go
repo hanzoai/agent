@@ -27,7 +27,7 @@ type DefaultAgentService struct {
 	portManager     interfaces.PortManager
 	registryStorage interfaces.RegistryStorage
 	agentClient     interfaces.AgentClient
-	hanzo-agentsHome  string
+	hanzoAgentsHome  string
 }
 
 // NewAgentService creates a new agent service instance
@@ -36,14 +36,14 @@ func NewAgentService(
 	portManager interfaces.PortManager,
 	registryStorage interfaces.RegistryStorage,
 	agentClient interfaces.AgentClient,
-	hanzo-agentsHome string,
+	hanzoAgentsHome string,
 ) interfaces.AgentService {
 	return &DefaultAgentService{
 		processManager:  processManager,
 		portManager:     portManager,
 		registryStorage: registryStorage,
 		agentClient:     agentClient,
-		hanzo-agentsHome:  hanzo-agentsHome,
+		hanzoAgentsHome:  hanzoAgentsHome,
 	}
 }
 
@@ -390,7 +390,7 @@ func (as *DefaultAgentService) ListRunningAgents() ([]domain.RunningAgent, error
 // loadRegistryDirect loads the registry using direct file system access
 // TODO: Eventually replace with registryStorage interface usage
 func (as *DefaultAgentService) loadRegistryDirect() (*packages.InstallationRegistry, error) {
-	registryPath := filepath.Join(as.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(as.hanzoAgentsHome, "installed.yaml")
 
 	registry := &packages.InstallationRegistry{
 		Installed: make(map[string]packages.InstalledPackage),
@@ -408,7 +408,7 @@ func (as *DefaultAgentService) loadRegistryDirect() (*packages.InstallationRegis
 // saveRegistryDirect saves the registry using direct file system access
 // TODO: Eventually replace with registryStorage interface usage
 func (as *DefaultAgentService) saveRegistryDirect(registry *packages.InstallationRegistry) error {
-	registryPath := filepath.Join(as.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(as.hanzoAgentsHome, "installed.yaml")
 
 	data, err := yaml.Marshal(registry)
 	if err != nil {
@@ -547,7 +547,7 @@ func (as *DefaultAgentService) waitForAgentNode(port int, timeout time.Duration)
 
 // updateRuntimeInfo updates the registry with runtime information
 func (as *DefaultAgentService) updateRuntimeInfo(agentNodeName string, port, pid int) error {
-	registryPath := filepath.Join(as.hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(as.hanzoAgentsHome, "installed.yaml")
 
 	// Load registry
 	registry := &packages.InstallationRegistry{}

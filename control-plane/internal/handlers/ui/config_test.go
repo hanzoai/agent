@@ -455,13 +455,13 @@ func (m *MockStorageProvider) ListDIDs(ctx context.Context) ([]*types.DIDRegistr
 }
 
 // HanzoAgents Server DID operations
-func (m *MockStorageProvider) StoreHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
-	args := m.Called(ctx, hanzo-agentsServerID, rootDID, masterSeed, createdAt, lastKeyRotation)
+func (m *MockStorageProvider) StoreHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
+	args := m.Called(ctx, hanzoAgentsServerID, rootDID, masterSeed, createdAt, lastKeyRotation)
 	return args.Error(0)
 }
 
-func (m *MockStorageProvider) GetHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
-	args := m.Called(ctx, hanzo-agentsServerID)
+func (m *MockStorageProvider) GetHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
+	args := m.Called(ctx, hanzoAgentsServerID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -477,8 +477,8 @@ func (m *MockStorageProvider) ListHanzoAgentsServerDIDs(ctx context.Context) ([]
 }
 
 // Agent DID operations
-func (m *MockStorageProvider) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int) error {
-	args := m.Called(ctx, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK, derivationIndex)
+func (m *MockStorageProvider) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int) error {
+	args := m.Called(ctx, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK, derivationIndex)
 	return args.Error(0)
 }
 

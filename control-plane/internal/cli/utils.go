@@ -27,23 +27,23 @@ func getHanzoAgentsHomeDir() string {
 		os.Exit(1)
 	}
 
-	hanzo-agentsHome := filepath.Join(homeDir, ".hanzo-agents")
+	hanzoAgentsHome := filepath.Join(homeDir, ".hanzo-agents")
 
 	// Ensure .hanzo-agents directory exists
-	if err := os.MkdirAll(hanzo-agentsHome, 0755); err != nil {
+	if err := os.MkdirAll(hanzoAgentsHome, 0755); err != nil {
 		PrintError(fmt.Sprintf("Failed to create .hanzo-agents directory: %v", err))
 		os.Exit(1)
 	}
 
-	ensureSubdirs(hanzo-agentsHome)
+	ensureSubdirs(hanzoAgentsHome)
 
-	return hanzo-agentsHome
+	return hanzoAgentsHome
 }
 
-func ensureSubdirs(hanzo-agentsHome string) {
+func ensureSubdirs(hanzoAgentsHome string) {
 	subdirs := []string{"packages", "logs", "config"}
 	for _, subdir := range subdirs {
-		if err := os.MkdirAll(filepath.Join(hanzo-agentsHome, subdir), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Join(hanzoAgentsHome, subdir), 0755); err != nil {
 			PrintError(fmt.Sprintf("Failed to create %s directory: %v", subdir, err))
 			os.Exit(1)
 		}

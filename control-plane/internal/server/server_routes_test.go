@@ -280,10 +280,10 @@ func (s *stubStorage) ListDIDs(ctx context.Context) ([]*types.DIDRegistryEntry, 
 }
 
 // HanzoAgents Server DID operations
-func (s *stubStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
+func (s *stubStorage) StoreHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID, rootDID string, masterSeed []byte, createdAt, lastKeyRotation time.Time) error {
 	return nil
 }
-func (s *stubStorage) GetHanzoAgentsServerDID(ctx context.Context, hanzo-agentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
+func (s *stubStorage) GetHanzoAgentsServerDID(ctx context.Context, hanzoAgentsServerID string) (*types.HanzoAgentsServerDIDInfo, error) {
 	return nil, nil
 }
 func (s *stubStorage) ListHanzoAgentsServerDIDs(ctx context.Context) ([]*types.HanzoAgentsServerDIDInfo, error) {
@@ -291,7 +291,7 @@ func (s *stubStorage) ListHanzoAgentsServerDIDs(ctx context.Context) ([]*types.H
 }
 
 // Agent DID operations
-func (s *stubStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int) error {
+func (s *stubStorage) StoreAgentDID(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int) error {
 	return nil
 }
 func (s *stubStorage) GetAgentDID(ctx context.Context, agentID string) (*types.AgentDIDInfo, error) {
@@ -313,7 +313,7 @@ func (s *stubStorage) ListComponentDIDs(ctx context.Context, agentDID string) ([
 }
 
 // Multi-step DID operations
-func (s *stubStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzo-agentsServerDID, publicKeyJWK string, derivationIndex int, components []storage.ComponentDIDRequest) error {
+func (s *stubStorage) StoreAgentDIDWithComponents(ctx context.Context, agentID, agentDID, hanzoAgentsServerDID, publicKeyJWK string, derivationIndex int, components []storage.ComponentDIDRequest) error {
 	return nil
 }
 

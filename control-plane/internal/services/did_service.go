@@ -22,7 +22,7 @@ type DIDService struct {
 	config             *config.DIDConfig
 	keystore           *KeystoreService
 	registry           *DIDRegistry
-	hanzo-agentsServerID string
+	hanzoAgentsServerID string
 }
 
 // NewDIDService creates a new DID service instance.
@@ -31,21 +31,21 @@ func NewDIDService(cfg *config.DIDConfig, keystore *KeystoreService, registry *D
 		config:             cfg,
 		keystore:           keystore,
 		registry:           registry,
-		hanzo-agentsServerID: "", // Will be set during initialization
+		hanzoAgentsServerID: "", // Will be set during initialization
 	}
 }
 
 // Initialize initializes the DID service and creates af server master seed if needed.
-func (s *DIDService) Initialize(hanzo-agentsServerID string) error {
+func (s *DIDService) Initialize(hanzoAgentsServerID string) error {
 	if !s.config.Enabled {
 		return nil
 	}
 
 	// Store the af server ID for dynamic resolution
-	s.hanzo-agentsServerID = hanzo-agentsServerID
+	s.hanzoAgentsServerID = hanzoAgentsServerID
 
 	// Check if af server already has a DID registry
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return fmt.Errorf("failed to check existing registry: %w", err)
 	}
@@ -65,7 +65,7 @@ func (s *DIDService) Initialize(hanzo-agentsServerID string) error {
 
 		// Create and store registry
 		registry = &types.DIDRegistry{
-			HanzoAgentsServerID: hanzo-agentsServerID,
+			HanzoAgentsServerID: hanzoAgentsServerID,
 			MasterSeed:         masterSeed,
 			RootDID:            rootDID,
 			AgentNodes:         make(map[string]types.AgentDIDInfo),
@@ -86,10 +86,10 @@ func (s *DIDService) Initialize(hanzo-agentsServerID string) error {
 // GetHanzoAgentsServerID returns the af server ID for this DID service instance.
 // This method provides dynamic af server ID resolution instead of hardcoded "default".
 func (s *DIDService) GetHanzoAgentsServerID() (string, error) {
-	if s.hanzo-agentsServerID == "" {
+	if s.hanzoAgentsServerID == "" {
 		return "", fmt.Errorf("af server ID not initialized - call Initialize() first")
 	}
-	return s.hanzo-agentsServerID, nil
+	return s.hanzoAgentsServerID, nil
 }
 
 // getHanzoAgentsServerID is an internal helper that returns the af server ID.
@@ -99,29 +99,29 @@ func (s *DIDService) getHanzoAgentsServerID() (string, error) {
 
 // validateHanzoAgentsServerRegistry ensures that the af server registry exists before operations.
 func (s *DIDService) validateHanzoAgentsServerRegistry() error {
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return err
 	}
 
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return fmt.Errorf("failed to get af server registry: %w", err)
 	}
 
 	if registry == nil {
-		return fmt.Errorf("af server registry not found for ID: %s - ensure Initialize() was called", hanzo-agentsServerID)
+		return fmt.Errorf("af server registry not found for ID: %s - ensure Initialize() was called", hanzoAgentsServerID)
 	}
 
 	return nil
 }
 
 // GetRegistry retrieves a DID registry for a af server.
-func (s *DIDService) GetRegistry(hanzo-agentsServerID string) (*types.DIDRegistry, error) {
+func (s *DIDService) GetRegistry(hanzoAgentsServerID string) (*types.DIDRegistry, error) {
 	if !s.config.Enabled {
 		return nil, fmt.Errorf("DID system is disabled")
 	}
-	return s.registry.GetRegistry(hanzo-agentsServerID)
+	return s.registry.GetRegistry(hanzoAgentsServerID)
 }
 
 // RegisterAgent generates DIDs for an agent node and all its components.
@@ -185,7 +185,7 @@ func (s *DIDService) RegisterAgent(req *types.DIDRegistrationRequest) (*types.DI
 // handleNewRegistration handles registration for new agents (original logic).
 func (s *DIDService) handleNewRegistration(req *types.DIDRegistrationRequest) (*types.DIDRegistrationResponse, error) {
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return &types.DIDRegistrationResponse{
 			Success: false,
@@ -194,7 +194,7 @@ func (s *DIDService) handleNewRegistration(req *types.DIDRegistrationRequest) (*
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return &types.DIDRegistrationResponse{
 			Success: false,
@@ -203,13 +203,13 @@ func (s *DIDService) handleNewRegistration(req *types.DIDRegistrationRequest) (*
 	}
 
 	// Generate af server hash for derivation path
-	hanzo-agentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
+	hanzoAgentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
 
 	// Get next agent index
 	agentIndex := len(registry.AgentNodes)
 
 	// Generate agent DID
-	agentPath := fmt.Sprintf("m/44'/%d'/%d'", hanzo-agentsServerHash, agentIndex)
+	agentPath := fmt.Sprintf("m/44'/%d'/%d'", hanzoAgentsServerHash, agentIndex)
 	agentDID, agentPrivKey, agentPubKey, err := s.generateDIDWithKeys(registry.MasterSeed, agentPath)
 	if err != nil {
 		return &types.DIDRegistrationResponse{
@@ -232,7 +232,7 @@ func (s *DIDService) handleNewRegistration(req *types.DIDRegistrationRequest) (*
 			continue
 		}
 
-		reasonerPath := fmt.Sprintf("m/44'/%d'/%d'/0'/%d'", hanzo-agentsServerHash, agentIndex, validReasonerIndex)
+		reasonerPath := fmt.Sprintf("m/44'/%d'/%d'/0'/%d'", hanzoAgentsServerHash, agentIndex, validReasonerIndex)
 		reasonerDID, reasonerPrivKey, reasonerPubKey, err := s.generateDIDWithKeys(registry.MasterSeed, reasonerPath)
 		if err != nil {
 			return &types.DIDRegistrationResponse{
@@ -278,7 +278,7 @@ func (s *DIDService) handleNewRegistration(req *types.DIDRegistrationRequest) (*
 			continue
 		}
 
-		skillPath := fmt.Sprintf("m/44'/%d'/%d'/1'/%d'", hanzo-agentsServerHash, agentIndex, validSkillIndex)
+		skillPath := fmt.Sprintf("m/44'/%d'/%d'/1'/%d'", hanzoAgentsServerHash, agentIndex, validSkillIndex)
 		skillDID, skillPrivKey, skillPubKey, err := s.generateDIDWithKeys(registry.MasterSeed, skillPath)
 		if err != nil {
 			return &types.DIDRegistrationResponse{
@@ -376,13 +376,13 @@ func (s *DIDService) ResolveDID(did string) (*types.DIDIdentity, error) {
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get af server ID: %w", err)
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DID registry: %w", err)
 	}
@@ -575,9 +575,9 @@ func (s *DIDService) ed25519PublicKeyToJWK(publicKey ed25519.PublicKey) (string,
 }
 
 // hashHanzoAgentsServerID creates a deterministic hash of af server ID for derivation paths.
-func (s *DIDService) hashHanzoAgentsServerID(hanzo-agentsServerID string) uint32 {
+func (s *DIDService) hashHanzoAgentsServerID(hanzoAgentsServerID string) uint32 {
 	h := fnv.New32a()
-	h.Write([]byte(hanzo-agentsServerID))
+	h.Write([]byte(hanzoAgentsServerID))
 	return h.Sum32() % (1 << 31) // Ensure it fits in BIP32 hardened derivation
 }
 
@@ -630,13 +630,13 @@ func (s *DIDService) ListAllAgentDIDs() ([]string, error) {
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get af server ID: %w", err)
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DID registry: %w", err)
 	}
@@ -675,13 +675,13 @@ func (s *DIDService) BackfillExistingNodes(ctx context.Context, storageProvider 
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return fmt.Errorf("failed to get af server ID: %w", err)
 	}
 
 	// Get current DID registry using dynamic ID
-	registry, err := s.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return fmt.Errorf("failed to get DID registry: %w", err)
 	}
@@ -734,13 +734,13 @@ func (s *DIDService) GetExistingAgentDID(agentNodeID string) (*types.AgentDIDInf
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get af server ID: %w", err)
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DID registry: %w", err)
 	}
@@ -869,21 +869,21 @@ func (s *DIDService) findSkillByID(skills []types.SkillDefinition, id string) *t
 // generateReasonerPath generates a derivation path for a reasoner.
 func (s *DIDService) generateReasonerPath(agentNodeID, reasonerID string) string {
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to get af server ID for reasoner path generation")
 		return ""
 	}
 
 	// Get registry to find agent index
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to get registry for reasoner path generation")
 		return ""
 	}
 
 	// Generate af server hash for derivation path
-	hanzo-agentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
+	hanzoAgentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
 
 	// Find agent index (this is a simplified approach - in production you might want to store this)
 	agentIndex := 0
@@ -898,27 +898,27 @@ func (s *DIDService) generateReasonerPath(agentNodeID, reasonerID string) string
 	existingAgent := registry.AgentNodes[agentNodeID]
 	reasonerIndex := len(existingAgent.Reasoners)
 
-	return fmt.Sprintf("m/44'/%d'/%d'/0'/%d'", hanzo-agentsServerHash, agentIndex, reasonerIndex)
+	return fmt.Sprintf("m/44'/%d'/%d'/0'/%d'", hanzoAgentsServerHash, agentIndex, reasonerIndex)
 }
 
 // generateSkillPath generates a derivation path for a skill.
 func (s *DIDService) generateSkillPath(agentNodeID, skillID string) string {
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to get af server ID for skill path generation")
 		return ""
 	}
 
 	// Get registry to find agent index
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to get registry for skill path generation")
 		return ""
 	}
 
 	// Generate af server hash for derivation path
-	hanzo-agentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
+	hanzoAgentsServerHash := s.hashHanzoAgentsServerID(registry.HanzoAgentsServerID)
 
 	// Find agent index (this is a simplified approach - in production you might want to store this)
 	agentIndex := 0
@@ -933,16 +933,16 @@ func (s *DIDService) generateSkillPath(agentNodeID, skillID string) string {
 	existingAgent := registry.AgentNodes[agentNodeID]
 	skillIndex := len(existingAgent.Skills)
 
-	return fmt.Sprintf("m/44'/%d'/%d'/1'/%d'", hanzo-agentsServerHash, agentIndex, skillIndex)
+	return fmt.Sprintf("m/44'/%d'/%d'/1'/%d'", hanzoAgentsServerHash, agentIndex, skillIndex)
 }
 
 // buildExistingIdentityPackage builds an identity package from existing agent DID info.
 func (s *DIDService) buildExistingIdentityPackage(existingAgent *types.AgentDIDInfo) types.DIDIdentityPackage {
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to get af server ID for identity package")
-		hanzo-agentsServerID = "unknown"
+		hanzoAgentsServerID = "unknown"
 	}
 
 	// Build reasoner DIDs map
@@ -981,7 +981,7 @@ func (s *DIDService) buildExistingIdentityPackage(existingAgent *types.AgentDIDI
 		},
 		ReasonerDIDs:       reasonerDIDs,
 		SkillDIDs:          skillDIDs,
-		HanzoAgentsServerID: hanzo-agentsServerID,
+		HanzoAgentsServerID: hanzoAgentsServerID,
 	}
 }
 
@@ -1063,7 +1063,7 @@ func (s *DIDService) PartialRegisterAgent(req *types.PartialDIDRegistrationReque
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return &types.DIDRegistrationResponse{
 			Success: false,
@@ -1072,7 +1072,7 @@ func (s *DIDService) PartialRegisterAgent(req *types.PartialDIDRegistrationReque
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return &types.DIDRegistrationResponse{
 			Success: false,
@@ -1253,7 +1253,7 @@ func (s *DIDService) DeregisterComponents(req *types.ComponentDeregistrationRequ
 	}
 
 	// Get af server ID dynamically
-	hanzo-agentsServerID, err := s.getHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.getHanzoAgentsServerID()
 	if err != nil {
 		return &types.ComponentDeregistrationResponse{
 			Success: false,
@@ -1262,7 +1262,7 @@ func (s *DIDService) DeregisterComponents(req *types.ComponentDeregistrationRequ
 	}
 
 	// Get af server registry using dynamic ID
-	registry, err := s.registry.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.registry.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return &types.ComponentDeregistrationResponse{
 			Success: false,

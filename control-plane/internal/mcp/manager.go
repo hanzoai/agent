@@ -405,10 +405,10 @@ func (m *MCPManager) getServerInfo(alias string) (*MCPServerInfo, error) {
 
 // updateHanzoAgentsYAML updates the hanzo-agents.yaml file with the new MCP server
 func (m *MCPManager) updateHanzoAgentsYAML(config MCPServerConfig) error {
-	hanzo-agentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
+	hanzoAgentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
 
 	// Read existing hanzo-agents.yaml
-	data, err := os.ReadFile(hanzo-agentsYAMLPath)
+	data, err := os.ReadFile(hanzoAgentsYAMLPath)
 	if err != nil {
 		return fmt.Errorf("failed to read hanzo-agents.yaml: %w", err)
 	}
@@ -481,7 +481,7 @@ func (m *MCPManager) updateHanzoAgentsYAML(config MCPServerConfig) error {
 		return fmt.Errorf("failed to marshal hanzo-agents.yaml: %w", err)
 	}
 
-	if err := os.WriteFile(hanzo-agentsYAMLPath, updatedData, 0644); err != nil {
+	if err := os.WriteFile(hanzoAgentsYAMLPath, updatedData, 0644); err != nil {
 		return fmt.Errorf("failed to write hanzo-agents.yaml: %w", err)
 	}
 
@@ -490,10 +490,10 @@ func (m *MCPManager) updateHanzoAgentsYAML(config MCPServerConfig) error {
 
 // removeMCPFromHanzoAgentsYAML removes an MCP server from hanzo-agents.yaml
 func (m *MCPManager) removeMCPFromHanzoAgentsYAML(alias string) error {
-	hanzo-agentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
+	hanzoAgentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
 
 	// Read existing hanzo-agents.yaml
-	data, err := os.ReadFile(hanzo-agentsYAMLPath)
+	data, err := os.ReadFile(hanzoAgentsYAMLPath)
 	if err != nil {
 		return fmt.Errorf("failed to read hanzo-agents.yaml: %w", err)
 	}
@@ -517,7 +517,7 @@ func (m *MCPManager) removeMCPFromHanzoAgentsYAML(alias string) error {
 		return fmt.Errorf("failed to marshal hanzo-agents.yaml: %w", err)
 	}
 
-	if err := os.WriteFile(hanzo-agentsYAMLPath, updatedData, 0644); err != nil {
+	if err := os.WriteFile(hanzoAgentsYAMLPath, updatedData, 0644); err != nil {
 		return fmt.Errorf("failed to write hanzo-agents.yaml: %w", err)
 	}
 
@@ -528,9 +528,9 @@ func (m *MCPManager) removeMCPFromHanzoAgentsYAML(alias string) error {
 //
 //nolint:unused // Reserved for future YAML config support
 func (m *MCPManager) loadMCPConfigsFromYAML() (map[string]MCPServerConfig, error) {
-	hanzo-agentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
+	hanzoAgentsYAMLPath := filepath.Join(m.projectDir, "hanzo-agents.yaml")
 
-	data, err := os.ReadFile(hanzo-agentsYAMLPath)
+	data, err := os.ReadFile(hanzoAgentsYAMLPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read hanzo-agents.yaml: %w", err)
 	}

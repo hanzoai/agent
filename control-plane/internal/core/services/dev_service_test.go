@@ -121,9 +121,9 @@ func TestRunInDevMode_HanzoAgentsYamlExists(t *testing.T) {
 	packagePath := filepath.Join(tmpDir, "test-package")
 	require.NoError(t, os.MkdirAll(packagePath, 0755))
 
-	hanzo-agentsYamlPath := filepath.Join(packagePath, "hanzo-agents.yaml")
-	hanzo-agentsYamlContent := []byte("name: test-package\nversion: 1.0.0")
-	require.NoError(t, os.WriteFile(hanzo-agentsYamlPath, hanzo-agentsYamlContent, 0644))
+	hanzoAgentsYamlPath := filepath.Join(packagePath, "hanzo-agents.yaml")
+	hanzoAgentsYamlContent := []byte("name: test-package\nversion: 1.0.0")
+	require.NoError(t, os.WriteFile(hanzoAgentsYamlPath, hanzoAgentsYamlContent, 0644))
 
 	processManager := newMockProcessManager()
 	portManager := newMockPortManager()
@@ -131,7 +131,7 @@ func TestRunInDevMode_HanzoAgentsYamlExists(t *testing.T) {
 
 	// Mock file system to report hanzo-agents.yaml exists
 	fileSystem.existsFunc = func(path string) bool {
-		return path == hanzo-agentsYamlPath
+		return path == hanzoAgentsYamlPath
 	}
 
 	service := NewDevService(processManager, portManager, fileSystem).(*DefaultDevService)
