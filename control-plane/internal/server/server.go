@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hanzoai/agents/control-plane/internal/cloud"        // Cloud provisioning
+	cloudaws "github.com/hanzoai/agents/control-plane/internal/cloud/aws"
+	cloudk8s "github.com/hanzoai/agents/control-plane/internal/cloud/k8s"
 	"github.com/hanzoai/agents/control-plane/internal/config"
 	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
 	coreservices "github.com/hanzoai/agents/control-plane/internal/core/services" // Core services
@@ -71,6 +74,9 @@ type HanzoAgentsServer struct {
 	adminGRPCPort            int
 	webhookDispatcher        services.WebhookDispatcher
 	observabilityForwarder   services.ObservabilityForwarder
+	// Cloud provisioning
+	cloudManager             *cloud.CloudManager
+	cloudMonitor             *cloud.CloudInstanceMonitor
 }
 
 // NewHanzoAgentsServer creates a new instance of the HanzoAgentsServer.
@@ -260,6 +266,46 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 	// Initialize execution cleanup service
 	cleanupService := handlers.NewExecutionCleanupService(storageProvider, cfg.HanzoAgents.ExecutionCleanup)
 
+	// Initialize cloud provisioning if enabled
+	var cloudManager *cloud.CloudManager
+	var cloudMonitor *cloud.CloudInstanceMonitor
+	if cfg.Cloud.Enabled {
+		cloudManager = cloud.NewCloudManager(cfg.Cloud, storageProvider)
+
+		// Register K8s provisioner for Linux bots
+		if cfg.Cloud.K8s.Enabled {
+			serverURL := fmt.Sprintf("http://localhost:%d", cfg.HanzoAgents.Port)
+			if v := os.Getenv("HANZO_AGENTS_SERVER_URL"); v != "" {
+				serverURL = v
+			}
+			k8sProv, err := cloudk8s.NewProvisioner(cfg.Cloud.K8s, serverURL, cfg.API.Auth.APIKey)
+			if err != nil {
+				logger.Logger.Error().Err(err).Msg("failed to create K8s provisioner")
+			} else {
+				cloudManager.RegisterProvisioner([]cloud.Platform{cloud.PlatformLinux}, k8sProv)
+			}
+		}
+
+		// Register AWS provisioner for Windows + macOS
+		if cfg.Cloud.AWS.Enabled {
+			serverURL := fmt.Sprintf("http://localhost:%d", cfg.HanzoAgents.Port)
+			if v := os.Getenv("HANZO_AGENTS_SERVER_URL"); v != "" {
+				serverURL = v
+			}
+			awsProv, err := cloudaws.NewProvisioner(context.Background(), cfg.Cloud.AWS, storageProvider, serverURL, cfg.API.Auth.APIKey)
+			if err != nil {
+				logger.Logger.Error().Err(err).Msg("failed to create AWS provisioner")
+			} else {
+				cloudManager.RegisterProvisioner([]cloud.Platform{cloud.PlatformWindows, cloud.PlatformMacOS}, awsProv)
+				// Seed dedicated hosts from config
+				_ = awsProv.SeedDedicatedHosts(context.Background(), storageProvider)
+			}
+		}
+
+		cloudMonitor = cloud.NewCloudInstanceMonitor(cloudManager, storageProvider, cfg.Cloud)
+		logger.Logger.Info().Msg("cloud provisioning enabled")
+	}
+
 	adminPort := cfg.HanzoAgents.Port + 100
 	if envPort := os.Getenv("HANZO_AGENTS_ADMIN_GRPC_PORT"); envPort != "" {
 		if parsedPort, parseErr := strconv.Atoi(envPort); parseErr == nil {
@@ -292,6 +338,8 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		observabilityForwarder:   observabilityForwarder,
 		registryWatcherCancel:    nil,
 		adminGRPCPort:            adminPort,
+		cloudManager:             cloudManager,
+		cloudMonitor:             cloudMonitor,
 	}, nil
 }
 
@@ -331,6 +379,11 @@ func (s *HanzoAgentsServer) Start() error {
 	if err := s.cleanupService.Start(ctx); err != nil {
 		logger.Logger.Error().Err(err).Msg("Failed to start execution cleanup service")
 		// Don't fail server startup if cleanup service fails to start
+	}
+
+	// Start cloud instance monitor if enabled
+	if s.cloudMonitor != nil {
+		go s.cloudMonitor.Start()
 	}
 
 	// Start reasoner event heartbeat (30 second intervals)
@@ -446,6 +499,11 @@ func (s *HanzoAgentsServer) Stop() error {
 	if s.registryWatcherCancel != nil {
 		s.registryWatcherCancel()
 		s.registryWatcherCancel = nil
+	}
+
+	// Stop cloud instance monitor
+	if s.cloudMonitor != nil {
+		s.cloudMonitor.Stop()
 	}
 
 	// Stop UI service heartbeat
@@ -869,6 +927,18 @@ func (s *HanzoAgentsServer) setupRoutes() {
 				mcp.GET("/status", mcpHandler.GetMCPStatusHandler)
 			}
 
+			// Cloud provisioning UI endpoints
+			if s.cloudManager != nil {
+				cloudUIHandler := ui.NewCloudHandler(s.cloudManager)
+				cloudUI := uiAPI.Group("/cloud")
+				{
+					cloudUI.GET("/instances", cloudUIHandler.ListInstancesHandler)
+					cloudUI.GET("/instances/:id/details", cloudUIHandler.GetInstanceDetailsHandler)
+					cloudUI.GET("/summary", cloudUIHandler.GetSummaryHandler)
+					cloudUI.GET("/events", cloudUIHandler.StreamEventsHandler)
+				}
+			}
+
 			// Dashboard endpoints
 			dashboard := uiAPI.Group("/dashboard")
 			{
@@ -921,8 +991,8 @@ func (s *HanzoAgentsServer) setupRoutes() {
 		}
 
 		// Node management endpoints
-		agentAPI.POST("/nodes/register", handlers.RegisterNodeHandler(s.storage, s.uiService, s.didService, s.presenceManager))
-		agentAPI.POST("/nodes", handlers.RegisterNodeHandler(s.storage, s.uiService, s.didService, s.presenceManager))
+		agentAPI.POST("/nodes/register", handlers.RegisterNodeHandler(s.storage, s.uiService, s.didService, s.presenceManager, s.cloudManager))
+		agentAPI.POST("/nodes", handlers.RegisterNodeHandler(s.storage, s.uiService, s.didService, s.presenceManager, s.cloudManager))
 		agentAPI.POST("/nodes/register-serverless", handlers.RegisterServerlessAgentHandler(s.storage, s.uiService, s.didService, s.presenceManager))
 		agentAPI.GET("/nodes", handlers.ListNodesHandler(s.storage))
 		agentAPI.GET("/nodes/:node_id", handlers.GetNodeHandler(s.storage))
@@ -1056,6 +1126,24 @@ func (s *HanzoAgentsServer) setupRoutes() {
 				Msg("DID routes NOT registered - conditions not met")
 		}
 		// Note: Removed unused/unimplemented DID endpoint placeholders for system simplification
+
+		// Cloud provisioning API routes
+		if s.cloudManager != nil {
+			cloudHandlers := handlers.NewCloudHandlers(s.cloudManager)
+			cloudAPI := agentAPI.Group("/cloud")
+			{
+				cloudAPI.POST("/instances", cloudHandlers.CreateInstanceHandler())
+				cloudAPI.GET("/instances", cloudHandlers.ListInstancesHandler())
+				cloudAPI.GET("/instances/:id", cloudHandlers.GetInstanceHandler())
+				cloudAPI.DELETE("/instances/:id", cloudHandlers.TerminateInstanceHandler())
+				cloudAPI.POST("/instances/:id/start", cloudHandlers.StartInstanceHandler())
+				cloudAPI.POST("/instances/:id/stop", cloudHandlers.StopInstanceHandler())
+				cloudAPI.GET("/instances/:id/connect", cloudHandlers.GetConnectionInfoHandler())
+				cloudAPI.GET("/instances/:id/logs", cloudHandlers.GetLogsHandler())
+				cloudAPI.POST("/instances/:id/exec", cloudHandlers.ExecuteCommandHandler())
+				cloudAPI.GET("/quota", cloudHandlers.GetQuotaHandler())
+			}
+		}
 
 		// Settings API routes (observability webhook configuration)
 		settings := agentAPI.Group("/settings")

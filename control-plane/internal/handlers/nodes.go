@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hanzoai/agents/control-plane/internal/cloud"
 	"github.com/hanzoai/agents/control-plane/internal/logger"
 	"github.com/hanzoai/agents/control-plane/internal/services" // Import services package
 	"github.com/hanzoai/agents/control-plane/internal/storage"
@@ -364,7 +365,7 @@ func processHeartbeatAsync(storageProvider storage.StorageProvider, uiService *s
 }
 
 // RegisterNodeHandler handles the registration of a new agent node.
-func RegisterNodeHandler(storageProvider storage.StorageProvider, uiService *services.UIService, didService *services.DIDService, presenceManager *services.PresenceManager) gin.HandlerFunc {
+func RegisterNodeHandler(storageProvider storage.StorageProvider, uiService *services.UIService, didService *services.DIDService, presenceManager *services.PresenceManager, cloudMgr ...*cloud.CloudManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		var newNode types.AgentNode
@@ -560,6 +561,27 @@ func RegisterNodeHandler(storageProvider storage.StorageProvider, uiService *ser
 
 		// Note: Node registration events are now handled by the health monitor
 		// The health monitor will detect the new node and emit appropriate events
+
+		// Correlate with cloud instance if HANZO_AGENTS_INSTANCE_ID is in metadata
+		if len(cloudMgr) > 0 && cloudMgr[0] != nil {
+			if instanceID, ok := newNode.Metadata.Custom["cloud_instance_id"].(string); ok && instanceID != "" {
+				go func() {
+					bgCtx := context.Background()
+					inst, err := cloudMgr[0].GetInstance(bgCtx, instanceID)
+					if err == nil && inst != nil {
+						inst.AgentNodeID = newNode.ID
+						inst.State = cloud.InstanceStateRunning
+						now := time.Now().UTC()
+						inst.ProvisionedAt = &now
+						_ = storageProvider.UpdateCloudInstance(bgCtx, inst)
+						cloudMgr[0].EventBus().EmitInstanceEvent(cloud.EventInstanceConnected, instanceID, map[string]string{
+							"agent_node_id": newNode.ID,
+						})
+						logger.Logger.Info().Str("instance_id", instanceID).Str("node_id", newNode.ID).Msg("cloud instance linked to agent node")
+					}
+				}()
+			}
+		}
 
 		if presenceManager != nil {
 			presenceManager.Touch(newNode.ID, time.Now().UTC())

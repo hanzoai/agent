@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v3" // Added for yaml.Unmarshal
 
+	"github.com/hanzoai/agents/control-plane/internal/cloud"
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 )
 
@@ -19,7 +20,13 @@ type Config struct {
 	Storage    StorageConfig    `yaml:"storage" mapstructure:"storage"`
 	UI         UIConfig         `yaml:"ui" mapstructure:"ui"`
 	API        APIConfig        `yaml:"api" mapstructure:"api"`
+	Cloud      CloudConfig      `yaml:"cloud" mapstructure:"cloud"`
 }
+
+// CloudConfig is an alias of the cloud package's configuration so callers can
+// work with a single definition while keeping the canonical struct colocated
+// with the implementation in the cloud package.
+type CloudConfig = cloud.CloudConfig
 
 // UIConfig holds configuration for the web UI.
 type UIConfig struct {
@@ -167,6 +174,10 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	// Apply environment variable overrides
 	applyEnvOverrides(&cfg)
+
+	// Apply cloud config defaults and env overrides
+	cfg.Cloud.Defaults()
+	cfg.Cloud.ApplyEnvOverrides()
 
 	return &cfg, nil
 }
