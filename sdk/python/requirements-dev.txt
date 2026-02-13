@@ -1,0 +1,11 @@
+# Development/test dependencies for Hanzo Agents SDK (Python 3.8+)
+# Install with: pip install -r requirements-dev.txt
+pytest>=7.4,<9
+pytest-asyncio>=0.21,<0.24
+pytest-cov>=4.1,<5
+responses>=0.23,<0.26
+respx>=0.20,<0.22
+freezegun>=1.2,<2
+syrupy>=4,<5
+hypothesis>=6.88,<7
+pytest-socket>=0.6,<0.8

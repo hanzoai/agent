@@ -1,0 +1,72 @@
+{
+  "name": "@hanzo/agents",
+  "version": "0.1.41-rc.2",
+  "description": "Hanzo Agents TypeScript SDK",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "prepare": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.53",
+    "@ai-sdk/cohere": "^2.0.20",
+    "@ai-sdk/deepseek": "^1.0.31",
+    "@ai-sdk/google": "^2.0.44",
+    "@ai-sdk/groq": "^2.0.32",
+    "@ai-sdk/mistral": "^2.0.25",
+    "@ai-sdk/openai": "^2.0.77",
+    "@ai-sdk/xai": "^2.0.39",
+    "ai": "^5.0.106",
+    "axios": "^1.6.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "ws": "^8.16.0",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/ws": "^8.5.10",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hanzoai/agents.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://github.com/hanzoai/agents/tree/main/sdk/typescript",
+  "bugs": {
+    "url": "https://github.com/hanzoai/agents/issues"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "hanzo-agents",
+    "ai-agents",
+    "llm",
+    "multi-agent",
+    "orchestration"
+  ],
+  "author": "Hanzo Agents Team"
+}

@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# =============================================================================
+# Quick MCP Endpoints Test Script
+# =============================================================================
+# A simplified version for quick testing of MCP endpoints
+# Usage: ./hanzo-agents/scripts/quick-mcp-test.sh
+# =============================================================================
+
+HANZO_AGENTS_SERVER="${HANZO_AGENTS_SERVER:-http://localhost:8080}"
+
+echo "🧠 Quick MCP Endpoints Test"
+echo "=========================="
+echo "Server: $HANZO_AGENTS_SERVER"
+echo ""
+
+# Check if server is running
+echo "1. Checking Hanzo Agents server..."
+if curl -s --connect-timeout 5 "$HANZO_AGENTS_SERVER/health" > /dev/null; then
+    echo "✅ Hanzo Agents server is running"
+else
+    echo "❌ Hanzo Agents server is not responding"
+    exit 1
+fi
+
+# Test overall MCP status
+echo ""
+echo "2. Testing overall MCP status..."
+curl -s "$HANZO_AGENTS_SERVER/api/ui/v1/mcp/status" | jq . 2>/dev/null || echo "❌ Failed to get MCP status"
+
+# Get first node ID
+echo ""
+echo "3. Getting available nodes..."
+FIRST_NODE=$(curl -s "$HANZO_AGENTS_SERVER/api/ui/v1/nodes" | jq -r '.[0].id // empty' 2>/dev/null)
+
+if [ -n "$FIRST_NODE" ] && [ "$FIRST_NODE" != "null" ]; then
+    echo "✅ Found node: $FIRST_NODE"
+
+    # Test node MCP health
+    echo ""
+    echo "4. Testing node MCP health..."
+    curl -s "$HANZO_AGENTS_SERVER/api/ui/v1/nodes/$FIRST_NODE/mcp/health" | jq . 2>/dev/null || echo "❌ Failed to get node MCP health"
+
+    # Test developer mode
+    echo ""
+    echo "5. Testing developer mode..."
+    curl -s "$HANZO_AGENTS_SERVER/api/ui/v1/nodes/$FIRST_NODE/mcp/health?mode=developer" | jq . 2>/dev/null || echo "❌ Failed to get developer mode health"
+else
+    echo "⚠️  No nodes found - skipping node-specific tests"
+fi
+
+echo ""
+echo "🎉 Quick test completed!"
+echo ""
+echo "For comprehensive testing, run:"
+echo "  ./hanzo-agents/scripts/test-mcp-endpoints.sh"
