@@ -188,6 +188,22 @@ type StorageProvider interface {
 	GetDeadLetterQueue(ctx context.Context, limit, offset int) ([]types.ObservabilityDeadLetterEntry, error)
 	DeleteFromDeadLetterQueue(ctx context.Context, ids []int64) error
 	ClearDeadLetterQueue(ctx context.Context) error
+
+	// Cloud Instance operations
+	CreateCloudInstance(ctx context.Context, instance *types.CloudInstance) error
+	GetCloudInstance(ctx context.Context, id string) (*types.CloudInstance, error)
+	UpdateCloudInstance(ctx context.Context, instance *types.CloudInstance) error
+	ListCloudInstances(ctx context.Context, filters types.InstanceFilters) ([]*types.CloudInstance, error)
+	DeleteCloudInstance(ctx context.Context, id string) error
+	GetCloudInstanceByAgentNodeID(ctx context.Context, agentNodeID string) (*types.CloudInstance, error)
+	CountCloudInstancesByTeam(ctx context.Context, teamID string) (int, error)
+
+	// Dedicated Host operations
+	CreateDedicatedHost(ctx context.Context, host *types.DedicatedHost) error
+	GetDedicatedHost(ctx context.Context, id string) (*types.DedicatedHost, error)
+	UpdateDedicatedHost(ctx context.Context, host *types.DedicatedHost) error
+	ListDedicatedHosts(ctx context.Context) ([]*types.DedicatedHost, error)
+	GetAvailableDedicatedHost(ctx context.Context) (*types.DedicatedHost, error)
 }
 
 // ComponentDIDRequest represents a component DID to be stored

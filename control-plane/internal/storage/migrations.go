@@ -45,6 +45,8 @@ func (ls *LocalStorage) autoMigrateSchema(ctx context.Context) error {
 		&ExecutionWebhookModel{},
 		&ObservabilityWebhookModel{},
 		&ObservabilityDeadLetterQueueModel{},
+		&CloudInstanceModel{},
+		&DedicatedHostModel{},
 	}
 
 	if err := gormDB.WithContext(ctx).AutoMigrate(models...); err != nil {

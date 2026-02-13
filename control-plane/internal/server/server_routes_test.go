@@ -365,6 +365,44 @@ func (s *stubStorage) GetDeadLetterQueue(ctx context.Context, limit, offset int)
 func (s *stubStorage) DeleteFromDeadLetterQueue(ctx context.Context, ids []int64) error { return nil }
 func (s *stubStorage) ClearDeadLetterQueue(ctx context.Context) error                   { return nil }
 
+// Cloud instance stubs
+func (s *stubStorage) CreateCloudInstance(ctx context.Context, instance *types.CloudInstance) error {
+	return nil
+}
+func (s *stubStorage) GetCloudInstance(ctx context.Context, id string) (*types.CloudInstance, error) {
+	return nil, nil
+}
+func (s *stubStorage) UpdateCloudInstance(ctx context.Context, instance *types.CloudInstance) error {
+	return nil
+}
+func (s *stubStorage) ListCloudInstances(ctx context.Context, filters types.InstanceFilters) ([]*types.CloudInstance, error) {
+	return nil, nil
+}
+func (s *stubStorage) DeleteCloudInstance(ctx context.Context, id string) error { return nil }
+func (s *stubStorage) GetCloudInstanceByAgentNodeID(ctx context.Context, agentNodeID string) (*types.CloudInstance, error) {
+	return nil, nil
+}
+func (s *stubStorage) CountCloudInstancesByTeam(ctx context.Context, teamID string) (int, error) {
+	return 0, nil
+}
+
+// Dedicated host stubs
+func (s *stubStorage) CreateDedicatedHost(ctx context.Context, host *types.DedicatedHost) error {
+	return nil
+}
+func (s *stubStorage) GetDedicatedHost(ctx context.Context, id string) (*types.DedicatedHost, error) {
+	return nil, nil
+}
+func (s *stubStorage) UpdateDedicatedHost(ctx context.Context, host *types.DedicatedHost) error {
+	return nil
+}
+func (s *stubStorage) ListDedicatedHosts(ctx context.Context) ([]*types.DedicatedHost, error) {
+	return nil, nil
+}
+func (s *stubStorage) GetAvailableDedicatedHost(ctx context.Context) (*types.DedicatedHost, error) {
+	return nil, nil
+}
+
 // stubPayloadStore implements services.PayloadStore
 type stubPayloadStore struct{}
 
