@@ -159,7 +159,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	}
 
 	// Create HanzoAgents server instance
-	hanzo-agentsServer, err := server.NewHanzoAgentsServer(cfg)
+	hanzoAgentsServer, err := server.NewHanzoAgentsServer(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create HanzoAgents server: %v", err)
 	}
@@ -167,7 +167,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	// Start the server in a goroutine so we can open the browser
 	go func() {
 		fmt.Printf("HanzoAgents server attempting to start on port %d...\n", cfg.HanzoAgents.Port)
-		if err := hanzo-agentsServer.Start(); err != nil {
+		if err := hanzoAgentsServer.Start(); err != nil {
 			log.Fatalf("Failed to start HanzoAgents server: %v", err)
 		}
 	}()

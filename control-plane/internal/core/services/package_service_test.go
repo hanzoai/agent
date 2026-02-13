@@ -120,24 +120,24 @@ func convertToPackagesPackage(name string, pkg *domain.InstalledPackage) package
 func TestNewPackageService(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := "/tmp/test-hanzo-agents"
+	hanzoAgentsHome := "/tmp/test-hanzo-agents"
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome)
 
 	assert.NotNil(t, service)
 	ps, ok := service.(*DefaultPackageService)
 	require.True(t, ok)
 	assert.Equal(t, registryStorage, ps.registryStorage)
 	assert.Equal(t, fileSystem, ps.fileSystem)
-	assert.Equal(t, hanzo-agentsHome, ps.hanzo-agentsHome)
+	assert.Equal(t, hanzoAgentsHome, ps.hanzoAgentsHome)
 }
 
 func TestInstallPackage_GitURL(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := t.TempDir()
+	hanzoAgentsHome := t.TempDir()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	options := domain.InstallOptions{
 		Force:   false,
@@ -155,7 +155,7 @@ func TestInstallPackage_GitURL(t *testing.T) {
 func TestInstallLocalPackage_Success(t *testing.T) {
 	tmpDir := t.TempDir()
 	sourcePath := filepath.Join(tmpDir, "source-package")
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	// Create source package structure
 	require.NoError(t, os.MkdirAll(sourcePath, 0755))
@@ -173,7 +173,7 @@ main: main.py
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	options := domain.InstallOptions{
 		Force:   false,
@@ -196,9 +196,9 @@ func TestInstallLocalPackage_MissingPackageYaml(t *testing.T) {
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	options := domain.InstallOptions{
 		Force:   false,
@@ -213,7 +213,7 @@ func TestInstallLocalPackage_MissingPackageYaml(t *testing.T) {
 func TestInstallLocalPackage_AlreadyInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
 	sourcePath := filepath.Join(tmpDir, "source-package")
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	// Create source package structure
 	require.NoError(t, os.MkdirAll(sourcePath, 0755))
@@ -229,13 +229,13 @@ main: main.py
 	require.NoError(t, os.WriteFile(mainPyPath, []byte("# Test package"), 0644))
 
 	// Create registry with package already installed
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"test-package": {
 				Name:    "test-package",
 				Version: "1.0.0",
-				Path:    filepath.Join(hanzo-agentsHome, "packages", "test-package"),
+				Path:    filepath.Join(hanzoAgentsHome, "packages", "test-package"),
 				Status:  "stopped",
 			},
 		},
@@ -248,7 +248,7 @@ main: main.py
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	options := domain.InstallOptions{
 		Force:   false,
@@ -262,12 +262,12 @@ main: main.py
 
 func TestUninstallPackage_Success(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
-	packagePath := filepath.Join(hanzo-agentsHome, "packages", "test-package")
+	hanzoAgentsHome := tmpDir
+	packagePath := filepath.Join(hanzoAgentsHome, "packages", "test-package")
 	require.NoError(t, os.MkdirAll(packagePath, 0755))
 
 	// Create registry with package installed
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"test-package": {
@@ -276,7 +276,7 @@ func TestUninstallPackage_Success(t *testing.T) {
 				Path:    packagePath,
 				Status:  "stopped",
 				Runtime: packages.RuntimeInfo{
-					LogFile: filepath.Join(hanzo-agentsHome, "logs", "test-package.log"),
+					LogFile: filepath.Join(hanzoAgentsHome, "logs", "test-package.log"),
 				},
 			},
 		},
@@ -289,7 +289,7 @@ func TestUninstallPackage_Success(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err = service.UninstallPackage("test-package")
 	require.NoError(t, err)
@@ -301,12 +301,12 @@ func TestUninstallPackage_Success(t *testing.T) {
 
 func TestUninstallPackage_NotInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err := service.UninstallPackage("nonexistent-package")
 	assert.Error(t, err)
@@ -315,13 +315,13 @@ func TestUninstallPackage_NotInstalled(t *testing.T) {
 
 func TestUninstallPackage_Running(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
-	packagePath := filepath.Join(hanzo-agentsHome, "packages", "test-package")
+	hanzoAgentsHome := tmpDir
+	packagePath := filepath.Join(hanzoAgentsHome, "packages", "test-package")
 	require.NoError(t, os.MkdirAll(packagePath, 0755))
 
 	pid := 12345
 	// Create registry with package running
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"test-package": {
@@ -331,7 +331,7 @@ func TestUninstallPackage_Running(t *testing.T) {
 				Status:  "running",
 				Runtime: packages.RuntimeInfo{
 					PID:     &pid,
-					LogFile: filepath.Join(hanzo-agentsHome, "logs", "test-package.log"),
+					LogFile: filepath.Join(hanzoAgentsHome, "logs", "test-package.log"),
 				},
 			},
 		},
@@ -344,7 +344,7 @@ func TestUninstallPackage_Running(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err = service.UninstallPackage("test-package")
 	// Should fail because package is running
@@ -354,23 +354,23 @@ func TestUninstallPackage_Running(t *testing.T) {
 
 func TestListInstalledPackages(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	// Create registry with packages
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	installedAt := time.Now().Format(time.RFC3339)
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"package-1": {
 				Name:        "package-1",
 				Version:     "1.0.0",
-				Path:        filepath.Join(hanzo-agentsHome, "packages", "package-1"),
+				Path:        filepath.Join(hanzoAgentsHome, "packages", "package-1"),
 				InstalledAt: installedAt,
 			},
 			"package-2": {
 				Name:        "package-2",
 				Version:     "2.0.0",
-				Path:        filepath.Join(hanzo-agentsHome, "packages", "package-2"),
+				Path:        filepath.Join(hanzoAgentsHome, "packages", "package-2"),
 				InstalledAt: installedAt,
 			},
 		},
@@ -383,7 +383,7 @@ func TestListInstalledPackages(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	packages, err := service.ListInstalledPackages()
 	require.NoError(t, err)
@@ -392,17 +392,17 @@ func TestListInstalledPackages(t *testing.T) {
 
 func TestGetPackageInfo_Success(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	// Create registry with package
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	installedAt := time.Now().Format(time.RFC3339)
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"test-package": {
 				Name:        "test-package",
 				Version:     "1.0.0",
-				Path:        filepath.Join(hanzo-agentsHome, "packages", "test-package"),
+				Path:        filepath.Join(hanzoAgentsHome, "packages", "test-package"),
 				InstalledAt: installedAt,
 			},
 		},
@@ -415,7 +415,7 @@ func TestGetPackageInfo_Success(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	pkg, err := service.GetPackageInfo("test-package")
 	require.NoError(t, err)
@@ -425,12 +425,12 @@ func TestGetPackageInfo_Success(t *testing.T) {
 
 func TestGetPackageInfo_NotFound(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	_, err := service.GetPackageInfo("nonexistent-package")
 	assert.Error(t, err)
@@ -450,9 +450,9 @@ func TestValidatePackage_Success(t *testing.T) {
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err := service.validatePackage(packagePath)
 	assert.NoError(t, err)
@@ -465,9 +465,9 @@ func TestValidatePackage_MissingPackageYaml(t *testing.T) {
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err := service.validatePackage(packagePath)
 	assert.Error(t, err)
@@ -484,9 +484,9 @@ func TestValidatePackage_MissingMainPy(t *testing.T) {
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err := service.validatePackage(packagePath)
 	assert.Error(t, err)
@@ -508,9 +508,9 @@ main: main.py
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	metadata, err := service.parsePackageMetadata(packagePath)
 	require.NoError(t, err)
@@ -532,9 +532,9 @@ description: Test package
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	_, err := service.parsePackageMetadata(packagePath)
 	assert.Error(t, err)
@@ -543,9 +543,9 @@ description: Test package
 
 func TestIsPackageInstalled_Installed(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 	registry := &packages.InstallationRegistry{
 		Installed: map[string]packages.InstalledPackage{
 			"test-package": {
@@ -562,7 +562,7 @@ func TestIsPackageInstalled_Installed(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	installed := service.isPackageInstalled("test-package")
 	assert.True(t, installed)
@@ -570,12 +570,12 @@ func TestIsPackageInstalled_Installed(t *testing.T) {
 
 func TestIsPackageInstalled_NotInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	installed := service.isPackageInstalled("nonexistent-package")
 	assert.False(t, installed)
@@ -583,7 +583,7 @@ func TestIsPackageInstalled_NotInstalled(t *testing.T) {
 
 func TestStopAgentNode_Success(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	pid := 12345
 	agentNode := &packages.InstalledPackage{
@@ -597,7 +597,7 @@ func TestStopAgentNode_Success(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	// This will fail because we can't easily mock os.FindProcess
 	// But we verify the function exists and handles the PID check
@@ -610,7 +610,7 @@ func TestStopAgentNode_Success(t *testing.T) {
 
 func TestStopAgentNode_NoPID(t *testing.T) {
 	tmpDir := t.TempDir()
-	hanzo-agentsHome := tmpDir
+	hanzoAgentsHome := tmpDir
 
 	agentNode := &packages.InstalledPackage{
 		Name:    "test-package",
@@ -623,7 +623,7 @@ func TestStopAgentNode_NoPID(t *testing.T) {
 	registryStorage := newMockPackageRegistryStorage()
 	fileSystem := newMockFileSystemAdapter()
 
-	service := NewPackageService(registryStorage, fileSystem, hanzo-agentsHome).(*DefaultPackageService)
+	service := NewPackageService(registryStorage, fileSystem, hanzoAgentsHome).(*DefaultPackageService)
 
 	err := service.stopAgentNode(agentNode)
 	assert.Error(t, err)

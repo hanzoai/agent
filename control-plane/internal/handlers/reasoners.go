@@ -48,7 +48,7 @@ func ExecuteReasonerHandler(storageProvider storage.StorageProvider) gin.Handler
 		startTime := time.Now()
 
 		// Generate HanzoAgents Request ID
-		hanzo-agentsRequestID := utils.GenerateHanzoAgentsRequestID()
+		hanzoAgentsRequestID := utils.GenerateHanzoAgentsRequestID()
 
 		// Extract headers
 		workflowID := c.GetHeader("X-Workflow-ID")
@@ -132,7 +132,7 @@ func ExecuteReasonerHandler(storageProvider storage.StorageProvider) gin.Handler
 		workflowExecution := &types.WorkflowExecution{
 			WorkflowID:          workflowID,
 			ExecutionID:         executionID,
-			HanzoAgentsRequestID: hanzo-agentsRequestID,
+			HanzoAgentsRequestID: hanzoAgentsRequestID,
 			AgentNodeID:         nodeID,
 			ReasonerID:          reasonerName,
 			Status:              "running",
@@ -256,7 +256,7 @@ func ExecuteReasonerHandler(storageProvider storage.StorageProvider) gin.Handler
 		agentReq.Header.Set("Content-Type", "application/json")
 		agentReq.Header.Set("X-Workflow-ID", workflowID)
 		agentReq.Header.Set("X-Execution-ID", executionID)
-		agentReq.Header.Set("X-HanzoAgents-Request-ID", hanzo-agentsRequestID)
+		agentReq.Header.Set("X-HanzoAgents-Request-ID", hanzoAgentsRequestID)
 		if targetNode.DeploymentType == "serverless" {
 			agentReq.Header.Set("X-Run-ID", workflowID)
 		}
@@ -376,7 +376,7 @@ func ExecuteReasonerHandler(storageProvider storage.StorageProvider) gin.Handler
 		// Set response headers
 		c.Header("X-Workflow-ID", workflowID)
 		c.Header("X-Execution-ID", executionID)
-		c.Header("X-HanzoAgents-Request-ID", hanzo-agentsRequestID)
+		c.Header("X-HanzoAgents-Request-ID", hanzoAgentsRequestID)
 		c.Header("X-Agent-Node-ID", nodeID)
 		c.Header("X-Duration-MS", fmt.Sprintf("%d", duration))
 
@@ -397,7 +397,7 @@ func ExecuteSkillHandler(storageProvider storage.StorageProvider) gin.HandlerFun
 		startTime := time.Now()
 
 		// Generate HanzoAgents Request ID
-		hanzo-agentsRequestID := utils.GenerateHanzoAgentsRequestID()
+		hanzoAgentsRequestID := utils.GenerateHanzoAgentsRequestID()
 
 		// Extract headers
 		workflowID := c.GetHeader("X-Workflow-ID")
@@ -481,7 +481,7 @@ func ExecuteSkillHandler(storageProvider storage.StorageProvider) gin.HandlerFun
 		workflowExecution := &types.WorkflowExecution{
 			WorkflowID:          workflowID,
 			ExecutionID:         executionID,
-			HanzoAgentsRequestID: hanzo-agentsRequestID,
+			HanzoAgentsRequestID: hanzoAgentsRequestID,
 			AgentNodeID:         nodeID,
 			ReasonerID:          skillName, // For skills, ReasonerID will store skillName
 			Status:              "running",
@@ -548,7 +548,7 @@ func ExecuteSkillHandler(storageProvider storage.StorageProvider) gin.HandlerFun
 		agentReq.Header.Set("Content-Type", "application/json")
 		agentReq.Header.Set("X-Workflow-ID", workflowID)
 		agentReq.Header.Set("X-Execution-ID", executionID)
-		agentReq.Header.Set("X-HanzoAgents-Request-ID", hanzo-agentsRequestID)
+		agentReq.Header.Set("X-HanzoAgents-Request-ID", hanzoAgentsRequestID)
 		if parentWorkflowID != "" {
 			agentReq.Header.Set("X-Parent-Workflow-ID", parentWorkflowID)
 		}
@@ -659,7 +659,7 @@ func ExecuteSkillHandler(storageProvider storage.StorageProvider) gin.HandlerFun
 		// Set response headers
 		c.Header("X-Workflow-ID", workflowID)
 		c.Header("X-Execution-ID", executionID)
-		c.Header("X-HanzoAgents-Request-ID", hanzo-agentsRequestID)
+		c.Header("X-HanzoAgents-Request-ID", hanzoAgentsRequestID)
 		c.Header("X-Agent-Node-ID", nodeID)
 		c.Header("X-Duration-MS", fmt.Sprintf("%d", duration))
 

@@ -139,8 +139,8 @@ func runAddCommandWithOptions(opts *MCPAddOptions, verbose bool) error {
 }
 
 func validateHanzoAgentsProject(projectDir string) error {
-	hanzo-agentsYAMLPath := filepath.Join(projectDir, "hanzo-agents.yaml")
-	if _, err := os.Stat(hanzo-agentsYAMLPath); os.IsNotExist(err) {
+	hanzoAgentsYAMLPath := filepath.Join(projectDir, "hanzo-agents.yaml")
+	if _, err := os.Stat(hanzoAgentsYAMLPath); os.IsNotExist(err) {
 		return fmt.Errorf("not a HanzoAgents project directory (hanzo-agents.yaml not found)")
 	}
 	return nil

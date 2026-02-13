@@ -29,8 +29,8 @@ Examples:
 }
 
 func runListCommand(cmd *cobra.Command, args []string) {
-	hanzo-agentsHome := getHanzoAgentsHomeDir()
-	registryPath := filepath.Join(hanzo-agentsHome, "installed.yaml")
+	hanzoAgentsHome := getHanzoAgentsHomeDir()
+	registryPath := filepath.Join(hanzoAgentsHome, "installed.yaml")
 
 	// Load registry
 	registry := &packages.InstallationRegistry{

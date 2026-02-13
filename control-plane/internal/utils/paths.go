@@ -27,30 +27,30 @@ type DataDirectories struct {
 // It respects environment variables and provides sensible defaults
 func GetHanzoAgentsDataDirectories() (*DataDirectories, error) {
 	// Determine HanzoAgents home directory
-	hanzo-agentsHome := os.Getenv("HANZO_AGENTS_HOME")
-	if hanzo-agentsHome == "" {
+	hanzoAgentsHome := os.Getenv("HANZO_AGENTS_HOME")
+	if hanzoAgentsHome == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return nil, err
 		}
-		hanzo-agentsHome = filepath.Join(homeDir, ".hanzo-agents")
+		hanzoAgentsHome = filepath.Join(homeDir, ".hanzo-agents")
 	}
 
 	// Create the data directories structure
 	dirs := &DataDirectories{
-		HanzoAgentsHome:   hanzo-agentsHome,
-		DataDir:          filepath.Join(hanzo-agentsHome, "data"),
-		DatabaseDir:      filepath.Join(hanzo-agentsHome, "data"),
-		KeysDir:          filepath.Join(hanzo-agentsHome, "data", "keys"),
-		DIDRegistriesDir: filepath.Join(hanzo-agentsHome, "data", "did_registries"),
-		VCsDir:           filepath.Join(hanzo-agentsHome, "data", "vcs"),
-		VCsExecutionsDir: filepath.Join(hanzo-agentsHome, "data", "vcs", "executions"),
-		VCsWorkflowsDir:  filepath.Join(hanzo-agentsHome, "data", "vcs", "workflows"),
-		AgentsDir:        filepath.Join(hanzo-agentsHome, "agents"),
-		LogsDir:          filepath.Join(hanzo-agentsHome, "logs"),
-		ConfigDir:        filepath.Join(hanzo-agentsHome, "config"),
-		TempDir:          filepath.Join(hanzo-agentsHome, "temp"),
-		PayloadsDir:      filepath.Join(hanzo-agentsHome, "data", "payloads"),
+		HanzoAgentsHome:   hanzoAgentsHome,
+		DataDir:          filepath.Join(hanzoAgentsHome, "data"),
+		DatabaseDir:      filepath.Join(hanzoAgentsHome, "data"),
+		KeysDir:          filepath.Join(hanzoAgentsHome, "data", "keys"),
+		DIDRegistriesDir: filepath.Join(hanzoAgentsHome, "data", "did_registries"),
+		VCsDir:           filepath.Join(hanzoAgentsHome, "data", "vcs"),
+		VCsExecutionsDir: filepath.Join(hanzoAgentsHome, "data", "vcs", "executions"),
+		VCsWorkflowsDir:  filepath.Join(hanzoAgentsHome, "data", "vcs", "workflows"),
+		AgentsDir:        filepath.Join(hanzoAgentsHome, "agents"),
+		LogsDir:          filepath.Join(hanzoAgentsHome, "logs"),
+		ConfigDir:        filepath.Join(hanzoAgentsHome, "config"),
+		TempDir:          filepath.Join(hanzoAgentsHome, "temp"),
+		PayloadsDir:      filepath.Join(hanzoAgentsHome, "data", "payloads"),
 	}
 
 	return dirs, nil

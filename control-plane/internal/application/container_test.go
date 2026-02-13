@@ -13,10 +13,10 @@ import (
 func TestCreateServiceContainerWithoutDID(t *testing.T) {
 	t.Parallel()
 
-	hanzo-agentsHome := t.TempDir()
+	hanzoAgentsHome := t.TempDir()
 	cfg := &config.Config{}
 
-	container := CreateServiceContainer(cfg, hanzo-agentsHome)
+	container := CreateServiceContainer(cfg, hanzoAgentsHome)
 
 	if container.PackageService == nil || container.AgentService == nil || container.DevService == nil {
 		t.Fatalf("expected core services to be initialised")
@@ -29,13 +29,13 @@ func TestCreateServiceContainerWithoutDID(t *testing.T) {
 func TestCreateServiceContainerDIDWithoutStorageFallback(t *testing.T) {
 	t.Parallel()
 
-	hanzo-agentsHome := t.TempDir()
+	hanzoAgentsHome := t.TempDir()
 	cfg := &config.Config{}
 	cfg.Features.DID.Enabled = true
-	cfg.Features.DID.Keystore.Path = filepath.Join(hanzo-agentsHome, "keys")
+	cfg.Features.DID.Keystore.Path = filepath.Join(hanzoAgentsHome, "keys")
 	cfg.Storage.Mode = "invalid"
 
-	container := CreateServiceContainer(cfg, hanzo-agentsHome)
+	container := CreateServiceContainer(cfg, hanzoAgentsHome)
 
 	if container.DIDService != nil || container.VCService != nil {
 		t.Fatalf("expected DID services to remain nil when storage initialisation fails")
@@ -45,15 +45,15 @@ func TestCreateServiceContainerDIDWithoutStorageFallback(t *testing.T) {
 func TestCreateServiceContainerWithLocalDID(t *testing.T) {
 	t.Parallel()
 
-	hanzo-agentsHome := t.TempDir()
+	hanzoAgentsHome := t.TempDir()
 	cfg := &config.Config{}
 	cfg.Storage.Mode = "local"
 	cfg.Storage.Local = storagecfg.LocalStorageConfig{
-		DatabasePath: filepath.Join(hanzo-agentsHome, "hanzo-agents.db"),
-		KVStorePath:  filepath.Join(hanzo-agentsHome, "hanzo-agents.bolt"),
+		DatabasePath: filepath.Join(hanzoAgentsHome, "hanzo-agents.db"),
+		KVStorePath:  filepath.Join(hanzoAgentsHome, "hanzo-agents.bolt"),
 	}
 	cfg.Features.DID.Enabled = true
-	cfg.Features.DID.Keystore.Path = filepath.Join(hanzo-agentsHome, "keys")
+	cfg.Features.DID.Keystore.Path = filepath.Join(hanzoAgentsHome, "keys")
 
 	ctx := context.Background()
 	probe := storagecfg.NewLocalStorage(storagecfg.LocalStorageConfig{})
@@ -71,7 +71,7 @@ func TestCreateServiceContainerWithLocalDID(t *testing.T) {
 		t.Fatalf("failed to close probe storage: %v", err)
 	}
 
-	container := CreateServiceContainer(cfg, hanzo-agentsHome)
+	container := CreateServiceContainer(cfg, hanzoAgentsHome)
 
 	if container.DIDService == nil {
 		t.Fatalf("expected DID service to be initialised when configuration is valid")

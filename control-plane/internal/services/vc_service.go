@@ -565,12 +565,12 @@ func (s *VCService) generateWorkflowVCDocument(workflowID string, executionVCs [
 	}
 
 	// Get af server DID as issuer using dynamic resolution
-	hanzo-agentsServerID, err := s.didService.GetHanzoAgentsServerID()
+	hanzoAgentsServerID, err := s.didService.GetHanzoAgentsServerID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get af server ID: %w", err)
 	}
 
-	registry, err := s.didService.GetRegistry(hanzo-agentsServerID)
+	registry, err := s.didService.GetRegistry(hanzoAgentsServerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get af server DID: %w", err)
 	}

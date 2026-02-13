@@ -279,8 +279,8 @@ func TestUnregisterAgentFromMonitoring_NoMonitor(t *testing.T) {
 func TestSyncPackagesFromRegistry(t *testing.T) {
 	storage := newStubPackageStorage()
 
-	hanzo-agentsHome := t.TempDir()
-	pkgDir := filepath.Join(hanzo-agentsHome, "packages", "mypkg")
+	hanzoAgentsHome := t.TempDir()
+	pkgDir := filepath.Join(hanzoAgentsHome, "packages", "mypkg")
 	if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 		t.Fatalf("failed to create package dir: %v", err)
 	}
@@ -291,18 +291,18 @@ func TestSyncPackagesFromRegistry(t *testing.T) {
 	}
 
 	installedContent := []byte("installed:\n  test-package:\n    name: Test Package\n    version: \"1.0.0\"\n    description: Test description\n    path: \"" + pkgDir + "\"\n    source: local\n")
-	if err := os.WriteFile(filepath.Join(hanzo-agentsHome, "installed.yaml"), installedContent, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hanzoAgentsHome, "installed.yaml"), installedContent, 0o644); err != nil {
 		t.Fatalf("failed to write installed.yaml: %v", err)
 	}
 	var reg InstallationRegistry
-	if data, err := os.ReadFile(filepath.Join(hanzo-agentsHome, "installed.yaml")); err == nil {
+	if data, err := os.ReadFile(filepath.Join(hanzoAgentsHome, "installed.yaml")); err == nil {
 		_ = yaml.Unmarshal(data, &reg)
 	}
 	if len(reg.Installed) == 0 {
 		t.Fatal("expected registry to contain installed package")
 	}
 
-	if err := SyncPackagesFromRegistry(hanzo-agentsHome, storage); err != nil {
+	if err := SyncPackagesFromRegistry(hanzoAgentsHome, storage); err != nil {
 		t.Fatalf("SyncPackagesFromRegistry returned error: %v", err)
 	}
 
@@ -313,9 +313,9 @@ func TestSyncPackagesFromRegistry(t *testing.T) {
 
 func TestSyncPackagesFromRegistryMissingFile(t *testing.T) {
 	storage := newStubPackageStorage()
-	hanzo-agentsHome := t.TempDir()
+	hanzoAgentsHome := t.TempDir()
 
-	if err := SyncPackagesFromRegistry(hanzo-agentsHome, storage); err != nil {
+	if err := SyncPackagesFromRegistry(hanzoAgentsHome, storage); err != nil {
 		t.Fatalf("expected nil error when registry file missing, got %v", err)
 	}
 	if len(storage.packages) != 0 {

@@ -37,11 +37,11 @@ func (r *DIDRegistry) Initialize() error {
 
 // GetRegistry retrieves a DID registry for a af server.
 // Returns (nil, nil) if registry doesn't exist, (nil, error) for actual errors.
-func (r *DIDRegistry) GetRegistry(hanzo-agentsServerID string) (*types.DIDRegistry, error) {
+func (r *DIDRegistry) GetRegistry(hanzoAgentsServerID string) (*types.DIDRegistry, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	registry, exists := r.registries[hanzo-agentsServerID]
+	registry, exists := r.registries[hanzoAgentsServerID]
 	if !exists {
 		// Return nil, nil for "not found" to distinguish from actual errors
 		return nil, nil
@@ -76,12 +76,12 @@ func (r *DIDRegistry) ListRegistries() ([]*types.DIDRegistry, error) {
 }
 
 // DeleteRegistry deletes a DID registry for a af server.
-func (r *DIDRegistry) DeleteRegistry(hanzo-agentsServerID string) error {
+func (r *DIDRegistry) DeleteRegistry(hanzoAgentsServerID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	// Remove from memory
-	delete(r.registries, hanzo-agentsServerID)
+	delete(r.registries, hanzoAgentsServerID)
 
 	// TODO: Add database deletion method to storage interface
 	// For now, we'll just remove from memory
@@ -89,13 +89,13 @@ func (r *DIDRegistry) DeleteRegistry(hanzo-agentsServerID string) error {
 }
 
 // UpdateAgentStatus updates the status of an agent DID.
-func (r *DIDRegistry) UpdateAgentStatus(hanzo-agentsServerID, agentNodeID string, status types.AgentDIDStatus) error {
+func (r *DIDRegistry) UpdateAgentStatus(hanzoAgentsServerID, agentNodeID string, status types.AgentDIDStatus) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	registry, exists := r.registries[hanzo-agentsServerID]
+	registry, exists := r.registries[hanzoAgentsServerID]
 	if !exists {
-		return fmt.Errorf("registry not found for af server: %s", hanzo-agentsServerID)
+		return fmt.Errorf("registry not found for af server: %s", hanzoAgentsServerID)
 	}
 
 	agentInfo, exists := registry.AgentNodes[agentNodeID]
@@ -111,13 +111,13 @@ func (r *DIDRegistry) UpdateAgentStatus(hanzo-agentsServerID, agentNodeID string
 }
 
 // FindDIDByComponent finds a DID by component type and function name.
-func (r *DIDRegistry) FindDIDByComponent(hanzo-agentsServerID, componentType, functionName string) (*types.DIDIdentity, error) {
+func (r *DIDRegistry) FindDIDByComponent(hanzoAgentsServerID, componentType, functionName string) (*types.DIDIdentity, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	registry, exists := r.registries[hanzo-agentsServerID]
+	registry, exists := r.registries[hanzoAgentsServerID]
 	if !exists {
-		return nil, fmt.Errorf("registry not found for af server: %s", hanzo-agentsServerID)
+		return nil, fmt.Errorf("registry not found for af server: %s", hanzoAgentsServerID)
 	}
 
 	// Search through all agent nodes
@@ -163,13 +163,13 @@ func (r *DIDRegistry) FindDIDByComponent(hanzo-agentsServerID, componentType, fu
 }
 
 // GetAgentDIDs retrieves all DIDs for a specific agent node.
-func (r *DIDRegistry) GetAgentDIDs(hanzo-agentsServerID, agentNodeID string) (*types.DIDIdentityPackage, error) {
+func (r *DIDRegistry) GetAgentDIDs(hanzoAgentsServerID, agentNodeID string) (*types.DIDIdentityPackage, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	registry, exists := r.registries[hanzo-agentsServerID]
+	registry, exists := r.registries[hanzoAgentsServerID]
 	if !exists {
-		return nil, fmt.Errorf("registry not found for af server: %s", hanzo-agentsServerID)
+		return nil, fmt.Errorf("registry not found for af server: %s", hanzoAgentsServerID)
 	}
 
 	agentInfo, exists := registry.AgentNodes[agentNodeID]
@@ -209,7 +209,7 @@ func (r *DIDRegistry) GetAgentDIDs(hanzo-agentsServerID, agentNodeID string) (*t
 		},
 		ReasonerDIDs:       reasonerDIDs,
 		SkillDIDs:          skillDIDs,
-		HanzoAgentsServerID: hanzo-agentsServerID,
+		HanzoAgentsServerID: hanzoAgentsServerID,
 	}, nil
 }
 
@@ -221,21 +221,21 @@ func (r *DIDRegistry) loadRegistriesFromDatabase() error {
 
 	ctx := context.Background()
 	// Load af server DID information
-	hanzo-agentsServerDIDs, err := r.storageProvider.ListHanzoAgentsServerDIDs(ctx)
+	hanzoAgentsServerDIDs, err := r.storageProvider.ListHanzoAgentsServerDIDs(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list af server DIDs: %w", err)
 	}
 
 	// Create registries for each af server
-	for _, hanzo-agentsServerDIDInfo := range hanzo-agentsServerDIDs {
+	for _, hanzoAgentsServerDIDInfo := range hanzoAgentsServerDIDs {
 		registry := &types.DIDRegistry{
-			HanzoAgentsServerID: hanzo-agentsServerDIDInfo.HanzoAgentsServerID,
-			RootDID:            hanzo-agentsServerDIDInfo.RootDID,
-			MasterSeed:         hanzo-agentsServerDIDInfo.MasterSeed,
+			HanzoAgentsServerID: hanzoAgentsServerDIDInfo.HanzoAgentsServerID,
+			RootDID:            hanzoAgentsServerDIDInfo.RootDID,
+			MasterSeed:         hanzoAgentsServerDIDInfo.MasterSeed,
 			AgentNodes:         make(map[string]types.AgentDIDInfo),
 			TotalDIDs:          0,
-			CreatedAt:          hanzo-agentsServerDIDInfo.CreatedAt,
-			LastKeyRotation:    hanzo-agentsServerDIDInfo.LastKeyRotation,
+			CreatedAt:          hanzoAgentsServerDIDInfo.CreatedAt,
+			LastKeyRotation:    hanzoAgentsServerDIDInfo.LastKeyRotation,
 		}
 
 		// Load agent DIDs for this af server
@@ -252,7 +252,7 @@ func (r *DIDRegistry) loadRegistriesFromDatabase() error {
 			agentInfo := types.AgentDIDInfo{
 				DID:                agentDIDInfo.DID,
 				AgentNodeID:        agentDIDInfo.AgentNodeID,
-				HanzoAgentsServerID: hanzo-agentsServerDIDInfo.HanzoAgentsServerID,
+				HanzoAgentsServerID: hanzoAgentsServerDIDInfo.HanzoAgentsServerID,
 				PublicKeyJWK:       agentDIDInfo.PublicKeyJWK,
 				DerivationPath:     agentDIDInfo.DerivationPath,
 				Status:             agentDIDInfo.Status,
@@ -297,7 +297,7 @@ func (r *DIDRegistry) loadRegistriesFromDatabase() error {
 			registry.TotalDIDs++
 		}
 
-		r.registries[hanzo-agentsServerDIDInfo.HanzoAgentsServerID] = registry
+		r.registries[hanzoAgentsServerDIDInfo.HanzoAgentsServerID] = registry
 	}
 
 	return nil

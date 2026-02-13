@@ -50,14 +50,14 @@ func TestLocalStorageStoreWorkflowExecutionPersistsLifecycleFields(t *testing.T)
 	}
 
 	execID := "exec_test"
-	hanzo-agentsRequestID := "req_test"
+	hanzoAgentsRequestID := "req_test"
 	agentID := "agent_1"
 	reasonerID := "reasoner.alpha"
 
 	exec := &types.WorkflowExecution{
 		WorkflowID:          workflowID,
 		ExecutionID:         execID,
-		HanzoAgentsRequestID: hanzo-agentsRequestID,
+		HanzoAgentsRequestID: hanzoAgentsRequestID,
 		RunID:               &runID,
 		AgentNodeID:         agentID,
 		ReasonerID:          reasonerID,
