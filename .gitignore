@@ -19,6 +19,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!control-plane/web/client/src/lib/
 lib64/
 parts/
 sdist/
