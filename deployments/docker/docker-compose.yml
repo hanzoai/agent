@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hanzo-agents
+      POSTGRES_PASSWORD: hanzo-agents
+      POSTGRES_DB: hanzo-agents
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hanzo-agents"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  control-plane:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.control-plane
+    environment:
+      HANZO_AGENTS_HOME: /data
+      HANZO_AGENTS_CONFIG_FILE: /etc/hanzo-agents/config/hanzo-agents.yaml
+      HANZO_AGENTS_STORAGE_MODE: postgres
+      HANZO_AGENTS_POSTGRES_URL: postgres://hanzo-agents:hanzo-agents@postgres:5432/hanzo-agents?sslmode=disable
+      HANZO_AGENTS_STORAGE_POSTGRES_URL: postgres://hanzo-agents:hanzo-agents@postgres:5432/hanzo-agents?sslmode=disable
+      HANZO_AGENTS_DATABASE_URL: postgres://hanzo-agents:hanzo-agents@postgres:5432/hanzo-agents?sslmode=disable
+      HANZO_AGENTS_HTTP_ADDR: 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - hanzo-agents-data:/data
+
+  demo-go-agent:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.demo-go-agent
+    command: ["serve"]
+    environment:
+      HANZO_AGENTS_URL: http://control-plane:8080
+      AGENT_NODE_ID: demo-go-agent
+      AGENT_LISTEN_ADDR: :8001
+      AGENT_PUBLIC_URL: http://demo-go-agent:8001
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    depends_on:
+      - control-plane
+
+  demo-python-agent:
+    profiles: ["python-demo"]
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.demo-python-agent
+    environment:
+      HANZO_AGENTS_URL: http://control-plane:8080
+      AGENT_NODE_ID: demo-python-agent
+      PORT: "8001"
+      AGENT_CALLBACK_URL: http://demo-python-agent:8001
+    ports:
+      - "8002:8001"
+    restart: unless-stopped
+    depends_on:
+      - control-plane
+
+volumes:
+  pgdata:
+  hanzo-agents-data:
