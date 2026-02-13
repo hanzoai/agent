@@ -410,3 +410,52 @@ type ObservabilityDeadLetterQueueModel struct {
 }
 
 func (ObservabilityDeadLetterQueueModel) TableName() string { return "observability_dead_letter_queue" }
+
+// CloudInstanceModel represents a provisioned cloud instance.
+type CloudInstanceModel struct {
+	ID              string     `gorm:"column:id;primaryKey"`
+	Platform        string     `gorm:"column:platform;not null;index"`
+	State           string     `gorm:"column:state;not null;index"`
+	Provider        string     `gorm:"column:provider;not null;index"`
+	InstanceID      string     `gorm:"column:instance_id;not null;index"`
+	InstanceType    string     `gorm:"column:instance_type"`
+	ImageID         string     `gorm:"column:image_id"`
+	Region          string     `gorm:"column:region"`
+	BotPackage      string     `gorm:"column:bot_package;not null"`
+	BotVersion      string     `gorm:"column:bot_version"`
+	PublicIP        string     `gorm:"column:public_ip"`
+	PrivateIP       string     `gorm:"column:private_ip"`
+	AgentNodeID     string     `gorm:"column:agent_node_id;index"`
+	TeamID          string     `gorm:"column:team_id;not null;index"`
+	DedicatedHostID  string     `gorm:"column:dedicated_host_id;index"`
+	HourlyRateCents  int       `gorm:"column:hourly_rate_cents;default:0"`
+	AccruedCostCents int       `gorm:"column:accrued_cost_cents;default:0"`
+	BillingTier      string    `gorm:"column:billing_tier"`
+	ConnectionInfo   []byte    `gorm:"column:connection_info"`
+	Metadata        []byte     `gorm:"column:metadata"`
+	Tags            []byte     `gorm:"column:tags"`
+	ErrorMessage    string     `gorm:"column:error_message"`
+	RequestedAt     time.Time  `gorm:"column:requested_at;not null"`
+	ProvisionedAt   *time.Time `gorm:"column:provisioned_at"`
+	TerminatedAt    *time.Time `gorm:"column:terminated_at"`
+	CreatedAt       time.Time  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt       time.Time  `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+func (CloudInstanceModel) TableName() string { return "cloud_instances" }
+
+// DedicatedHostModel represents an AWS Dedicated Host for macOS instances.
+type DedicatedHostModel struct {
+	ID                string     `gorm:"column:id;primaryKey"`
+	HostID            string     `gorm:"column:host_id;not null;uniqueIndex"`
+	InstanceType      string     `gorm:"column:instance_type;not null"`
+	State             string     `gorm:"column:state;not null;index"`
+	CurrentInstanceID string     `gorm:"column:current_instance_id;index"`
+	AllocatedAt       *time.Time `gorm:"column:allocated_at"`
+	ReleasedAt        *time.Time `gorm:"column:released_at"`
+	MinAllocationSec  int64      `gorm:"column:min_allocation_sec;not null;default:86400"`
+	CreatedAt         time.Time  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+func (DedicatedHostModel) TableName() string { return "dedicated_hosts" }
