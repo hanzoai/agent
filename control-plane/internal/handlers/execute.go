@@ -115,6 +115,7 @@ type executionController struct {
 	httpClient *http.Client
 	payloads   services.PayloadStore
 	webhooks   services.WebhookDispatcher
+	billing    *services.BillingService
 	eventBus   *events.ExecutionEventBus
 	timeout    time.Duration
 }
@@ -152,36 +153,36 @@ const (
 )
 
 // ExecuteHandler handles synchronous execution requests.
-func ExecuteHandler(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration) gin.HandlerFunc {
-	controller := newExecutionController(store, payloads, webhooks, timeout)
+func ExecuteHandler(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration, billing *services.BillingService) gin.HandlerFunc {
+	controller := newExecutionController(store, payloads, webhooks, timeout, billing)
 	return controller.handleSync
 }
 
 // ExecuteAsyncHandler handles asynchronous execution requests.
-func ExecuteAsyncHandler(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration) gin.HandlerFunc {
-	controller := newExecutionController(store, payloads, webhooks, timeout)
+func ExecuteAsyncHandler(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration, billing *services.BillingService) gin.HandlerFunc {
+	controller := newExecutionController(store, payloads, webhooks, timeout, billing)
 	return controller.handleAsync
 }
 
 // GetExecutionStatusHandler resolves a single execution record.
 func GetExecutionStatusHandler(store ExecutionStore) gin.HandlerFunc {
-	controller := newExecutionController(store, nil, nil, 0)
+	controller := newExecutionController(store, nil, nil, 0, nil)
 	return controller.handleStatus
 }
 
 // BatchExecutionStatusHandler resolves multiple execution records.
 func BatchExecutionStatusHandler(store ExecutionStore) gin.HandlerFunc {
-	controller := newExecutionController(store, nil, nil, 0)
+	controller := newExecutionController(store, nil, nil, 0, nil)
 	return controller.handleBatchStatus
 }
 
 // UpdateExecutionStatusHandler ingests status callbacks from agent nodes.
 func UpdateExecutionStatusHandler(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration) gin.HandlerFunc {
-	controller := newExecutionController(store, payloads, webhooks, timeout)
+	controller := newExecutionController(store, payloads, webhooks, timeout, nil)
 	return controller.handleStatusUpdate
 }
 
-func newExecutionController(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration) *executionController {
+func newExecutionController(store ExecutionStore, payloads services.PayloadStore, webhooks services.WebhookDispatcher, timeout time.Duration, billing *services.BillingService) *executionController {
 	// Use default timeout if not provided (0 or negative)
 	if timeout <= 0 {
 		timeout = 90 * time.Second
@@ -193,6 +194,7 @@ func newExecutionController(store ExecutionStore, payloads services.PayloadStore
 		},
 		payloads: payloads,
 		webhooks: webhooks,
+		billing:  billing,
 		eventBus: store.GetExecutionEventBus(),
 		timeout:  timeout,
 	}
@@ -768,6 +770,7 @@ type preparedExecution struct {
 	targetType        string
 	webhookRegistered bool
 	webhookError      *string
+	billingUserID     string
 }
 
 func (c *executionController) prepareExecution(ctx context.Context, ginCtx *gin.Context) (*preparedExecution, error) {
@@ -889,6 +892,69 @@ func (c *executionController) prepareExecution(ctx context.Context, ginCtx *gin.
 		return nil, fmt.Errorf("create execution record: %w", err)
 	}
 
+	// ── BILLING GATE ─────────────────────────────────────────────────────
+	// Check the user has positive credit before allowing execution.
+	// The user ID comes from the X-Actor-ID header (set by the gateway
+	// from the IAM JWT subject).
+	var billingUserID string
+	if c.billing != nil {
+		// Resolve billing user: prefer ActorID header, fallback to session
+		if headers.actorID != nil && *headers.actorID != "" {
+			billingUserID = *headers.actorID
+		}
+		if billingUserID == "" {
+			ginCtx.JSON(http.StatusUnauthorized, gin.H{
+				"error":        "authentication required for billing",
+				"execution_id": exec.ExecutionID,
+			})
+			return nil, fmt.Errorf("billing: authentication required")
+		}
+
+		available, err := c.billing.CheckBalance(ctx, billingUserID)
+		if err != nil {
+			if errors.Is(err, services.ErrCommerceUnavailable) {
+				ginCtx.JSON(http.StatusServiceUnavailable, gin.H{
+					"error":        "billing service unavailable",
+					"execution_id": exec.ExecutionID,
+				})
+				return nil, fmt.Errorf("billing: commerce unavailable")
+			}
+			ginCtx.JSON(http.StatusInternalServerError, gin.H{
+				"error":        "billing check failed",
+				"execution_id": exec.ExecutionID,
+			})
+			return nil, fmt.Errorf("billing: check balance: %w", err)
+		}
+
+		if available <= 0 {
+			// Mark execution as failed with insufficient funds
+			errMsg := "insufficient funds"
+			_, _ = c.store.UpdateExecutionRecord(ctx, exec.ExecutionID, func(current *types.Execution) (*types.Execution, error) {
+				current.Status = types.ExecutionStatusFailed
+				current.ErrorMessage = &errMsg
+				now := time.Now().UTC()
+				current.CompletedAt = pointerTime(now)
+				current.UpdatedAt = now
+				return current, nil
+			})
+			ginCtx.JSON(http.StatusPaymentRequired, gin.H{
+				"error":        "insufficient funds — add credits to continue",
+				"execution_id": exec.ExecutionID,
+			})
+			return nil, fmt.Errorf("billing: insufficient funds")
+		}
+
+		// Store billing user on the execution for post-execution billing
+		exec.BillingUserID = &billingUserID
+
+		logger.Logger.Info().
+			Str("execution_id", exec.ExecutionID).
+			Str("billing_user", billingUserID).
+			Int64("available_cents", available).
+			Msg("billing gate passed")
+	}
+	// ── END BILLING GATE ─────────────────────────────────────────────────
+
 	var webhookRegistered bool
 	if sanitizedWebhook != nil && webhookError == nil {
 		registration := &types.ExecutionWebhook{
@@ -926,6 +992,7 @@ func (c *executionController) prepareExecution(ctx context.Context, ginCtx *gin.
 		targetType:        targetType,
 		webhookRegistered: webhookRegistered,
 		webhookError:      webhookError,
+		billingUserID:     billingUserID,
 	}, nil
 }
 
@@ -1027,6 +1094,10 @@ func (c *executionController) completeExecution(ctx context.Context, plan *prepa
 				eventData["input"] = inputPayload
 			}
 			c.publishExecutionEventWithReasonerInfo(updated, string(types.ExecutionStatusSucceeded), eventData, plan.agent, &plan.target.TargetName)
+
+			// ── BILLING: charge actual cost after execution ──────────
+			c.billingDebitAfterExecution(ctx, plan, result)
+
 			return nil
 		}
 		lastErr = err
@@ -1083,6 +1154,10 @@ func (c *executionController) failExecution(ctx context.Context, plan *preparedE
 				eventData["input"] = inputPayload
 			}
 			c.publishExecutionEventWithReasonerInfo(updated, string(types.ExecutionStatusFailed), eventData, plan.agent, &plan.target.TargetName)
+
+			// ── BILLING: charge actual cost on failure too (resources consumed) ──
+			c.billingDebitAfterExecution(ctx, plan, result)
+
 			return nil
 		}
 		lastErr = err
@@ -1093,6 +1168,79 @@ func (c *executionController) failExecution(ctx context.Context, plan *preparedE
 		return err
 	}
 	return lastErr
+}
+
+// ── Billing helpers ──────────────────────────────────────────────────────
+
+// agentUsageInfo describes cost data extracted from the agent response.
+type agentUsageInfo struct {
+	Model       string `json:"model"`
+	Provider    string `json:"provider"`
+	TotalTokens int    `json:"total_tokens"`
+	CostCents   int64  `json:"cost_cents"`
+}
+
+// extractCostFromAgentResponse parses the agent response for a "usage" block.
+// Returns zero values if the agent didn't report cost (which means $0 charge).
+func extractCostFromAgentResponse(result []byte) agentUsageInfo {
+	if len(result) == 0 {
+		return agentUsageInfo{}
+	}
+	var parsed struct {
+		Usage *agentUsageInfo `json:"usage"`
+	}
+	if err := json.Unmarshal(result, &parsed); err != nil || parsed.Usage == nil {
+		return agentUsageInfo{}
+	}
+	return *parsed.Usage
+}
+
+// billingDebitAfterExecution charges the user for actual usage.
+// If the agent didn't report cost, $0 is charged (correct — no resources consumed).
+func (c *executionController) billingDebitAfterExecution(ctx context.Context, plan *preparedExecution, result []byte) {
+	if c.billing == nil || plan.billingUserID == "" {
+		return
+	}
+
+	cost := extractCostFromAgentResponse(result)
+	if cost.CostCents <= 0 {
+		return
+	}
+
+	txID, err := c.billing.DebitActualCost(ctx, services.DebitParams{
+		User:        plan.billingUserID,
+		AmountCents: cost.CostCents,
+		Model:       cost.Model,
+		Provider:    cost.Provider,
+		Tokens:      cost.TotalTokens,
+		ExecutionID: plan.exec.ExecutionID,
+		BotID:       plan.target.TargetName,
+	})
+	if err != nil {
+		// Log but don't fail — execution already completed.
+		// A retry mechanism should pick this up.
+		logger.Logger.Error().Err(err).
+			Str("execution_id", plan.exec.ExecutionID).
+			Str("billing_user", plan.billingUserID).
+			Int64("cost_cents", cost.CostCents).
+			Msg("billing debit failed after execution — needs retry")
+		return
+	}
+
+	// Update execution record with billing info (best-effort)
+	_, _ = c.store.UpdateExecutionRecord(ctx, plan.exec.ExecutionID, func(current *types.Execution) (*types.Execution, error) {
+		current.DebitTransactionID = &txID
+		current.ActualCostCents = &cost.CostCents
+		current.UpdatedAt = time.Now().UTC()
+		return current, nil
+	})
+
+	logger.Logger.Info().
+		Str("execution_id", plan.exec.ExecutionID).
+		Str("billing_user", plan.billingUserID).
+		Str("transaction_id", txID).
+		Int64("cost_cents", cost.CostCents).
+		Msg("billing debit recorded")
 }
 
 func (c *executionController) triggerWebhook(executionID string) {
