@@ -307,7 +307,7 @@ func TestUpdateExecutionStatusHandler_ProgressUpdate(t *testing.T) {
 
 func TestWaitForExecutionCompletion_Success(t *testing.T) {
 	store := newTestExecutionStorage(nil)
-	controller := newExecutionController(store, nil, nil, 90*time.Second)
+	controller := newExecutionController(store, nil, nil, 90*time.Second, nil)
 
 	execution := &types.Execution{
 		ExecutionID: "exec-1",
@@ -375,7 +375,7 @@ func TestWaitForExecutionCompletion_Success(t *testing.T) {
 
 func TestWaitForExecutionCompletion_Timeout(t *testing.T) {
 	store := newTestExecutionStorage(nil)
-	controller := newExecutionController(store, nil, nil, 90*time.Second)
+	controller := newExecutionController(store, nil, nil, 90*time.Second, nil)
 
 	execution := &types.Execution{
 		ExecutionID: "exec-1",
@@ -399,7 +399,7 @@ func TestWaitForExecutionCompletion_Timeout(t *testing.T) {
 
 func TestWaitForExecutionCompletion_ContextCancellation(t *testing.T) {
 	store := newTestExecutionStorage(nil)
-	controller := newExecutionController(store, nil, nil, 90*time.Second)
+	controller := newExecutionController(store, nil, nil, 90*time.Second, nil)
 
 	execution := &types.Execution{
 		ExecutionID: "exec-1",
@@ -439,7 +439,7 @@ func TestWaitForExecutionCompletion_ContextCancellation(t *testing.T) {
 func TestWaitForExecutionCompletion_NoEventBus(t *testing.T) {
 	// Create storage without event bus
 	store := &testExecutionStorageWithoutEventBus{}
-	controller := newExecutionController(store, nil, nil, 90*time.Second)
+	controller := newExecutionController(store, nil, nil, 90*time.Second, nil)
 
 	ctx := context.Background()
 	result, err := controller.waitForExecutionCompletion(ctx, "exec-1", 1*time.Second)

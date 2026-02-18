@@ -77,6 +77,8 @@ type HanzoAgentsServer struct {
 	// Cloud provisioning
 	cloudManager             *cloud.CloudManager
 	cloudMonitor             *cloud.CloudInstanceMonitor
+	// Billing
+	billingService           *services.BillingService
 }
 
 // NewHanzoAgentsServer creates a new instance of the HanzoAgentsServer.
@@ -306,6 +308,14 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		logger.Logger.Info().Msg("cloud provisioning enabled")
 	}
 
+	// Initialize billing service — always active for prepaid credit enforcement
+	billingService := services.NewBillingService(services.BillingConfig{
+		CommerceURL: cfg.Billing.CommerceURL,
+		AdminToken:  cfg.Billing.AdminToken,
+		Currency:    cfg.Billing.Currency,
+	})
+	logger.Logger.Info().Str("commerce_url", cfg.Billing.CommerceURL).Msg("billing enforcement active")
+
 	adminPort := cfg.HanzoAgents.Port + 100
 	if envPort := os.Getenv("HANZO_AGENTS_ADMIN_GRPC_PORT"); envPort != "" {
 		if parsedPort, parseErr := strconv.Atoi(envPort); parseErr == nil {
@@ -340,6 +350,7 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		adminGRPCPort:            adminPort,
 		cloudManager:             cloudManager,
 		cloudMonitor:             cloudMonitor,
+		billingService:           billingService,
 	}, nil
 }
 
@@ -1023,11 +1034,14 @@ func (s *HanzoAgentsServer) setupRoutes() {
 		agentAPI.POST("/skills/:skill_id", handlers.ExecuteSkillHandler(s.storage))
 
 		// Unified execution endpoints (path-based)
-		agentAPI.POST("/execute/:target", handlers.ExecuteHandler(s.storage, s.payloadStore, s.webhookDispatcher, s.config.HanzoAgents.ExecutionQueue.AgentCallTimeout))
-		agentAPI.POST("/execute/async/:target", handlers.ExecuteAsyncHandler(s.storage, s.payloadStore, s.webhookDispatcher, s.config.HanzoAgents.ExecutionQueue.AgentCallTimeout))
+		agentAPI.POST("/execute/:target", handlers.ExecuteHandler(s.storage, s.payloadStore, s.webhookDispatcher, s.config.HanzoAgents.ExecutionQueue.AgentCallTimeout, s.billingService))
+		agentAPI.POST("/execute/async/:target", handlers.ExecuteAsyncHandler(s.storage, s.payloadStore, s.webhookDispatcher, s.config.HanzoAgents.ExecutionQueue.AgentCallTimeout, s.billingService))
 		agentAPI.GET("/executions/:execution_id", handlers.GetExecutionStatusHandler(s.storage))
 		agentAPI.POST("/executions/batch-status", handlers.BatchExecutionStatusHandler(s.storage))
 		agentAPI.POST("/executions/:execution_id/status", handlers.UpdateExecutionStatusHandler(s.storage, s.payloadStore, s.webhookDispatcher, s.config.HanzoAgents.ExecutionQueue.AgentCallTimeout))
+
+		// Billing balance proxy (proxies to Commerce with admin token)
+		agentAPI.GET("/billing/balance", handlers.BillingBalanceHandler(s.billingService))
 
 		// Execution notes endpoints for app.note() feature
 		agentAPI.POST("/executions/note", handlers.AddExecutionNoteHandler(s.storage))

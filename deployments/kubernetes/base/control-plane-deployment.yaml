@@ -30,6 +30,15 @@ spec:
               value: "/dev/null"
             - name: HANZO_AGENTS_STORAGE_MODE
               value: "local"
+            - name: BILLING_COMMERCE_URL
+              value: "http://commerce.hanzo.svc.cluster.local:8001"
+            - name: BILLING_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: control-plane-billing
+                  key: admin-token
+            - name: BILLING_CURRENCY
+              value: "usd"
           volumeMounts:
             - name: data
               mountPath: /data

@@ -48,7 +48,7 @@ func TestExecuteHandler_Success(t *testing.T) {
 	payloads := services.NewFilePayloadStore(t.TempDir())
 
 	router := gin.New()
-	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second))
+	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second, nil))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/execute/node-1.reasoner-a", strings.NewReader(`{"input":{"foo":"bar"}}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -100,7 +100,7 @@ func TestExecuteHandler_AgentError(t *testing.T) {
 	payloads := services.NewFilePayloadStore(t.TempDir())
 
 	router := gin.New()
-	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second))
+	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second, nil))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/execute/node-1.reasoner-a", strings.NewReader(`{"input":{"foo":"bar"}}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -135,7 +135,7 @@ func TestExecuteHandler_TargetNotFound(t *testing.T) {
 	payloads := services.NewFilePayloadStore(t.TempDir())
 
 	router := gin.New()
-	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second))
+	router.POST("/api/v1/execute/:target", ExecuteHandler(store, payloads, nil, 90*time.Second, nil))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/execute/node-1.unknown", strings.NewReader(`{"input":{"foo":"bar"}}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -175,7 +175,7 @@ func TestExecuteAsyncHandler_ReturnsAccepted(t *testing.T) {
 	payloads := services.NewFilePayloadStore(t.TempDir())
 
 	router := gin.New()
-	router.POST("/api/v1/execute/async/:target", ExecuteAsyncHandler(store, payloads, nil, 90*time.Second))
+	router.POST("/api/v1/execute/async/:target", ExecuteAsyncHandler(store, payloads, nil, 90*time.Second, nil))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/execute/async/node-1.reasoner-a", strings.NewReader(`{"input":{"foo":"bar"}}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -211,7 +211,7 @@ func TestExecuteAsyncHandler_InvalidJSON(t *testing.T) {
 	payloads := services.NewFilePayloadStore(t.TempDir())
 
 	router := gin.New()
-	router.POST("/api/v1/execute/async/:target", ExecuteAsyncHandler(store, payloads, nil, 90*time.Second))
+	router.POST("/api/v1/execute/async/:target", ExecuteAsyncHandler(store, payloads, nil, 90*time.Second, nil))
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/execute/async/node-1.reasoner-a", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")

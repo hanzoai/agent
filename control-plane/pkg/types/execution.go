@@ -35,6 +35,11 @@ type Execution struct {
 	SessionID *string `json:"session_id,omitempty" db:"session_id"`
 	ActorID   *string `json:"actor_id,omitempty" db:"actor_id"`
 
+	// Billing fields — populated when BILLING_ENABLED=true
+	BillingUserID      *string `json:"billing_user_id,omitempty" db:"billing_user_id"`
+	DebitTransactionID *string `json:"debit_transaction_id,omitempty" db:"debit_transaction_id"`
+	ActualCostCents    *int64  `json:"actual_cost_cents,omitempty" db:"actual_cost_cents"`
+
 	// Notes for debugging and tracking
 	Notes []ExecutionNote `json:"notes,omitempty" db:"notes"`
 

@@ -21,6 +21,15 @@ type Config struct {
 	UI         UIConfig         `yaml:"ui" mapstructure:"ui"`
 	API        APIConfig        `yaml:"api" mapstructure:"api"`
 	Cloud      CloudConfig      `yaml:"cloud" mapstructure:"cloud"`
+	Billing    BillingConfig    `yaml:"billing" mapstructure:"billing"`
+}
+
+// BillingConfig holds prepaid credit billing configuration.
+// Billing is always active — every execution is balance-gated and charged actual cost.
+type BillingConfig struct {
+	CommerceURL string `yaml:"commerce_url" mapstructure:"commerce_url"` // BILLING_COMMERCE_URL
+	AdminToken  string `yaml:"admin_token" mapstructure:"admin_token"`   // BILLING_ADMIN_TOKEN
+	Currency    string `yaml:"currency" mapstructure:"currency"`         // default "usd"
 }
 
 // CloudConfig is an alias of the cloud package's configuration so callers can
@@ -219,5 +228,16 @@ func applyEnvOverrides(cfg *Config) {
 		if d, err := time.ParseDuration(val); err == nil {
 			cfg.HanzoAgents.NodeHealth.HeartbeatStaleThreshold = d
 		}
+	}
+
+	// Billing overrides
+	if val := os.Getenv("BILLING_COMMERCE_URL"); val != "" {
+		cfg.Billing.CommerceURL = val
+	}
+	if val := os.Getenv("BILLING_ADMIN_TOKEN"); val != "" {
+		cfg.Billing.AdminToken = val
+	}
+	if val := os.Getenv("BILLING_CURRENCY"); val != "" {
+		cfg.Billing.Currency = val
 	}
 }
