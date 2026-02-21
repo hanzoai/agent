@@ -140,6 +140,15 @@ type AuthConfig struct {
 	APIKey string `yaml:"api_key" mapstructure:"api_key"`
 	// SkipPaths allows bypassing auth for specific endpoints (e.g., health).
 	SkipPaths []string `yaml:"skip_paths" mapstructure:"skip_paths"`
+
+	// IAM (Casdoor) OAuth configuration
+	IAMEnabled        bool   `yaml:"iam_enabled" mapstructure:"iam_enabled"`
+	IAMEndpoint       string `yaml:"iam_endpoint" mapstructure:"iam_endpoint"`               // Internal endpoint (e.g., http://iam.hanzo.svc:8000)
+	IAMPublicEndpoint string `yaml:"iam_public_endpoint" mapstructure:"iam_public_endpoint"` // External endpoint (e.g., https://hanzo.id)
+	IAMClientID       string `yaml:"iam_client_id" mapstructure:"iam_client_id"`
+	IAMClientSecret   string `yaml:"iam_client_secret" mapstructure:"iam_client_secret"`
+	IAMOrganization   string `yaml:"iam_organization" mapstructure:"iam_organization"`
+	IAMApplication    string `yaml:"iam_application" mapstructure:"iam_application"`
 }
 
 // StorageConfig is an alias of the storage layer's configuration so callers can
@@ -201,6 +210,29 @@ func applyEnvOverrides(cfg *Config) {
 	// Also support the nested path format for consistency
 	if apiKey := os.Getenv("HANZO_AGENTS_API_AUTH_API_KEY"); apiKey != "" {
 		cfg.API.Auth.APIKey = apiKey
+	}
+
+	// IAM Authentication overrides
+	if val := os.Getenv("HANZO_AGENTS_IAM_ENABLED"); val != "" {
+		cfg.API.Auth.IAMEnabled = val == "true" || val == "1"
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_ENDPOINT"); val != "" {
+		cfg.API.Auth.IAMEndpoint = val
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_PUBLIC_ENDPOINT"); val != "" {
+		cfg.API.Auth.IAMPublicEndpoint = val
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_CLIENT_ID"); val != "" {
+		cfg.API.Auth.IAMClientID = val
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_CLIENT_SECRET"); val != "" {
+		cfg.API.Auth.IAMClientSecret = val
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_ORGANIZATION"); val != "" {
+		cfg.API.Auth.IAMOrganization = val
+	}
+	if val := os.Getenv("HANZO_AGENTS_IAM_APPLICATION"); val != "" {
+		cfg.API.Auth.IAMApplication = val
 	}
 
 	// Node health monitoring overrides

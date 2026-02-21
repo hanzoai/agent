@@ -24,7 +24,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver for PostgreSQL
-	_ "github.com/mattn/go-sqlite3"    // Import sqlite3 driver
+	_ "modernc.org/sqlite"             // Import pure-Go sqlite driver
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -531,10 +531,9 @@ func (ls *LocalStorage) initializeSQLite(ctx context.Context) error {
 		busyTimeout = 60000
 	}
 
-	dsn := fmt.Sprintf("%s?_journal_mode=WAL&_synchronous=NORMAL&_cache_size=10000&_foreign_keys=ON&_busy_timeout=%d&_wal_autocheckpoint=1000&_temp_store=MEMORY&_mmap_size=268435456",
-		dbPath, busyTimeout)
+	dsn := fmt.Sprintf("file:%s", dbPath)
 
-	db, err := sql.Open("sqlite3", dsn)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return fmt.Errorf("failed to open SQLite database: %w", err)
 	}
@@ -555,7 +554,14 @@ func (ls *LocalStorage) initializeSQLite(ctx context.Context) error {
 	ls.db.SetConnMaxIdleTime(5 * time.Minute)
 
 	pragmas := []string{
+		fmt.Sprintf("PRAGMA busy_timeout=%d", busyTimeout),
+		"PRAGMA foreign_keys=ON",
+		"PRAGMA journal_mode=WAL",
+		"PRAGMA synchronous=NORMAL",
+		"PRAGMA cache_size=10000",
 		"PRAGMA wal_autocheckpoint=1000",
+		"PRAGMA temp_store=MEMORY",
+		"PRAGMA mmap_size=268435456",
 		"PRAGMA journal_size_limit=67108864",
 		"PRAGMA optimize",
 	}

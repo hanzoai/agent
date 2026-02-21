@@ -264,7 +264,7 @@ export function DIDExplorerPage() {
     const reasonerColumns = [
         {
             key: "name",
-            header: "Reasoner Name",
+            header: "Bot Name",
             sortable: true,
             align: "left" as const,
             render: (reasoner: ComponentDIDInfo) => (
@@ -330,8 +330,8 @@ export function DIDExplorerPage() {
                     title={selectedAgent ? selectedAgent.agent_node_id : "DID Explorer"}
                     description={
                         selectedAgent
-                            ? `Viewing reasoners for agent ${selectedAgent.agent_node_id}`
-                            : "Explore decentralized identifiers for agents and reasoners"
+                            ? `Viewing bots for agent ${selectedAgent.agent_node_id}`
+                            : "Explore decentralized identifiers for agents and bots"
                     }
                     aside={
                         <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export function DIDExplorerPage() {
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                                 <div>
                                     <span className="text-muted-foreground">
-                                        Reasoners:
+                                        Bots:
                                     </span>
                                     <div className="mt-1 font-medium">
                                         {selectedAgentReasoners.length}
@@ -448,7 +448,7 @@ export function DIDExplorerPage() {
                         {/* Reasoners Table */}
                         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                             <h3 className="text-lg font-semibold mb-4 flex-shrink-0">
-                                Reasoners ({selectedAgentReasoners.length})
+                                Bots ({selectedAgentReasoners.length})
                             </h3>
                             <div className="flex-1 overflow-hidden">
                                 <CompactTable
@@ -474,9 +474,9 @@ export function DIDExplorerPage() {
                                 columns={reasonerColumns}
                                 gridTemplate={GRID_TEMPLATE_REASONERS}
                                 emptyState={{
-                                    title: "No reasoners found",
+                                    title: "No bots found",
                                     description:
-                                        "This agent doesn't have any reasoners yet.",
+                                        "This agent doesn't have any bots yet.",
                                     icon: (
                                         <Function className="h-6 w-6 text-muted-foreground" />
                                     ),
@@ -594,7 +594,7 @@ export function DIDExplorerPage() {
                                                             {
                                                                 agent.reasoner_count
                                                             }{" "}
-                                                            reasoners
+                                                            bots
                                                         </Badge>
                                                     </div>
                                                 </div>

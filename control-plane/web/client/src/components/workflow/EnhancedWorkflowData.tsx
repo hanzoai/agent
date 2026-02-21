@@ -591,7 +591,7 @@ export function EnhancedWorkflowData({
           // Left Panel - Search + Node List
           <div key="node-list" className="h-full flex flex-col space-y-4 p-4">
             <Input
-              placeholder="Search by agent, reasoner, execution, or JSON content"
+              placeholder="Search by agent, bot, execution, or JSON content"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full"
@@ -669,7 +669,7 @@ export function EnhancedWorkflowData({
                       size="sm"
                       onClick={handleOpenReasonerPage}
                     >
-                      Go to Reasoner
+                      Go to Bot
                     </Button>
                   )}
                   <Button
