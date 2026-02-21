@@ -26,7 +26,7 @@ func (ls *LocalStorage) initGormDB() error {
 	case "postgres":
 		dialector = postgres.New(postgres.Config{Conn: ls.db.DB})
 	default:
-		dialector = sqlite.Dialector{Conn: ls.db.DB, DriverName: "sqlite3"}
+		dialector = sqlite.Dialector{Conn: ls.db.DB, DriverName: "sqlite"}
 	}
 	gormDB, err := gorm.Open(dialector, &gorm.Config{
 		Logger:         logger.Default.LogMode(logger.Silent),

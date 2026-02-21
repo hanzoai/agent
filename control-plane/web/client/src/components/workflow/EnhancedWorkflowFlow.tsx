@@ -141,7 +141,7 @@ export function EnhancedWorkflowFlow({
       {showSearch && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2">
           <Input
-            placeholder="Search by agent, reasoner, or execution ID..."
+            placeholder="Search by agent, bot, or execution ID..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);

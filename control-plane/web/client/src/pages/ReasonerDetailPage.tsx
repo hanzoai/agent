@@ -97,7 +97,7 @@ export function ReasonerDetailPage() {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load reasoner details"
+        err instanceof Error ? err.message : "Failed to load bot details"
       );
     } finally {
       setLoading(false);
@@ -193,7 +193,7 @@ export function ReasonerDetailPage() {
         <div className="flex flex-col items-center gap-3">
           <InProgress className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="text-body-small">
-            Loading reasoner details...
+            Loading bot details...
           </p>
         </div>
       </div>
@@ -209,7 +209,7 @@ export function ReasonerDetailPage() {
             <div>
               <h3 className="font-semibold text-red-900">Error</h3>
               <p className="text-sm text-red-700">
-                {error || "Reasoner not found"}
+                {error || "Bot not found"}
               </p>
             </div>
           </div>
@@ -330,10 +330,10 @@ export function ReasonerDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Play className="h-5 w-5" />
-                Execute Reasoner
+                Execute Bot
               </CardTitle>
               <CardDescription>
-                Provide input data and execute the reasoner
+                Provide input data and execute the bot
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -358,7 +358,7 @@ export function ReasonerDetailPage() {
                 ) : (
                   <>
                     <Play className="h-4 w-4 mr-2" />
-                    Execute Reasoner
+                    Execute Bot
                   </>
                 )}
               </Button>
@@ -377,7 +377,7 @@ export function ReasonerDetailPage() {
                 <CardHeader>
                   <CardTitle className="text-sm">Input Schema</CardTitle>
                   <CardDescription>
-                    Expected input format for this reasoner
+                    Expected input format for this bot
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -399,7 +399,7 @@ export function ReasonerDetailPage() {
                 <CardHeader>
                   <CardTitle className="text-sm">Output Schema</CardTitle>
                   <CardDescription>
-                    Expected output format from this reasoner
+                    Expected output format from this bot
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

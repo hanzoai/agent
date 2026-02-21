@@ -28,21 +28,24 @@ func RegisterUIRoutes(router *gin.Engine) {
 	}
 
 	fileServer := http.FileServer(http.FS(uiFS))
+	serveIndex := func(c *gin.Context) {
+		indexHTML, err := UIFiles.ReadFile("dist/index.html")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to load UI index",
+			})
+			return
+		}
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, string(indexHTML))
+	}
 
 	router.GET("/ui/*filepath", func(c *gin.Context) {
 		path := c.Param("filepath")
 
 		// If accessing root UI path or a directory, serve index.html
 		if path == "/" || path == "" || strings.HasSuffix(path, "/") {
-			indexHTML, err := UIFiles.ReadFile("dist/index.html")
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to load UI index",
-				})
-				return
-			}
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			c.String(http.StatusOK, string(indexHTML))
+			serveIndex(c)
 			return
 		}
 
@@ -75,38 +78,53 @@ func RegisterUIRoutes(router *gin.Engine) {
 		}
 
 		// For all other paths (SPA routes), serve index.html
-		indexHTML, err := UIFiles.ReadFile("dist/index.html")
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to load UI index",
-			})
+		serveIndex(c)
+	})
+
+	// Root serves the same Canvas SPA as /ui/
+	router.GET("/", func(c *gin.Context) {
+		serveIndex(c)
+	})
+
+	// SPA fallback for both /ui/* and root-based routes.
+	router.NoRoute(func(c *gin.Context) {
+		path := strings.ToLower(c.Request.URL.Path)
+		if strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/metrics") || strings.HasPrefix(path, "/health") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "endpoint not found"})
 			return
 		}
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, string(indexHTML))
-	})
 
-	// Root redirect to embedded UI
-	router.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/ui/")
-	})
+		// Serve static assets regardless of /ui prefix.
+		isStaticAsset := strings.HasSuffix(path, ".js") ||
+			strings.HasSuffix(path, ".css") ||
+			strings.HasSuffix(path, ".html") ||
+			strings.HasSuffix(path, ".ico") ||
+			strings.HasSuffix(path, ".png") ||
+			strings.HasSuffix(path, ".jpg") ||
+			strings.HasSuffix(path, ".jpeg") ||
+			strings.HasSuffix(path, ".gif") ||
+			strings.HasSuffix(path, ".svg") ||
+			strings.HasSuffix(path, ".woff") ||
+			strings.HasSuffix(path, ".woff2") ||
+			strings.HasSuffix(path, ".ttf") ||
+			strings.HasSuffix(path, ".eot") ||
+			strings.HasSuffix(path, ".map") ||
+			strings.HasSuffix(path, ".json") ||
+			strings.HasSuffix(path, ".xml") ||
+			strings.HasSuffix(path, ".txt")
 
-	// SPA fallback - serve index.html for all /ui/* routes that don't match static files
-	router.NoRoute(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/ui/") {
-			indexHTML, err := UIFiles.ReadFile("dist/index.html")
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to load UI",
-				})
+		if isStaticAsset {
+			// /ui/* static files.
+			if strings.HasPrefix(path, "/ui/") {
+				http.StripPrefix("/ui", fileServer).ServeHTTP(c.Writer, c.Request)
 				return
 			}
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			c.String(http.StatusOK, string(indexHTML))
-		} else {
-			// For non-UI paths, return 404
-			c.JSON(http.StatusNotFound, gin.H{"error": "endpoint not found"})
+			// Root static files (for Vite base="/").
+			fileServer.ServeHTTP(c.Writer, c.Request)
+			return
 		}
+
+		serveIndex(c)
 	})
 }
 

@@ -478,7 +478,7 @@ export function CompactWorkflowsTable({
     },
     {
       key: "current_task",
-      header: "Last Reasoner",
+      header: "Last Bot",
       sortable: false,
       align: "left" as const,
       render: (workflow: WorkflowSummary) => (
@@ -567,7 +567,7 @@ export function CompactWorkflowsTable({
       {/* Search */}
       <FastTableSearch
         onSearch={handleSearch}
-        placeholder="Search workflows by name, agent, reasoner, status..."
+        placeholder="Search workflows by name, agent, bot, status..."
         resultCount={filteredWorkflows.length}
         totalCount={workflows.length}
         disabled={loading}

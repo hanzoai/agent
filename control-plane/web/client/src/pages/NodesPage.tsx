@@ -128,7 +128,7 @@ export function NodesPage() {
     } catch (err) {
       console.error("Failed to load nodes summary:", err);
       setError(
-        "Failed to load agent nodes. Please ensure the Hanzo Agents server is running and accessible."
+        "Failed to load nodes. Please ensure the Hanzo Bot server is running and accessible."
       );
     } finally {
       setIsLoading(false);
@@ -538,7 +538,7 @@ export function NodesPage() {
     ? `Showing ${filteredNodes.length} result${
         filteredNodes.length === 1 ? "" : "s"
       } for "${searchQuery}"`
-    : "Monitor and manage your AI agent nodes in the Hanzo Agents orchestration platform.";
+    : "Monitor and manage your nodes in the Hanzo Bot orchestration platform.";
 
   const connectionBadgeVariant = connected
     ? "success"
@@ -595,7 +595,7 @@ export function NodesPage() {
     <>
       <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
         <PageHeader
-          title="Agent Nodes"
+          title="Nodes"
           description={headerSubtitle}
           actions={pageHeaderActions}
           aside={

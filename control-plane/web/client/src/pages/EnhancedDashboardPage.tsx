@@ -351,7 +351,7 @@ export function EnhancedDashboardPage() {
         </ResponsiveGrid.Item>
       </ResponsiveGrid>
 
-      {/* Row 3: Detailed drill-downs - Workflow Insights + Reasoner Activity */}
+      {/* Row 3: Detailed drill-downs - Workflow Insights + Bot Activity */}
       <ResponsiveGrid
         columns={{ base: 1, md: 6, lg: 12 }}
         flow="dense"
@@ -858,7 +858,7 @@ function ReasonerActivityPanel({
     <Card variant="surface" interactive={false} className="flex h-full flex-col">
       <CardHeader className="space-y-4 p-5 pb-2">
         <CardTitle className="flex items-center gap-2">
-          <Cpu className="h-4 w-4" /> Reasoner activity
+          <Cpu className="h-4 w-4" /> Bot activity
         </CardTitle>
         <div className="grid grid-cols-3 gap-2 text-center text-body-small uppercase tracking-wide text-text-tertiary">
           <StatusCounter
@@ -881,7 +881,7 @@ function ReasonerActivityPanel({
       <CardContent className="flex flex-1 flex-col gap-4 min-h-0 p-5 pt-0">
         {reasoners.length === 0 ? (
           <p className="text-body-small">
-            No recent reasoner activity. Trigger a workflow or execution to
+            No recent bot activity. Trigger a workflow or execution to
             populate this view.
           </p>
         ) : (
