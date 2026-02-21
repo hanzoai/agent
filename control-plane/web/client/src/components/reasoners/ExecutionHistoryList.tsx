@@ -133,7 +133,7 @@ export function ExecutionHistoryList({ history, onLoadMore }: ExecutionHistoryLi
   if (executions.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>No executions found for this reasoner.</p>
+        <p>No executions found for this bot.</p>
       </div>
     );
   }

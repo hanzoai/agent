@@ -119,7 +119,7 @@ export function CompactExecutionHeader({
             </code>
             <CopyButton
               value={execution.agent_node_id}
-              tooltip="Copy agent node ID"
+              tooltip="Copy node ID"
               className="opacity-0 transition-opacity duration-150 group-hover:opacity-100 h-6 w-6 rounded-md [&_svg]:!h-3 [&_svg]:!w-3"
             />
           </div>

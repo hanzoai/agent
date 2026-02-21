@@ -176,7 +176,7 @@ export function ReasonersSkillsTable({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Function className="w-5 h-5 text-muted-foreground" />
-            Reasoners & Skills
+            Bots & Skills
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -185,7 +185,7 @@ export function ReasonersSkillsTable({
               <Function className="w-8 h-8 opacity-50" />
               <Tools className="w-8 h-8 opacity-50" />
             </div>
-            <p className="text-sm">No reasoners or skills available</p>
+            <p className="text-sm">No bots or skills available</p>
           </div>
         </CardContent>
       </Card>
@@ -198,7 +198,7 @@ export function ReasonersSkillsTable({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Function className="w-5 h-5 text-muted-foreground" />
-            Reasoners & Skills
+            Bots & Skills
             <Badge variant="outline" className="ml-2 text-xs">
               {filteredItems.length}
             </Badge>
@@ -207,11 +207,11 @@ export function ReasonersSkillsTable({
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Search reasoners and skills..."
+              placeholder="Search bots and skills..."
               size="sm"
               wrapperClassName="w-64"
               inputClassName="border border-border bg-background focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring"
-              clearButtonAriaLabel="Clear reasoner and skill search"
+              clearButtonAriaLabel="Clear bot and skill search"
             />
             {copyFeedback && (
               <div className="text-sm text-status-success bg-status-success-bg border border-status-success-border rounded-md px-3 py-1">
@@ -241,7 +241,7 @@ export function ReasonersSkillsTable({
                   item.type === "reasoner" && nodeId && "cursor-pointer"
                 )}
                 onClick={(event) => handleRowClick(item, event)}
-                title={item.type === "reasoner" && nodeId ? `Click to view ${item.name} details` : undefined}
+                title={item.type === "reasoner" && nodeId ? `Click to view ${item.name} bot details` : undefined}
               >
                 <TableCell>
                   <div className="flex items-center justify-center">
@@ -265,7 +265,7 @@ export function ReasonersSkillsTable({
                           : "bg-blue-500/10 text-blue-500 border-blue-500/20"
                       )}
                     >
-                      {item.type}
+                      {item.type === "reasoner" ? "bot" : item.type}
                     </Badge>
                   </div>
                 </TableCell>

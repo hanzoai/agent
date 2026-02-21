@@ -152,7 +152,7 @@ export function ExecutionHero({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 p-0 hover:bg-muted/80 [&_svg]:h-3 [&_svg]:w-3"
-                    tooltip="Copy agent node ID"
+                    tooltip="Copy node ID"
                   />
                 </div>
 
@@ -234,7 +234,7 @@ export function ExecutionHero({
               className="flex items-center gap-2 h-8"
             >
               <BracketsCurly className="w-4 h-4" />
-              Reasoner
+              Bot
             </Button>
 
             <Button
@@ -244,7 +244,7 @@ export function ExecutionHero({
               className="flex items-center gap-2 h-8"
             >
               <ShareNetwork className="w-4 h-4" />
-              Agent Node
+              Node
             </Button>
           </div>
 

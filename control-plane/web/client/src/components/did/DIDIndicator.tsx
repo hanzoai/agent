@@ -92,7 +92,7 @@ export function DIDIndicator({
           </div>
           <div className="flex items-center gap-1.5 text-body-small">
             <Cognitive size={12} />
-            <span>{status.reasoner_count} reasoners verified</span>
+            <span>{status.reasoner_count} bots verified</span>
           </div>
         </div>
     </div>
@@ -166,13 +166,13 @@ export function NodeDIDCard({ nodeId, className = "" }: NodeDIDCardProps) {
         </div>
         <div className="flex items-center gap-1.5 text-body-small">
           <Cognitive size={12} />
-          <span>{status.reasoner_count} reasoners</span>
+          <span>{status.reasoner_count} bots</span>
         </div>
       </div>
 
       <div className="text-body-small">
         Node has verified identity and {status.reasoner_count} verified
-        reasoners
+        bots
       </div>
     </div>
   );

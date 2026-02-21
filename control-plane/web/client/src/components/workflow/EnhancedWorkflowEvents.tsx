@@ -284,7 +284,7 @@ export function EnhancedWorkflowEvents({
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-border">
         <div className="flex flex-wrap items-center gap-3">
           <Input
-            placeholder="Search by agent, reasoner, execution, or note content"
+            placeholder="Search by agent, bot, execution, or note content"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-72"

@@ -160,7 +160,7 @@ export function DIDIdentityCard({
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <span>🧠</span>
-                Reasoners ({reasoners.length})
+                Bots ({reasoners.length})
               </h4>
               <div className="space-y-2 pl-4 border-l-2 border-blue-100">
                 {reasoners.map(([functionName, reasoner]) => (
@@ -168,7 +168,7 @@ export function DIDIdentityCard({
                     key={functionName}
                     functionName={functionName}
                     reasoner={reasoner}
-                    onCopyDID={(did) => handleCopyDID(did, "Reasoner")}
+                    onCopyDID={(did) => handleCopyDID(did, "Bot")}
                   />
                 ))}
               </div>

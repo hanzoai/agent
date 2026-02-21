@@ -65,7 +65,7 @@ const VIEW_MODES: ViewMode[] = [
   {
     id: 'agents',
     label: 'Agents',
-    description: 'Grouped by agent nodes',
+    description: 'Grouped by nodes',
     icon: 'tree',
   },
 ];

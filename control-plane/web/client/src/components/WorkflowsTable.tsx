@@ -522,7 +522,7 @@ export function WorkflowsTable({
                 Workflow
               </div>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Last Reasoner
+                Last Bot
               </div>
               <SortableHeaderCell
                 label="Nodes"

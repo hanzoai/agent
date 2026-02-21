@@ -99,13 +99,13 @@ export function CompactExecutionsTable({
     },
     {
       key: "task_name",
-      header: "Reasoner",
+      header: "Bot",
       sortable: true,
       align: "left" as const,
       render: (execution: EnhancedExecution) => (
         <div className="min-w-0 flex items-center gap-2">
           <span className="truncate text-sm font-medium text-primary-foundation">
-            {execution.task_name || "Unknown Reasoner"}
+            {execution.task_name || "Unknown Bot"}
           </span>
           <span className="text-tertiary-foundation text-xs">•</span>
           <div className="flex items-center gap-1.5 text-tertiary-foundation min-w-0">
@@ -186,7 +186,7 @@ export function CompactExecutionsTable({
       {/* Search */}
       <FastTableSearch
         onSearch={handleSearch}
-        placeholder={isMobile ? "Search executions..." : "Search executions by reasoner, agent, ID, status..."}
+        placeholder={isMobile ? "Search executions..." : "Search executions by bot, agent, ID, status..."}
         resultCount={filteredExecutions.length}
         totalCount={executions.length}
         disabled={loading}

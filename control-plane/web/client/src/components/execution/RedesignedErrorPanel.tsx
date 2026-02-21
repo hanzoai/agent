@@ -132,8 +132,8 @@ export function RedesignedErrorPanel({ execution }: RedesignedErrorPanelProps) {
           </h5>
           <ul className="text-body-small space-y-1">
             <li>• Check the input data format and validation</li>
-            <li>• Review the reasoner implementation for this error type</li>
-            <li>• Verify agent node connectivity and dependencies</li>
+            <li>• Review the bot implementation for this error type</li>
+            <li>• Verify node connectivity and dependencies</li>
             <li>• Check system logs for additional context</li>
           </ul>
         </div>

@@ -308,7 +308,7 @@ const NodeCard = memo(
           nodeSummary.id
         }. Status: ${getStatusText()}. ${
           nodeSummary.reasoner_count
-        } reasoners, ${nodeSummary.skill_count} skills.`}
+        } bots, ${nodeSummary.skill_count} skills.`}
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-start justify-between gap-3">
@@ -420,7 +420,7 @@ const NodeCard = memo(
           <div className="flex items-center gap-1.5">
             <Code className="h-4 w-4" />
             <span>
-              {reasonerCount} reasoner{reasonerCount === 1 ? "" : "s"}
+              {reasonerCount} bot{reasonerCount === 1 ? "" : "s"}
             </span>
           </div>
           <div className="flex items-center gap-1.5">

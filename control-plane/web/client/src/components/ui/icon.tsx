@@ -18,6 +18,7 @@ import {
   FileText,
   GithubLogo,
   Question,
+  Bot,
 } from "@/components/ui/icon-bridge";
 import type { IconComponent, IconWeight } from "@/components/ui/icon-bridge";
 
@@ -40,6 +41,7 @@ const icons = {
   documentation: FileText,
   github: GithubLogo,
   support: Question,
+  bot: Bot,
 } as const;
 
 export interface IconProps {

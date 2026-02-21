@@ -1,4 +1,5 @@
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { SidebarNew } from "./components/Navigation/SidebarNew";
 import { TopNavigation } from "./components/Navigation/TopNavigation";
 import { RootRedirect } from "./components/RootRedirect";
@@ -21,25 +22,14 @@ import { WorkflowDeckGLTestPage } from "./pages/WorkflowDeckGLTestPage";
 import { DIDExplorerPage } from "./pages/DIDExplorerPage";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { ObservabilityWebhookSettingsPage } from "./pages/ObservabilityWebhookSettingsPage";
+import { MarketPage } from "./pages/MarketPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AuthGuard } from "./components/AuthGuard";
+import { SpaceProvider } from "./contexts/SpaceContext";
+import { CommandPalette } from "./components/command-palette/CommandPalette";
+import { useCommandItems } from "./hooks/useCommandItems";
 
-// Placeholder pages for new routes
-
-function AgentsPage() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-center">
-        <h2 className="text-heading-1 mb-2">
-          My Agents
-        </h2>
-        <p className="text-body">
-          Your configured and running agents
-        </p>
-      </div>
-    </div>
-  );
-}
+import { AgentCanvasPage } from "./pages/AgentCanvasPage";
 
 function SettingsPage() {
   return (
@@ -57,21 +47,18 @@ function SettingsPage() {
 }
 
 function AppContent() {
-  // Use focus management hook to ensure trackpad navigation works
   useFocusManagement();
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+  const commandItems = useCommandItems({});
 
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-background text-foreground transition-colors">
-        {/* Sidebar */}
         <SidebarNew sections={navigationSections} />
 
-        {/* Main Content */}
         <SidebarInset>
-          {/* Top Navigation */}
-          <TopNavigation />
+          <TopNavigation onCommandPalette={() => setCmdkOpen(true)} />
 
-          {/* Main Content Area */}
           <main className="flex flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden">
             <Routes>
               <Route path="/" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><RootRedirect /></div>} />
@@ -95,7 +82,10 @@ function AppContent() {
               />
               <Route path="/packages" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><PackagesPage /></div>} />
               <Route path="/settings" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><SettingsPage /></div>} />
-              <Route path="/agents" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><AgentsPage /></div>} />
+              <Route path="/playground" element={<div className="flex-1 min-h-full"><AgentCanvasPage /></div>} />
+              <Route path="/agents" element={<Navigate to="/playground" replace />} />
+              <Route path="/canvas" element={<Navigate to="/playground" replace />} />
+              <Route path="/market" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><MarketPage /></div>} />
               <Route path="/identity/dids" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><DIDExplorerPage /></div>} />
               <Route path="/identity/credentials" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><CredentialsPage /></div>} />
               <Route path="/settings/observability-webhook" element={<div className="p-4 md:p-6 lg:p-8 min-h-full"><ObservabilityWebhookSettingsPage /></div>} />
@@ -104,11 +94,20 @@ function AppContent() {
           </main>
         </SidebarInset>
       </div>
+
+      {/* Global command palette */}
+      <CommandPalette items={commandItems} open={cmdkOpen} onOpenChange={setCmdkOpen} />
     </SidebarProvider>
   );
 }
 
 function App() {
+  const runtimeBasename =
+    (typeof window !== "undefined" &&
+      (window.location.pathname === "/ui" || window.location.pathname.startsWith("/ui/")))
+      ? "/ui"
+      : "/";
+
   return (
     <ThemeProvider
       attribute="class"
@@ -117,13 +116,15 @@ function App() {
       disableTransitionOnChange
     >
       <ModeProvider>
-        <AuthProvider>
-          <AuthGuard>
-            <Router basename={import.meta.env.VITE_BASE_PATH || "/ui"}>
-              <AppContent />
-            </Router>
-          </AuthGuard>
-        </AuthProvider>
+        <SpaceProvider>
+          <AuthProvider>
+            <AuthGuard>
+              <Router basename={import.meta.env.VITE_BASE_PATH || runtimeBasename}>
+                <AppContent />
+              </Router>
+            </AuthGuard>
+          </AuthProvider>
+        </SpaceProvider>
       </ModeProvider>
     </ThemeProvider>
   );

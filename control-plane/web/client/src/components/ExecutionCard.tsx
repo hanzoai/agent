@@ -134,7 +134,7 @@ export function ExecutionCard({ execution, onViewDetails, compact = false }: Exe
               <div className="font-medium">{execution.agent_node_id}</div>
             </div>
             <div>
-              <div className="text-muted-foreground">Reasoner</div>
+              <div className="text-muted-foreground">Bot</div>
               <div className="font-medium">{execution.reasoner_id}</div>
             </div>
             <div>

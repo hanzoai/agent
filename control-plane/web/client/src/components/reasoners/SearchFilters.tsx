@@ -47,7 +47,7 @@ export function SearchFilters({
     <div className="bg-[var(--bg-tertiary)] border border-[var(--border-secondary)] rounded-xl p-4 mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[var(--text-primary)] font-medium text-sm">Filter Reasoners</h2>
+        <h2 className="text-[var(--text-primary)] font-medium text-sm">Filter Bots</h2>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -63,7 +63,7 @@ export function SearchFilters({
         <SearchBar
           value={searchInput}
           onChange={setSearchInput}
-          placeholder="Search reasoners..."
+          placeholder="Search bots..."
           size="md"
           wrapperClassName="w-full"
           inputClassName={`
@@ -72,7 +72,7 @@ export function SearchFilters({
             focus-visible:ring-1 focus-visible:ring-[var(--input-focus)]
             focus-visible:border-[var(--input-focus)]
           `}
-          clearButtonAriaLabel="Clear reasoner search"
+          clearButtonAriaLabel="Clear bot search"
         />
       </div>
 
@@ -133,14 +133,14 @@ export function SearchFilters({
         <div className="text-[var(--text-secondary)]">
           {safeFilters.search ? (
             <>
-              Found <span className="text-[var(--text-primary)] font-medium">{safeTotalCount}</span> reasoners
+              Found <span className="text-[var(--text-primary)] font-medium">{safeTotalCount}</span> bots
               {safeFilters.search && (
                 <> matching "<span className="text-[var(--text-primary)] font-medium">{safeFilters.search}</span>"</>
               )}
             </>
           ) : (
             <>
-              Showing <span className="text-[var(--text-primary)] font-medium">{safeTotalCount}</span> reasoners
+              Showing <span className="text-[var(--text-primary)] font-medium">{safeTotalCount}</span> bots
             </>
           )}
         </div>
