@@ -613,7 +613,7 @@ export function ObservabilityWebhookSettingsPage() {
               </ul>
             </div>
             <div className="space-y-2">
-              <h4 className="font-medium">Reasoner Events</h4>
+              <h4 className="font-medium">Bot Events</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>reasoner_online</li>
                 <li>reasoner_offline</li>

@@ -28,6 +28,7 @@ import (
 	infrastorage "github.com/hanzoai/agents/control-plane/internal/infrastructure/storage"
 	"github.com/hanzoai/agents/control-plane/internal/logger"
 	"github.com/hanzoai/agents/control-plane/internal/server/middleware"
+	"github.com/hanzoai/agents/control-plane/internal/server/routes"
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
@@ -727,13 +728,34 @@ func (s *HanzoAgentsServer) setupRoutes() {
 		c.Next()
 	})
 
-	// API key authentication middleware (supports headers + api_key query param)
-	s.Router.Use(middleware.APIKeyAuth(middleware.AuthConfig{
+	// Register IAM/OAuth auth routes BEFORE auth middleware (they must be unauthenticated).
+	routes.RegisterAuthRoutes(s.Router, s.config.API.Auth)
+
+	// Combined authentication middleware: tries IAM first, then API key.
+	iamConfig := middleware.IAMConfig{
+		Enabled:        s.config.API.Auth.IAMEnabled,
+		Endpoint:       s.config.API.Auth.IAMEndpoint,
+		PublicEndpoint: s.config.API.Auth.IAMPublicEndpoint,
+		ClientID:       s.config.API.Auth.IAMClientID,
+		ClientSecret:   s.config.API.Auth.IAMClientSecret,
+		Organization:   s.config.API.Auth.IAMOrganization,
+		Application:    s.config.API.Auth.IAMApplication,
+	}
+	apiKeyConfig := middleware.AuthConfig{
 		APIKey:    s.config.API.Auth.APIKey,
 		SkipPaths: s.config.API.Auth.SkipPaths,
-	}))
+	}
+	s.Router.Use(middleware.CombinedAuth(iamConfig, apiKeyConfig))
+
+	if s.config.API.Auth.IAMEnabled {
+		logger.Logger.Info().
+			Str("iam_endpoint", s.config.API.Auth.IAMEndpoint).
+			Str("iam_public_endpoint", s.config.API.Auth.IAMPublicEndpoint).
+			Str("iam_application", s.config.API.Auth.IAMApplication).
+			Msg("IAM (Casdoor) authentication enabled")
+	}
 	if s.config.API.Auth.APIKey != "" {
-		logger.Logger.Info().Msg("🔐 API key authentication enabled")
+		logger.Logger.Info().Msg("API key authentication enabled")
 	}
 
 	// Expose Prometheus metrics

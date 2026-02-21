@@ -13,7 +13,7 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
   const developerItems = [
     {
       id: "nodes",
-      label: "Agent Nodes",
+      label: "Nodes",
       icon: Network_3,
       description: "Monitor and manage AI agent nodes",
       disabled: false,

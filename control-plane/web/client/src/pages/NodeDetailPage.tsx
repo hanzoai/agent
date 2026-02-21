@@ -655,7 +655,7 @@ function NodeDetailPageContent() {
   );
 
   const headerMetadata: Array<{ label: string; value: string }> = [
-    { label: "Reasoners", value: String(reasonerCount) },
+    { label: "Bots", value: String(reasonerCount) },
     { label: "Skills", value: String(skillCount) },
     {
       label: "MCP",
@@ -841,7 +841,7 @@ function NodeDetailPageContent() {
                 <CardHeader>
                   <CardTitle>Node Information</CardTitle>
                   <CardDescription>
-                    Comprehensive details about this agent node
+                    Comprehensive details about this node
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

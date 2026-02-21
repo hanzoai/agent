@@ -29,7 +29,7 @@ export function ExecutionResult({ result, error, loading }: ExecutionResultProps
       <div className="flex items-center justify-center py-8">
         <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-body-small">Executing reasoner...</p>
+          <p className="text-body-small">Executing bot...</p>
         </div>
       </div>
     );
@@ -50,7 +50,7 @@ export function ExecutionResult({ result, error, loading }: ExecutionResultProps
   if (!result) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>No execution result yet. Click "Execute Reasoner" to run.</p>
+        <p>No execution result yet. Click "Execute Bot" to run.</p>
       </div>
     );
   }

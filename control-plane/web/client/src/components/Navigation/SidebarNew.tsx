@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
+import { brand } from "@/config/branding";
 
 interface SidebarNewProps {
   sections: NavigationSection[];
@@ -34,11 +35,11 @@ export function SidebarNew({ sections }: SidebarNewProps) {
             <SidebarMenuButton size="lg" asChild className="active:scale-[0.98] transition-transform">
               <NavLink to="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
-                  <Icon name="dashboard" size={16} />
+                  <img src={brand.logoUrl} alt={brand.name} className="size-4 invert" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold tracking-tight">Hanzo Agents</span>
-                  <span className="truncate text-[10px] text-muted-foreground font-mono">v1.0.0</span>
+                  <span className="truncate font-semibold tracking-tight">{brand.name}</span>
+                  <span className="truncate text-[10px] text-muted-foreground font-mono">{brand.version}</span>
                 </div>
               </NavLink>
             </SidebarMenuButton>
@@ -104,6 +105,14 @@ export function SidebarNew({ sections }: SidebarNewProps) {
 
       <SidebarFooter className="border-t border-border/40 pt-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Flow Builder">
+              <a href="https://flow.hanzo.ai" target="_blank" rel="noopener noreferrer">
+                <Icon name="flow-data" size={15} className="text-muted-foreground" />
+                <span>Flow Builder</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Documentation">
               <a href="https://hanzo-agents.ai/docs" target="_blank" rel="noopener noreferrer">

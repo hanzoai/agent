@@ -69,7 +69,7 @@ export function ReasonerCard({ reasoner, onClick }: ReasonerCardProps) {
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      aria-label={`View reasoner ${reasoner.name}`}
+      aria-label={`View bot ${reasoner.name}`}
       className={cn(
         "group flex h-full flex-col gap-4 p-4 transition-transform duration-200 cursor-pointer",
         "hover:-translate-y-[1px]",

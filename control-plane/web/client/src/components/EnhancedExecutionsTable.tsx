@@ -241,7 +241,7 @@ export function EnhancedExecutionsTable({
                 onSortChange={onSortChange}
               />
               <SortableHeaderCell
-                label="Reasoner"
+                label="Bot"
                 field="task_name"
                 sortBy={sortBy}
                 sortOrder={sortOrder}
@@ -319,7 +319,7 @@ export function EnhancedExecutionsTable({
                       <div className="flex items-center min-w-0">
                         <div className="flex flex-col min-w-0">
                           <div className="truncate font-medium text-sm">
-                            {execution.task_name || "Unknown Reasoner"}
+                            {execution.task_name || "Unknown Bot"}
                           </div>
                           <div className="flex items-center gap-2 text-body-small">
                             <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[10px] font-medium">

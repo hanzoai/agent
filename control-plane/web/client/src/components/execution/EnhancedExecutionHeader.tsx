@@ -292,7 +292,7 @@ export function EnhancedExecutionHeader({
                 variant="ghost"
                 size="icon"
                 className="h-4 w-4 p-0 opacity-0 transition-opacity group-hover:opacity-100 [&_svg]:h-3 [&_svg]:w-3"
-                tooltip="Copy agent node ID"
+                tooltip="Copy node ID"
               />
             </div>
 

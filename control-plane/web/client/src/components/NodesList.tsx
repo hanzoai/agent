@@ -28,7 +28,7 @@ const NodesList: React.FC = () => {
       setTotalCount(data.count);
     } catch (err) {
       console.error('Failed to load nodes summary:', err);
-      setError('Failed to load agent nodes. Please ensure the Hanzo Agents server is running and accessible.');
+      setError('Failed to load agent nodes. Please ensure the Hanzo Bot server is running and accessible.');
     } finally {
       setIsLoading(false);
     }

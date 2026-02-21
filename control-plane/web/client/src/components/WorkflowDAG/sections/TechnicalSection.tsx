@@ -73,13 +73,13 @@ export function TechnicalSection({
       icon: <Code size={14} className="text-muted-foreground" />,
     },
     {
-      label: "Agent Node ID",
+      label: "Node ID",
       value: node.agent_node_id,
       copyable: true,
       icon: <Chip size={14} className="text-muted-foreground" />,
     },
     {
-      label: "Reasoner ID",
+      label: "Bot ID",
       value: node.reasoner_id,
       copyable: true,
       icon: <Settings size={14} className="text-muted-foreground" />,
@@ -287,7 +287,7 @@ export function TechnicalSection({
                 Node Type
               </span>
               <span className="text-muted-foreground font-mono">
-                Reasoner Execution
+                Bot Execution
               </span>
             </div>
             <div className="flex justify-between">

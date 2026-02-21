@@ -89,7 +89,7 @@ export function AllReasonersPage() {
             setError(err.message);
           }
         } else {
-          setError("An unexpected error occurred while fetching reasoners");
+          setError("An unexpected error occurred while fetching bots");
         }
         console.error("Failed to fetch reasoners:", err);
       } finally {
@@ -294,8 +294,8 @@ export function AllReasonersPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="All Reasoners"
-        description="Browse and execute reasoners across all connected agent nodes."
+        title="All Bots"
+        description="Browse and execute bots across all connected nodes."
         aside={
           <div className="flex flex-wrap items-center gap-4">
             <SegmentedControl

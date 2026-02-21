@@ -172,7 +172,7 @@ export function DIDInfoModal({ nodeId, isOpen, onClose }: DIDInfoModalProps) {
             <DIDStatusBadge status={didInfo.status} />
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Comprehensive DID identity details for agent node {nodeId}
+            Comprehensive DID identity details for node {nodeId}
           </DialogDescription>
         </DialogHeader>
 
@@ -192,7 +192,7 @@ export function DIDInfoModal({ nodeId, isOpen, onClose }: DIDInfoModalProps) {
           <TabsList variant="underline" className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" variant="underline">Overview</TabsTrigger>
             <TabsTrigger value="reasoners" variant="underline">
-              Reasoners ({reasoners.length})
+              Bots ({reasoners.length})
             </TabsTrigger>
             <TabsTrigger value="skills" variant="underline">Skills ({skills.length})</TabsTrigger>
             <TabsTrigger value="technical" variant="underline">Technical</TabsTrigger>
@@ -277,7 +277,7 @@ export function DIDInfoModal({ nodeId, isOpen, onClose }: DIDInfoModalProps) {
                         {reasoners.length}
                       </div>
                       <div className="text-body-small font-medium">
-                        Reasoners
+                        Bots
                       </div>
                     </div>
                     <div className="text-center p-4 bg-muted border border-border rounded-xl">
@@ -311,7 +311,7 @@ export function DIDInfoModal({ nodeId, isOpen, onClose }: DIDInfoModalProps) {
                     key={functionName}
                     functionName={functionName}
                     reasoner={reasoner}
-                    onCopyDID={(did) => handleCopyDID(did, "Reasoner")}
+                    onCopyDID={(did) => handleCopyDID(did, "Bot")}
                     onViewDocument={() => handleViewDIDDocument(reasoner.did)}
                     loadingDocument={loadingDocument === reasoner.did}
                   />
@@ -323,10 +323,10 @@ export function DIDInfoModal({ nodeId, isOpen, onClose }: DIDInfoModalProps) {
                   <Function size={32} className="text-blue-500" />
                 </div>
                 <h3 className="text-heading-3 text-foreground mb-2">
-                  No Reasoners
+                  No Bots
                 </h3>
                 <p className="text-muted-foreground">
-                  This agent has no reasoners with DID identities.
+                  This agent has no bots with DID identities.
                 </p>
               </div>
             )}

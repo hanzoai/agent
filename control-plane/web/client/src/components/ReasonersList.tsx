@@ -13,9 +13,9 @@ const ReasonersList: React.FC<ReasonersListProps> = ({ reasoners }) => {
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <WatsonxAi className="h-4 w-4 text-muted-foreground" />
-          <h4 className="text-sm font-medium">Reasoners (0)</h4>
+          <h4 className="text-sm font-medium">Bots (0)</h4>
         </div>
-        <p className="text-body-small">No reasoners available.</p>
+        <p className="text-body-small">No bots available.</p>
       </div>
     );
   }
@@ -24,7 +24,7 @@ const ReasonersList: React.FC<ReasonersListProps> = ({ reasoners }) => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <WatsonxAi className="h-4 w-4 text-muted-foreground" />
-        <h4 className="text-sm font-medium">Reasoners ({reasoners.length})</h4>
+        <h4 className="text-sm font-medium">Bots ({reasoners.length})</h4>
       </div>
       <div className="flex flex-wrap gap-2">
         {reasoners.map((reasoner) => (

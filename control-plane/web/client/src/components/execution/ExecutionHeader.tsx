@@ -299,7 +299,7 @@ export function ExecutionHeader({
               </div>
             </div>
             <div className="space-y-1">
-              <div className="text-label">Agent Node</div>
+              <div className="text-label">Node</div>
               <div className="flex items-center gap-2 group">
                 <code className="font-mono text-xs text-foreground">
                   {truncateId(execution.agent_node_id)}
