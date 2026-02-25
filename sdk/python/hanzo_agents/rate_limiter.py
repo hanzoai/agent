@@ -54,7 +54,7 @@ class StatelessRateLimiter:
 
     def _is_rate_limit_error(self, error: Exception) -> bool:
         """
-        Universal rate limit error detection for any LiteLLM provider.
+        Universal rate limit error detection for any LLM provider.
 
         Args:
             error: Exception to check
@@ -62,7 +62,7 @@ class StatelessRateLimiter:
         Returns:
             bool: True if this is a rate limit error
         """
-        # Check for specific LiteLLM rate limit error
+        # Check for specific LLM rate limit error
         if hasattr(error, "__class__") and "RateLimitError" in str(error.__class__):
             return True
 
