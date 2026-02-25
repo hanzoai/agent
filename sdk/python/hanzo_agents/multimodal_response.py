@@ -1,5 +1,5 @@
 """
-Multimodal response classes for handling LiteLLM multimodal outputs.
+Multimodal response classes for handling LLM multimodal outputs.
 Provides seamless integration with audio, image, and file outputs while maintaining backward compatibility.
 """
 
@@ -275,7 +275,7 @@ class MultimodalResponse:
 
     @property
     def raw_response(self) -> Optional[Any]:
-        """Get the raw LiteLLM response object."""
+        """Get the raw LLM response object."""
         return self._raw_response
 
     def save_all(
@@ -431,10 +431,10 @@ def _find_images_recursive(obj: Any, max_depth: int = 10) -> List[ImageOutput]:
 
 def detect_multimodal_response(response: Any) -> MultimodalResponse:
     """
-    Automatically detect and wrap multimodal content from LiteLLM responses.
+    Automatically detect and wrap multimodal content from LLM responses.
 
     Args:
-        response: Raw response from LiteLLM (completion or image_generation)
+        response: Raw response from LLM (completion or image_generation)
 
     Returns:
         MultimodalResponse with detected content

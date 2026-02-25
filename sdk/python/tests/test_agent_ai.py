@@ -39,7 +39,7 @@ class DummyAIConfig:
     async def get_model_limits(self, model=None):
         return {"context_length": 1000, "max_output_tokens": 100}
 
-    def get_litellm_params(self, **overrides):
+    def get_llm_params(self, **overrides):
         params = {
             "model": self.model,
             "temperature": self.temperature,
@@ -59,8 +59,8 @@ def agent_with_ai():
     return agent
 
 
-def setup_litellm_stub(monkeypatch):
-    module = types.ModuleType("litellm")
+def setup_llm_stub(monkeypatch):
+    module = types.ModuleType("llm")
     module.acompletion = AsyncMock()
     module.completion = lambda **kwargs: None
     module.aspeech = AsyncMock()
@@ -72,9 +72,9 @@ def setup_litellm_stub(monkeypatch):
     utils_module.trim_messages = lambda messages, model, max_tokens: messages
     module.utils = utils_module
 
-    monkeypatch.setitem(sys.modules, "litellm", module)
-    monkeypatch.setitem(sys.modules, "litellm.utils", utils_module)
-    monkeypatch.setattr("hanzo_agents.agent_ai.litellm", module, raising=False)
+    monkeypatch.setitem(sys.modules, "llm", module)
+    monkeypatch.setitem(sys.modules, "llm.utils", utils_module)
+    monkeypatch.setattr("hanzo_agents.agent_ai.llm", module, raising=False)
     return module
 
 
@@ -142,7 +142,7 @@ async def test_ai_simple_text(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_uses_fallback_models(monkeypatch, agent_with_ai):
     agent_with_ai.ai_config.fallback_models = ["openai/gpt-3.5"]
-    stub_module = setup_litellm_stub(monkeypatch)
+    stub_module = setup_llm_stub(monkeypatch)
 
     call_order = []
 
@@ -183,7 +183,7 @@ async def test_ai_uses_fallback_models(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_skips_rate_limiter_when_disabled(monkeypatch, agent_with_ai):
     agent_with_ai.ai_config.enable_rate_limit_retry = False
-    stub_module = setup_litellm_stub(monkeypatch)
+    stub_module = setup_llm_stub(monkeypatch)
     stub_module.acompletion.return_value = make_chat_response("ok")
 
     ai = AgentAI(agent_with_ai)
@@ -281,8 +281,8 @@ async def test_ai_with_multimodal_passes_modalities(monkeypatch, agent_with_ai):
 
 
 @pytest.mark.asyncio
-async def test_ai_with_vision_invokes_litellm(monkeypatch, agent_with_ai):
-    stub_module = setup_litellm_stub(monkeypatch)
+async def test_ai_with_vision_invokes_llm(monkeypatch, agent_with_ai):
+    stub_module = setup_llm_stub(monkeypatch)
     image_item = SimpleNamespace(url="http://image", b64_json=None, revised_prompt=None)
     stub_module.aimage_generation.return_value = SimpleNamespace(data=[image_item])
 

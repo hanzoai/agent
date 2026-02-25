@@ -25,7 +25,7 @@ def test_is_rate_limit_error_detects_status_code():
     limiter = StatelessRateLimiter()
 
     assert limiter._is_rate_limit_error(DummyHTTPError())
-    assert limiter._is_rate_limit_error(type("LiteLLMRateLimitError", (), {})())
+    assert limiter._is_rate_limit_error(type("LLMRateLimitError", (), {})())
     assert not limiter._is_rate_limit_error(RuntimeError("other error"))
 
 

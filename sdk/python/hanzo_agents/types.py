@@ -282,9 +282,9 @@ class AIConfig(BaseModel):
     Configuration for AI calls, defining default models, temperatures, and other parameters.
     These settings can be overridden at the method call level.
 
-    Leverages LiteLLM's standard environment variable handling for API keys:
+    Leverages LLM's standard environment variable handling for API keys:
     - OPENAI_API_KEY, ANTHROPIC_API_KEY, AZURE_OPENAI_API_KEY, etc.
-    - LiteLLM automatically detects and uses these standard environment variables
+    - LLM automatically detects and uses these standard environment variables
 
     All fields have sensible defaults, so you can create an AIConfig with minimal configuration:
 
@@ -362,11 +362,11 @@ class AIConfig(BaseModel):
     # Behavior settings
     timeout: Optional[int] = Field(
         default=None,
-        description="Timeout for AI calls in seconds. If None, uses LiteLLM's default.",
+        description="Timeout for AI calls in seconds. If None, uses LLM's default.",
     )
     retry_attempts: Optional[int] = Field(
         default=None,
-        description="Number of retry attempts for failed AI calls. If None, uses LiteLLM's default.",
+        description="Number of retry attempts for failed AI calls. If None, uses LLM's default.",
     )
     retry_delay: float = Field(
         default=1.0, description="Delay between retries in seconds."
@@ -421,7 +421,7 @@ class AIConfig(BaseModel):
         default=10, description="Number of previous messages to include in context."
     )
 
-    # LiteLLM configuration - these get passed directly to litellm.completion()
+    # LLM configuration - these get passed directly to llm.completion()
     api_key: Optional[str] = Field(
         default=None, description="API key override (if not using env vars)"
     )
@@ -433,9 +433,9 @@ class AIConfig(BaseModel):
         default=None, description="Organization ID (for OpenAI)"
     )
 
-    # Additional LiteLLM parameters that can be overridden
-    litellm_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional parameters to pass to LiteLLM"
+    # Additional LLM parameters that can be overridden
+    llm_params: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional parameters to pass to LLM"
     )
     fallback_models: List[str] = Field(
         default_factory=list,
@@ -458,7 +458,7 @@ class AIConfig(BaseModel):
     # Pydantic V2: allow fields that start with `model_`
     model_config = {"protected_namespaces": ()}
 
-    # Fallback model context mappings for when LiteLLM detection fails
+    # Fallback model context mappings for when LLM detection fails
     _MODEL_CONTEXT_LIMITS = {
         # OpenRouter Gemini models
         "openrouter/google/gemini-2.5-flash-lite": 1048576,  # 1M tokens
@@ -505,11 +505,11 @@ class AIConfig(BaseModel):
         fallback_context = self._MODEL_CONTEXT_LIMITS.get(target_model)
 
         try:
-            import litellm
+            import llm
 
-            litellm.suppress_debug_info = True
+            llm.suppress_debug_info = True
             # Fetch model info once and cache it
-            info = litellm.get_model_info(target_model)
+            info = llm.get_model_info(target_model)
 
         except Exception:
             info = None  # Ensure info is undefined outside except
@@ -590,12 +590,12 @@ class AIConfig(BaseModel):
         safe_prompt_chars = (max_ctx - max_out) * self.avg_chars_per_token
         return max(safe_prompt_chars, 1000)  # Ensure minimum viable prompt size
 
-    def get_litellm_params(
+    def get_llm_params(
         self, messages: Optional[List[Dict]] = None, **overrides
     ) -> Dict[str, Any]:
         """
-        Get parameters formatted for LiteLLM, with runtime overrides and smart token management.
-        LiteLLM handles environment variable detection automatically.
+        Get parameters formatted for LLM, with runtime overrides and smart token management.
+        LLM handles environment variable detection automatically.
         """
         params = {
             "model": self.model,
@@ -621,8 +621,8 @@ class AIConfig(BaseModel):
         if self.response_format != "auto":
             params["response_format"] = {"type": self.response_format}
 
-        # Add any additional litellm params
-        params.update(self.litellm_params)
+        # Add any additional llm params
+        params.update(self.llm_params)
 
         # Apply runtime overrides (highest priority)
         params.update(overrides)
@@ -658,7 +658,7 @@ class AIConfig(BaseModel):
     @classmethod
     def from_env(cls, **overrides) -> "AIConfig":
         """
-        Create AIConfig with smart defaults, letting LiteLLM handle env vars.
+        Create AIConfig with smart defaults, letting LLM handle env vars.
         This is the recommended way to create configs in production.
         """
         config = cls(**overrides)

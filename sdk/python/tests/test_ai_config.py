@@ -17,9 +17,9 @@ def test_ai_config_trim_by_chars():
     assert len(trimmed) <= 80  # rough upper bound
 
 
-def test_ai_config_get_litellm_params_uses_overrides_and_prunes_none():
+def test_ai_config_get_llm_params_uses_overrides_and_prunes_none():
     cfg = AIConfig(max_tokens=None, api_key=None)
-    params = cfg.get_litellm_params(max_tokens=123, temperature=0.4)
+    params = cfg.get_llm_params(max_tokens=123, temperature=0.4)
     assert params["max_tokens"] == 123
     assert params["temperature"] == 0.4
     # ensure None-valued fields are removed

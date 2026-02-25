@@ -2,7 +2,7 @@
 Tests for Media Providers and Unified Multimodal UX.
 
 This module tests:
-- FalProvider, LiteLLMProvider, OpenRouterProvider
+- FalProvider, LLMProvider, OpenRouterProvider
 - Provider routing in AgentAI (fal-ai/, openrouter/, default)
 - New methods: ai_generate_video, ai_transcribe_audio
 - AIConfig extensions: fal_api_key, video_model
@@ -17,7 +17,7 @@ import pytest
 from hanzo_agents.agent_ai import AgentAI
 from hanzo_agents.media_providers import (
     FalProvider,
-    LiteLLMProvider,
+    LLMProvider,
     OpenRouterProvider,
     MediaProvider,
     get_provider,
@@ -70,7 +70,7 @@ class DummyAIConfig:
     async def get_model_limits(self, model=None):
         return {"context_length": 1000, "max_output_tokens": 100}
 
-    def get_litellm_params(self, **overrides):
+    def get_llm_params(self, **overrides):
         params = {
             "model": self.model,
             "temperature": self.temperature,
@@ -105,9 +105,9 @@ def fal_provider():
 
 
 @pytest.fixture
-def litellm_provider():
-    """Create a LiteLLMProvider instance."""
-    return LiteLLMProvider()
+def llm_provider():
+    """Create a LLMProvider instance."""
+    return LLMProvider()
 
 
 @pytest.fixture
@@ -255,10 +255,10 @@ class TestProviderRegistry:
         provider = get_provider("fal")
         assert isinstance(provider, FalProvider)
 
-    def test_get_provider_litellm(self):
-        """get_provider should return LiteLLMProvider for 'litellm'."""
-        provider = get_provider("litellm")
-        assert isinstance(provider, LiteLLMProvider)
+    def test_get_provider_llm(self):
+        """get_provider should return LLMProvider for 'llm'."""
+        provider = get_provider("llm")
+        assert isinstance(provider, LLMProvider)
 
     def test_get_provider_openrouter(self):
         """get_provider should return OpenRouterProvider for 'openrouter'."""
