@@ -48,7 +48,7 @@ class DummyAIConfig:
     async def get_model_limits(self, model=None):
         return {"context_length": 1000, "max_output_tokens": 100}
 
-    def get_litellm_params(self, **overrides):
+    def get_llm_params(self, **overrides):
         params = {
             "model": self.model,
             "temperature": self.temperature,
@@ -68,8 +68,8 @@ def agent_with_ai():
     return agent
 
 
-def setup_litellm_stub(monkeypatch):
-    module = types.ModuleType("litellm")
+def setup_llm_stub(monkeypatch):
+    module = types.ModuleType("llm")
     module.acompletion = AsyncMock()
     module.completion = lambda **kwargs: None
     module.aspeech = AsyncMock()
@@ -81,9 +81,9 @@ def setup_litellm_stub(monkeypatch):
     utils_module.trim_messages = lambda messages, model, max_tokens: messages
     module.utils = utils_module
 
-    monkeypatch.setitem(sys.modules, "litellm", module)
-    monkeypatch.setitem(sys.modules, "litellm.utils", utils_module)
-    monkeypatch.setattr("hanzo_agents.agent_ai.litellm", module, raising=False)
+    monkeypatch.setitem(sys.modules, "llm", module)
+    monkeypatch.setitem(sys.modules, "llm.utils", utils_module)
+    monkeypatch.setattr("hanzo_agents.agent_ai.llm", module, raising=False)
     return module
 
 
@@ -96,37 +96,37 @@ def make_chat_response(content: str):
 @pytest.mark.asyncio
 async def test_ai_request_building_with_different_models(monkeypatch, agent_with_ai):
     """Test AI request building with different model configurations."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("test response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("test response")
 
     ai = AgentAI(agent_with_ai)
 
     # Test with default model
     result = await ai.ai("test prompt")
     assert result.text == "test response"
-    assert litellm_module.acompletion.called
+    assert llm_module.acompletion.called
 
     # Test with custom model (must include provider prefix)
     result = await ai.ai("test prompt", model="anthropic/claude-3-opus")
     assert result.text == "test response"
-    call_args = litellm_module.acompletion.call_args
+    call_args = llm_module.acompletion.call_args
     assert call_args[1]["model"] == "anthropic/claude-3-opus"
 
 
 @pytest.mark.asyncio
 async def test_ai_response_parsing_and_error_handling(monkeypatch, agent_with_ai):
     """Test response parsing and error handling."""
-    litellm_module = setup_litellm_stub(monkeypatch)
+    llm_module = setup_llm_stub(monkeypatch)
 
     ai = AgentAI(agent_with_ai)
 
     # Test successful response
-    litellm_module.acompletion.return_value = make_chat_response("success")
+    llm_module.acompletion.return_value = make_chat_response("success")
     result = await ai.ai("test")
     assert result.text == "success"
 
     # Test error response
-    litellm_module.acompletion.side_effect = Exception("API error")
+    llm_module.acompletion.side_effect = Exception("API error")
     with pytest.raises(Exception):
         await ai.ai("test")
 
@@ -134,7 +134,7 @@ async def test_ai_response_parsing_and_error_handling(monkeypatch, agent_with_ai
 @pytest.mark.asyncio
 async def test_ai_streaming_response(monkeypatch, agent_with_ai):
     """Test streaming response handling."""
-    litellm_module = setup_litellm_stub(monkeypatch)
+    llm_module = setup_llm_stub(monkeypatch)
 
     # Create a mock streaming response
     async def stream_generator():
@@ -143,7 +143,7 @@ async def test_ai_streaming_response(monkeypatch, agent_with_ai):
                 choices=[SimpleNamespace(delta=SimpleNamespace(content=chunk))]
             )
 
-    litellm_module.acompletion.return_value = stream_generator()
+    llm_module.acompletion.return_value = stream_generator()
 
     ai = AgentAI(agent_with_ai)
     result = await ai.ai("test", stream=True)
@@ -155,8 +155,8 @@ async def test_ai_streaming_response(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_multimodal_input_processing(monkeypatch, agent_with_ai):
     """Test multimodal input processing."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("image analyzed")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("image analyzed")
 
     ai = AgentAI(agent_with_ai)
 
@@ -165,7 +165,7 @@ async def test_ai_multimodal_input_processing(monkeypatch, agent_with_ai):
     assert result.text == "image analyzed"
 
     # Verify messages were constructed correctly
-    call_args = litellm_module.acompletion.call_args
+    call_args = llm_module.acompletion.call_args
     messages = call_args[1]["messages"]
     assert len(messages) > 0
 
@@ -173,7 +173,7 @@ async def test_ai_multimodal_input_processing(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_error_recovery_and_retry(monkeypatch, agent_with_ai):
     """Test error recovery and retry logic."""
-    litellm_module = setup_litellm_stub(monkeypatch)
+    llm_module = setup_llm_stub(monkeypatch)
 
     ai = AgentAI(agent_with_ai)
 
@@ -193,7 +193,7 @@ async def test_ai_error_recovery_and_retry(monkeypatch, agent_with_ai):
             raise error
         return make_chat_response("success after retry")
 
-    litellm_module.acompletion.side_effect = rate_limit_then_success
+    llm_module.acompletion.side_effect = rate_limit_then_success
 
     result = await ai.ai("test")
     assert result.text == "success after retry"
@@ -209,8 +209,8 @@ async def test_ai_with_schema_validation(monkeypatch, agent_with_ai):
         name: str
         age: int
 
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response(
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response(
         '{"name": "John", "age": 30}'
     )
 
@@ -225,8 +225,8 @@ async def test_ai_with_schema_validation(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_with_memory_injection(monkeypatch, agent_with_ai):
     """Test AI call with memory scope injection."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     # Mock memory methods
     agent_with_ai.memory.get = MagicMock(return_value={"key": "value"})
@@ -243,8 +243,8 @@ async def test_ai_with_memory_injection(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_with_context_parameter(monkeypatch, agent_with_ai):
     """Test AI call with context parameter."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     ai = AgentAI(agent_with_ai)
     context = {"user_id": "123", "session_id": "abc"}
@@ -252,16 +252,16 @@ async def test_ai_with_context_parameter(monkeypatch, agent_with_ai):
     result = await ai.ai("test", context=context)
     assert result.text == "response"
 
-    # Verify context was passed to litellm
-    call_args = litellm_module.acompletion.call_args
+    # Verify context was passed to llm
+    call_args = llm_module.acompletion.call_args
     assert call_args is not None
 
 
 @pytest.mark.asyncio
 async def test_ai_model_limits_caching(monkeypatch, agent_with_ai):
     """Test that model limits are cached on first call."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     # Mock get_model_limits to track calls
     original_get_model_limits = agent_with_ai.ai_config.get_model_limits
@@ -279,7 +279,7 @@ async def test_ai_model_limits_caching(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_fallback_models(monkeypatch, agent_with_ai):
     """Test fallback model behavior."""
-    litellm_module = setup_litellm_stub(monkeypatch)
+    llm_module = setup_llm_stub(monkeypatch)
 
     call_count = 0
 
@@ -290,7 +290,7 @@ async def test_ai_fallback_models(monkeypatch, agent_with_ai):
             raise Exception("Primary model failed")
         return make_chat_response("fallback success")
 
-    litellm_module.acompletion.side_effect = fail_then_succeed
+    llm_module.acompletion.side_effect = fail_then_succeed
     agent_with_ai.ai_config.fallback_models = ["openai/gpt-3.5-turbo"]
 
     ai = AgentAI(agent_with_ai)
@@ -304,34 +304,34 @@ async def test_ai_fallback_models(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_temperature_override(monkeypatch, agent_with_ai):
     """Test temperature parameter override."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     ai = AgentAI(agent_with_ai)
     await ai.ai("test", temperature=0.9)
 
-    call_args = litellm_module.acompletion.call_args
+    call_args = llm_module.acompletion.call_args
     assert call_args[1]["temperature"] == 0.9
 
 
 @pytest.mark.asyncio
 async def test_ai_max_tokens_override(monkeypatch, agent_with_ai):
     """Test max_tokens parameter override."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     ai = AgentAI(agent_with_ai)
     await ai.ai("test", max_tokens=200)
 
-    call_args = litellm_module.acompletion.call_args
+    call_args = llm_module.acompletion.call_args
     assert call_args[1]["max_tokens"] == 200
 
 
 @pytest.mark.asyncio
 async def test_ai_response_format_json(monkeypatch, agent_with_ai):
     """Test JSON response format."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response('{"key": "value"}')
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response('{"key": "value"}')
 
     ai = AgentAI(agent_with_ai)
     result = await ai.ai("test", response_format="json")
@@ -345,13 +345,13 @@ async def test_ai_response_format_json(monkeypatch, agent_with_ai):
 @pytest.mark.asyncio
 async def test_ai_system_and_user_prompts(monkeypatch, agent_with_ai):
     """Test system and user prompt handling."""
-    litellm_module = setup_litellm_stub(monkeypatch)
-    litellm_module.acompletion.return_value = make_chat_response("response")
+    llm_module = setup_llm_stub(monkeypatch)
+    llm_module.acompletion.return_value = make_chat_response("response")
 
     ai = AgentAI(agent_with_ai)
     await ai.ai(system="You are a helpful assistant", user="What is 2+2?")
 
-    call_args = litellm_module.acompletion.call_args
+    call_args = llm_module.acompletion.call_args
     messages = call_args[1]["messages"]
     assert len(messages) >= 2
     assert any(msg.get("role") == "system" for msg in messages)

@@ -33,7 +33,7 @@ from .multimodal_response import (
 from .media_providers import (
     MediaProvider,
     FalProvider,
-    LiteLLMProvider,
+    LLMProvider,
     OpenRouterProvider,
     get_provider,
     register_provider,
@@ -72,7 +72,7 @@ __all__ = [
     # Media providers
     "MediaProvider",
     "FalProvider",
-    "LiteLLMProvider",
+    "LLMProvider",
     "OpenRouterProvider",
     "get_provider",
     "register_provider",
