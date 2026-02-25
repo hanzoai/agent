@@ -2922,7 +2922,7 @@ class Agent(FastAPI):
         Returns a MultimodalResponse containing the generated image(s).
 
         Supported Providers:
-        - LiteLLM: DALL-E models like "dall-e-3", "dall-e-2"
+        - LLM: DALL-E models like "dall-e-3", "dall-e-2"
         - OpenRouter: Models like "openrouter/google/gemini-2.5-flash-image-preview"
 
         Args:

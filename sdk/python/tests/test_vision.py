@@ -5,13 +5,13 @@ Tests for vision.py image generation functions.
 import sys
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from hanzo_agents.vision import generate_image_litellm, generate_image_openrouter
+from hanzo_agents.vision import generate_image_llm, generate_image_openrouter
 from hanzo_agents.multimodal_response import MultimodalResponse, ImageOutput
 
 
 @pytest.mark.asyncio
-async def test_generate_image_litellm_success():
-    """Test successful LiteLLM image generation."""
+async def test_generate_image_llm_success():
+    """Test successful LLM image generation."""
     mock_response = MultimodalResponse(
         text="",
         images=[
@@ -23,16 +23,16 @@ async def test_generate_image_litellm_success():
         ],
     )
 
-    mock_litellm = MagicMock()
-    mock_litellm.aimage_generation = AsyncMock(return_value={"data": []})
+    mock_llm = MagicMock()
+    mock_llm.aimage_generation = AsyncMock(return_value={"data": []})
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         with patch(
             "hanzo_agents.multimodal_response.detect_multimodal_response"
         ) as mock_detect:
             mock_detect.return_value = mock_response
 
-            result = await generate_image_litellm(
+            result = await generate_image_llm(
                 prompt="A sunset",
                 model="dall-e-3",
                 size="1024x1024",
@@ -42,8 +42,8 @@ async def test_generate_image_litellm_success():
             )
 
             assert isinstance(result, MultimodalResponse)
-            mock_litellm.aimage_generation.assert_called_once()
-            call_kwargs = mock_litellm.aimage_generation.call_args[1]
+            mock_llm.aimage_generation.assert_called_once()
+            call_kwargs = mock_llm.aimage_generation.call_args[1]
             assert call_kwargs["prompt"] == "A sunset"
             assert call_kwargs["model"] == "dall-e-3"
             assert call_kwargs["size"] == "1024x1024"
@@ -52,18 +52,18 @@ async def test_generate_image_litellm_success():
 
 
 @pytest.mark.asyncio
-async def test_generate_image_litellm_without_style():
-    """Test LiteLLM image generation without style parameter for non-DALL-E models."""
-    mock_litellm = MagicMock()
-    mock_litellm.aimage_generation = AsyncMock(return_value={"data": []})
+async def test_generate_image_llm_without_style():
+    """Test LLM image generation without style parameter for non-DALL-E models."""
+    mock_llm = MagicMock()
+    mock_llm.aimage_generation = AsyncMock(return_value={"data": []})
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         with patch(
             "hanzo_agents.multimodal_response.detect_multimodal_response"
         ) as mock_detect:
             mock_detect.return_value = MultimodalResponse(text="", images=[])
 
-            await generate_image_litellm(
+            await generate_image_llm(
                 prompt="A cat",
                 model="stable-diffusion",
                 size="512x512",
@@ -72,22 +72,22 @@ async def test_generate_image_litellm_without_style():
                 response_format="url",
             )
 
-            call_kwargs = mock_litellm.aimage_generation.call_args[1]
+            call_kwargs = mock_llm.aimage_generation.call_args[1]
             assert "style" not in call_kwargs
 
 
 @pytest.mark.asyncio
-async def test_generate_image_litellm_import_error():
-    """Test ImportError when litellm is not installed."""
+async def test_generate_image_llm_import_error():
+    """Test ImportError when llm is not installed."""
 
     def import_side_effect(name, *args, **kwargs):
-        if name == "litellm":
-            raise ImportError("No module named 'litellm'")
+        if name == "llm":
+            raise ImportError("No module named 'llm'")
         return __import__(name, *args, **kwargs)
 
     with patch("builtins.__import__", side_effect=import_side_effect):
         with pytest.raises(ImportError) as exc_info:
-            await generate_image_litellm(
+            await generate_image_llm(
                 prompt="test",
                 model="dall-e-3",
                 size="1024x1024",
@@ -95,18 +95,18 @@ async def test_generate_image_litellm_import_error():
                 style=None,
                 response_format="url",
             )
-        assert "litellm is not installed" in str(exc_info.value)
+        assert "llm is not installed" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
-async def test_generate_image_litellm_api_error():
-    """Test error handling when LiteLLM API fails."""
-    mock_litellm = MagicMock()
-    mock_litellm.aimage_generation = AsyncMock(side_effect=Exception("API Error"))
+async def test_generate_image_llm_api_error():
+    """Test error handling when LLM API fails."""
+    mock_llm = MagicMock()
+    mock_llm.aimage_generation = AsyncMock(side_effect=Exception("API Error"))
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         with pytest.raises(Exception) as exc_info:
-            await generate_image_litellm(
+            await generate_image_llm(
                 prompt="test",
                 model="dall-e-3",
                 size="1024x1024",
@@ -133,10 +133,10 @@ async def test_generate_image_openrouter_success():
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
 
-    mock_litellm = MagicMock()
-    mock_litellm.acompletion = AsyncMock(return_value=mock_response)
+    mock_llm = MagicMock()
+    mock_llm.acompletion = AsyncMock(return_value=mock_response)
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         result = await generate_image_openrouter(
             prompt="A beautiful landscape",
             model="openrouter/google/gemini-2.5-flash-image-preview",
@@ -147,8 +147,8 @@ async def test_generate_image_openrouter_success():
         )
 
         assert isinstance(result, MultimodalResponse)
-        mock_litellm.acompletion.assert_called_once()
-        call_kwargs = mock_litellm.acompletion.call_args[1]
+        mock_llm.acompletion.assert_called_once()
+        call_kwargs = mock_llm.acompletion.call_args[1]
         assert (
             call_kwargs["model"] == "openrouter/google/gemini-2.5-flash-image-preview"
         )
@@ -168,10 +168,10 @@ async def test_generate_image_openrouter_with_dict_images():
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
 
-    mock_litellm = MagicMock()
-    mock_litellm.acompletion = AsyncMock(return_value=mock_response)
+    mock_llm = MagicMock()
+    mock_llm.acompletion = AsyncMock(return_value=mock_response)
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         result = await generate_image_openrouter(
             prompt="test",
             model="openrouter/test-model",
@@ -195,10 +195,10 @@ async def test_generate_image_openrouter_no_images():
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
 
-    mock_litellm = MagicMock()
-    mock_litellm.acompletion = AsyncMock(return_value=mock_response)
+    mock_llm = MagicMock()
+    mock_llm.acompletion = AsyncMock(return_value=mock_response)
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         result = await generate_image_openrouter(
             prompt="test",
             model="openrouter/test-model",
@@ -215,11 +215,11 @@ async def test_generate_image_openrouter_no_images():
 
 @pytest.mark.asyncio
 async def test_generate_image_openrouter_import_error():
-    """Test ImportError when litellm is not installed."""
+    """Test ImportError when llm is not installed."""
 
     def import_side_effect(name, *args, **kwargs):
-        if name == "litellm":
-            raise ImportError("No module named 'litellm'")
+        if name == "llm":
+            raise ImportError("No module named 'llm'")
         return __import__(name, *args, **kwargs)
 
     with patch("builtins.__import__", side_effect=import_side_effect):
@@ -232,16 +232,16 @@ async def test_generate_image_openrouter_import_error():
                 style=None,
                 response_format="url",
             )
-        assert "litellm is not installed" in str(exc_info.value)
+        assert "llm is not installed" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
 async def test_generate_image_openrouter_api_error():
     """Test error handling when OpenRouter API fails."""
-    mock_litellm = MagicMock()
-    mock_litellm.acompletion = AsyncMock(side_effect=Exception("API Error"))
+    mock_llm = MagicMock()
+    mock_llm.acompletion = AsyncMock(side_effect=Exception("API Error"))
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         with pytest.raises(Exception) as exc_info:
             await generate_image_openrouter(
                 prompt="test",
@@ -264,10 +264,10 @@ async def test_generate_image_openrouter_with_kwargs():
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
 
-    mock_litellm = MagicMock()
-    mock_litellm.acompletion = AsyncMock(return_value=mock_response)
+    mock_llm = MagicMock()
+    mock_llm.acompletion = AsyncMock(return_value=mock_response)
 
-    with patch.dict(sys.modules, {"litellm": mock_litellm}):
+    with patch.dict(sys.modules, {"llm": mock_llm}):
         await generate_image_openrouter(
             prompt="test",
             model="openrouter/test",
@@ -279,6 +279,6 @@ async def test_generate_image_openrouter_with_kwargs():
             temperature=0.7,
         )
 
-        call_kwargs = mock_litellm.acompletion.call_args[1]
+        call_kwargs = mock_llm.acompletion.call_args[1]
         assert call_kwargs["image_config"] == {"aspect_ratio": "16:9"}
         assert call_kwargs["temperature"] == 0.7

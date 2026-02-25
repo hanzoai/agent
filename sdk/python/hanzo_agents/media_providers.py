@@ -3,8 +3,8 @@ Media Provider Abstraction for Hanzo Agents
 
 Provides a unified interface for different media generation backends:
 - Fal.ai (Flux, SDXL, Whisper, TTS, Video models)
-- OpenRouter (via LiteLLM)
-- OpenAI DALL-E (via LiteLLM)
+- OpenRouter (via LLM)
+- OpenAI DALL-E (via LLM)
 - Future: ElevenLabs, Replicate, etc.
 
 Each provider implements the same interface, making it easy to swap
@@ -591,11 +591,11 @@ class FalProvider(MediaProvider):
             raise
 
 
-class LiteLLMProvider(MediaProvider):
+class LLMProvider(MediaProvider):
     """
-    LiteLLM-based provider for OpenAI, Azure, and other LiteLLM-supported backends.
+    LLM-based provider for OpenAI, Azure, and other LLM-supported backends.
 
-    Uses LiteLLM's image_generation and speech APIs.
+    Uses LLM's image_generation and speech APIs.
 
     Image Models:
     - dall-e-3 - OpenAI DALL-E 3
@@ -613,7 +613,7 @@ class LiteLLMProvider(MediaProvider):
 
     @property
     def name(self) -> str:
-        return "litellm"
+        return "llm"
 
     @property
     def supported_modalities(self) -> List[str]:
@@ -629,12 +629,12 @@ class LiteLLMProvider(MediaProvider):
         response_format: str = "url",
         **kwargs,
     ) -> MultimodalResponse:
-        """Generate image using LiteLLM (DALL-E, Azure DALL-E, etc.)."""
+        """Generate image using LLM (DALL-E, Azure DALL-E, etc.)."""
         from hanzo_agents import vision
 
         model = model or "dall-e-3"
 
-        return await vision.generate_image_litellm(
+        return await vision.generate_image_llm(
             prompt=prompt,
             model=model,
             size=size,
@@ -653,20 +653,20 @@ class LiteLLMProvider(MediaProvider):
         speed: float = 1.0,
         **kwargs,
     ) -> MultimodalResponse:
-        """Generate audio using LiteLLM TTS."""
+        """Generate audio using LLM TTS."""
         try:
-            import litellm
+            import llm
 
-            litellm.suppress_debug_info = True
+            llm.suppress_debug_info = True
         except ImportError:
             raise ImportError(
-                "litellm is not installed. Install it with: pip install litellm"
+                "llm is not installed. Install it with: pip install llm"
             )
 
         model = model or "tts-1"
 
         try:
-            response = await litellm.aspeech(
+            response = await llm.aspeech(
                 model=model,
                 input=text,
                 voice=voice,
@@ -698,7 +698,7 @@ class LiteLLMProvider(MediaProvider):
         except Exception as e:
             from hanzo_agents.logger import log_error
 
-            log_error(f"LiteLLM audio generation failed: {e}")
+            log_error(f"LLM audio generation failed: {e}")
             raise
 
 
@@ -761,14 +761,14 @@ class OpenRouterProvider(MediaProvider):
     ) -> MultimodalResponse:
         """OpenRouter doesn't support TTS directly."""
         raise NotImplementedError(
-            "OpenRouter doesn't support audio generation. Use LiteLLMProvider or FalProvider."
+            "OpenRouter doesn't support audio generation. Use LLMProvider or FalProvider."
         )
 
 
 # Provider registry for easy access
 _PROVIDERS: Dict[str, type] = {
     "fal": FalProvider,
-    "litellm": LiteLLMProvider,
+    "llm": LLMProvider,
     "openrouter": OpenRouterProvider,
 }
 
@@ -778,7 +778,7 @@ def get_provider(name: str, **kwargs) -> MediaProvider:
     Get a media provider instance by name.
 
     Args:
-        name: Provider name ('fal', 'litellm', 'openrouter')
+        name: Provider name ('fal', 'llm', 'openrouter')
         **kwargs: Provider-specific initialization arguments
 
     Returns:
@@ -792,8 +792,8 @@ def get_provider(name: str, **kwargs) -> MediaProvider:
             model="fal-ai/flux/dev"
         )
 
-        # LiteLLM provider for DALL-E
-        provider = get_provider("litellm")
+        # LLM provider for DALL-E
+        provider = get_provider("llm")
         result = await provider.generate_image(
             "A sunset over mountains",
             model="dall-e-3"

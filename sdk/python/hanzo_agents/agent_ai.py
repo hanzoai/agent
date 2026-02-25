@@ -17,23 +17,23 @@ from pydantic import BaseModel
 
 # Lazy loading for heavy LLM libraries to reduce memory footprint
 # These are only imported when AI features are actually used
-_litellm = None
+_llm = None
 _openai = None
 
 
-def _get_litellm():
-    """Lazy import of litellm - only loads when AI features are used."""
-    global _litellm
-    if _litellm is None:
+def _get_llm():
+    """Lazy import of llm - only loads when AI features are used."""
+    global _llm
+    if _llm is None:
         try:
-            import litellm
-            litellm.suppress_debug_info = True
-            _litellm = litellm
+            import llm
+            llm.suppress_debug_info = True
+            _llm = llm
         except Exception:  # pragma: no cover
-            class _LiteLLMStub:
+            class _LLMStub:
                 pass
-            _litellm = _LiteLLMStub()
-    return _litellm
+            _llm = _LLMStub()
+    return _llm
 
 
 def _get_openai():
@@ -64,7 +64,7 @@ class _LazyModule:
         return getattr(self._module, name)
 
 
-litellm = _LazyModule(_get_litellm)
+llm = _LazyModule(_get_llm)
 openai = _LazyModule(_get_openai)
 
 
@@ -268,7 +268,7 @@ class AgentAI:
             # This would be where memory data is merged into the context
             pass
 
-        # Prepare messages for LiteLLM
+        # Prepare messages for LLM
         messages = []
 
         # If a schema is provided, augment the system prompt with strict schema adherence instructions and schema context
@@ -306,13 +306,13 @@ class AgentAI:
             if processed_content:
                 messages.extend(processed_content)
 
-        litellm_module = litellm if hasattr(litellm, "acompletion") else None
+        llm_module = llm if hasattr(llm, "acompletion") else None
 
         # Ensure model limits are cached (done once per instance)
         await self._ensure_model_limits_cached()
 
-        # Apply prompt trimming using LiteLLM's token-aware utility when available.
-        utils_module = getattr(litellm_module, "utils", None) if litellm_module else None
+        # Apply prompt trimming using LLM's token-aware utility when available.
+        utils_module = getattr(llm_module, "utils", None) if llm_module else None
         token_counter = getattr(utils_module, "token_counter", None) if utils_module else None
         trim_messages = getattr(utils_module, "trim_messages", None) if utils_module else None
 
@@ -355,7 +355,7 @@ class AgentAI:
         if safe_input_limit < 1000:
             safe_input_limit = 1000
 
-        # Count actual prompt tokens using LiteLLM's token counter
+        # Count actual prompt tokens using LLM's token counter
         try:
             actual_prompt_tokens = token_counter(
                 model=final_config.model, messages=messages
@@ -378,27 +378,27 @@ class AgentAI:
         else:
             pass
 
-        # Prepare LiteLLM parameters using the config's method
-        # This leverages LiteLLM's standard environment variable handling and smart token management
-        litellm_params = final_config.get_litellm_params(
+        # Prepare LLM parameters using the config's method
+        # This leverages LLM's standard environment variable handling and smart token management
+        llm_params = final_config.get_llm_params(
             messages=messages,
             **kwargs,  # Runtime overrides have highest priority
         )
 
         # Ensure messages are always included in the final params
-        litellm_params["messages"] = messages
+        llm_params["messages"] = messages
 
         if schema:
-            # Use LiteLLM's native Pydantic model support for structured outputs
-            litellm_params["response_format"] = schema
+            # Use LLM's native Pydantic model support for structured outputs
+            llm_params["response_format"] = schema
 
-        # Define the LiteLLM call function for rate limiter
-        async def _make_litellm_call():
-            if litellm_module is None:
+        # Define the LLM call function for rate limiter
+        async def _make_llm_call():
+            if llm_module is None:
                 raise ImportError(
-                    "litellm is not installed. Please install it with `pip install litellm`."
+                    "llm is not installed. Please install it with `pip install llm`."
                 )
-            return await litellm_module.acompletion(**litellm_params)
+            return await llm_module.acompletion(**llm_params)
 
         async def _execute_with_fallbacks():
             # Check for configured fallback models in AI config
@@ -422,8 +422,8 @@ class AgentAI:
                             raise ValueError(
                                 f"Invalid model spec: '{m}'. Must include provider prefix, e.g. 'openai/gpt-4'."
                             )
-                        litellm_params["model"] = m
-                        return await _make_litellm_call()
+                        llm_params["model"] = m
+                        return await _make_llm_call()
                     except Exception as e:
                         log_debug(
                             f"Model {m} failed with {e}, trying next fallback if available..."
@@ -439,7 +439,7 @@ class AgentAI:
                     raise ValueError(
                         f"Invalid model spec: '{final_config.model}'. Must include provider prefix, e.g. 'openai/gpt-4'."
                     )
-                return await _make_litellm_call()
+                return await _make_llm_call()
 
         if final_config.enable_rate_limit_retry:
             rate_limiter = self._get_rate_limiter()
@@ -448,24 +448,24 @@ class AgentAI:
                     _execute_with_fallbacks
                 )
             except Exception as e:
-                log_debug(f"LiteLLM call failed after retries: {e}")
+                log_debug(f"LLM call failed after retries: {e}")
                 raise
         else:
             try:
                 response = await _execute_with_fallbacks()
             except HTTPStatusError as e:
                 log_debug(
-                    f"LiteLLM HTTP call failed: {e.response.status_code} - {e.response.text}"
+                    f"LLM HTTP call failed: {e.response.status_code} - {e.response.text}"
                 )
                 raise
             except requests.exceptions.RequestException as e:
-                log_debug(f"LiteLLM network call failed: {e}")
+                log_debug(f"LLM network call failed: {e}")
                 if e.response is not None:
                     log_debug(f"Response status: {e.response.status_code}")
                     log_debug(f"Response text: {e.response.text}")
                 raise
             except Exception as e:
-                log_debug(f"LiteLLM call failed: {e}")
+                log_debug(f"LLM call failed: {e}")
                 raise
 
         # Process the response
@@ -505,7 +505,7 @@ class AgentAI:
             return multimodal_response
 
     def _process_multimodal_args(self, args: tuple) -> List[Dict[str, Any]]:
-        """Process multimodal arguments into LiteLLM-compatible message format"""
+        """Process multimodal arguments into LLM-compatible message format"""
         from hanzo_agents.multimodal import Audio, File, Image, Text
 
         messages = []
@@ -530,7 +530,7 @@ class AgentAI:
                     )
 
             elif isinstance(arg, Audio):
-                # Handle audio input according to LiteLLM GPT-4o-audio pattern
+                # Handle audio input according to LLM GPT-4o-audio pattern
                 user_content.append(
                     {"type": "input_audio", "input_audio": arg.input_audio}
                 )
@@ -586,7 +586,7 @@ class AgentAI:
                         )
 
                 elif detected_type == "audio_file":
-                    # Convert audio file to LiteLLM input_audio format
+                    # Convert audio file to LLM input_audio format
                     try:
                         import base64
 
@@ -817,9 +817,9 @@ class AgentAI:
         """
         AI method optimized for audio output generation.
 
-        Automatically detects the model type and uses the appropriate LiteLLM function:
-        - For TTS models (tts-1, tts-1-hd, gpt-4o-mini-tts): Uses litellm.speech()
-        - For audio-capable chat models (gpt-4o-audio-preview): Uses litellm.completion() with audio modalities
+        Automatically detects the model type and uses the appropriate LLM function:
+        - For TTS models (tts-1, tts-1-hd, gpt-4o-mini-tts): Uses llm.speech()
+        - For audio-capable chat models (gpt-4o-audio-preview): Uses llm.completion() with audio modalities
 
         Args:
             *args: Input arguments (text prompts, etc.)
@@ -870,7 +870,7 @@ class AgentAI:
         # Check if this is a TTS model that needs the speech endpoint
         tts_models = ["tts-1", "tts-1-hd", "gpt-4o-mini-tts"]
         if model in tts_models:
-            # Use LiteLLM speech function for TTS models
+            # Use LLM speech function for TTS models
             return await self._generate_tts_audio(
                 *args, voice=voice, format=format, model=model, **kwargs
             )
@@ -892,17 +892,17 @@ class AgentAI:
         **kwargs,
     ) -> Any:
         """
-        Generate audio using LiteLLM's speech function for TTS models.
+        Generate audio using LLM's speech function for TTS models.
         """
         from hanzo_agents.multimodal_response import (
             AudioOutput,
             MultimodalResponse,
         )
 
-        litellm_module = litellm
-        if not hasattr(litellm_module, "aspeech"):
+        llm_module = llm
+        if not hasattr(llm_module, "aspeech"):
             raise ImportError(
-                "litellm is not installed. Please install it with `pip install litellm` to use TTS features."
+                "llm is not installed. Please install it with `pip install llm` to use TTS features."
             )
 
         # Combine all text inputs
@@ -912,10 +912,10 @@ class AgentAI:
 
         try:
             # Get API configuration
-            config = self.agent.ai_config.get_litellm_params()
+            config = self.agent.ai_config.get_llm_params()
 
-            # Use LiteLLM speech function
-            response = await litellm_module.aspeech(
+            # Use LLM speech function
+            response = await llm_module.aspeech(
                 model=model,
                 input=text_input,
                 voice=voice,
@@ -1003,7 +1003,7 @@ class AgentAI:
 
         try:
             # Get API configuration
-            config = self.agent.ai_config.get_litellm_params()
+            config = self.agent.ai_config.get_llm_params()
             api_key = config.get("api_key")
 
             if not api_key:
@@ -1086,8 +1086,8 @@ class AgentAI:
         """
         AI method optimized for image generation.
 
-        Supports both LiteLLM and OpenRouter providers:
-        - LiteLLM: Use model names like "dall-e-3", "azure/dall-e-3", "bedrock/stability.stable-diffusion-xl"
+        Supports both LLM and OpenRouter providers:
+        - LLM: Use model names like "dall-e-3", "azure/dall-e-3", "bedrock/stability.stable-diffusion-xl"
         - OpenRouter: Use model names with "openrouter/" prefix like "openrouter/google/gemini-2.5-flash-image-preview"
 
         Args:
@@ -1103,7 +1103,7 @@ class AgentAI:
             MultimodalResponse with image content
 
         Examples:
-            # LiteLLM (DALL-E)
+            # LLM (DALL-E)
             result = await agent.ai_with_vision("A sunset over mountains")
             result.images[0].save("sunset.png")
 
@@ -1145,8 +1145,8 @@ class AgentAI:
                 **kwargs,
             )
         else:
-            # LiteLLM: Use image generation API
-            return await vision.generate_image_litellm(
+            # LLM: Use image generation API
+            return await vision.generate_image_llm(
                 prompt=prompt,
                 model=model,
                 size=size,
@@ -1220,7 +1220,7 @@ class AgentAI:
         generated image(s).
 
         Supported Providers:
-        - LiteLLM: DALL-E models like "dall-e-3", "dall-e-2"
+        - LLM: DALL-E models like "dall-e-3", "dall-e-2"
         - OpenRouter: Models like "openrouter/google/gemini-2.5-flash-image-preview"
         - Fal.ai: Models like "fal-ai/flux/dev", "fal-ai/flux/schnell", "fal-ai/recraft-v3"
 
@@ -1307,7 +1307,7 @@ class AgentAI:
         generated audio.
 
         Supported Providers:
-        - LiteLLM: OpenAI TTS models like "tts-1", "tts-1-hd", "gpt-4o-mini-tts"
+        - LLM: OpenAI TTS models like "tts-1", "tts-1-hd", "gpt-4o-mini-tts"
         - Fal.ai: TTS models like "fal-ai/kokoro/..." (custom deployments)
 
         Args:

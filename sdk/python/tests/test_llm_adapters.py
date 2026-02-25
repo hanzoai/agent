@@ -1,8 +1,8 @@
 """
-Tests for litellm_adapters.py provider-specific patches.
+Tests for llm_adapters.py provider-specific patches.
 """
 
-from hanzo_agents.litellm_adapters import (
+from hanzo_agents.llm_adapters import (
     get_provider_from_model,
     apply_openai_patches,
     apply_provider_patches,
