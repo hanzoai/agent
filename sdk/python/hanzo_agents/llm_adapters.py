@@ -1,5 +1,5 @@
 """
-LiteLLM Provider Adapters
+LLM Provider Adapters
 
 This module centralizes provider-specific parameter transformations and patches
 required to ensure compatibility across different LLM providers.
@@ -20,11 +20,11 @@ def get_provider_from_model(model: str) -> str:
     """
     Extract provider name from model string.
 
-    LiteLLM uses the format "provider/model-name" (e.g., "openai/gpt-4o").
+    LLM uses the format "provider/model-name" (e.g., "openai/gpt-4o").
     This function extracts the provider prefix.
 
     Args:
-        model: Model string in LiteLLM format
+        model: Model string in LLM format
 
     Returns:
         Provider name (e.g., "openai", "anthropic", "cohere")
@@ -51,7 +51,7 @@ def apply_openai_patches(params: Dict[str, Any]) -> Dict[str, Any]:
 
     Reason: OpenAI's newer models (gpt-4o, gpt-4o-mini, etc.) use
     `max_completion_tokens` instead of `max_tokens` to disambiguate between
-    input tokens and output tokens. LiteLLM may not always handle this
+    input tokens and output tokens. LLM may not always handle this
     transformation automatically for all OpenAI models.
 
     This patch ensures compatibility by renaming the parameter when targeting
@@ -84,7 +84,7 @@ def apply_provider_patches(params: Dict[str, Any], model: str) -> Dict[str, Any]
 
     **When to add a new patch:**
     1. A specific provider requires a different parameter name
-    2. A provider has parameter constraints that differ from LiteLLM defaults
+    2. A provider has parameter constraints that differ from LLM defaults
     3. There's a known incompatibility that needs a workaround
 
     **How to add a new patch:**
@@ -93,7 +93,7 @@ def apply_provider_patches(params: Dict[str, Any], model: str) -> Dict[str, Any]
     3. Add a new elif branch in this function
 
     Args:
-        params: Parameter dictionary from AIConfig.get_litellm_params()
+        params: Parameter dictionary from AIConfig.get_llm_params()
         model: Model string (e.g., "openai/gpt-4o")
 
     Returns:
@@ -124,7 +124,7 @@ def filter_none_values(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Remove None values from parameter dictionary.
 
-    This ensures we only pass explicitly set parameters to LiteLLM,
+    This ensures we only pass explicitly set parameters to LLM,
     allowing it to use its own defaults for unset values.
 
     Args:

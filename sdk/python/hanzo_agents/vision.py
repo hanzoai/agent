@@ -1,11 +1,11 @@
 """
 Image Generation Module
 
-Handles image generation across multiple providers (LiteLLM, OpenRouter).
+Handles image generation across multiple providers (LLM, OpenRouter).
 Keeps provider-specific implementation details separate from the main agent code.
 
 Supported Providers:
-- LiteLLM: DALL-E, Azure DALL-E, Bedrock Stable Diffusion, etc.
+- LLM: DALL-E, Azure DALL-E, Bedrock Stable Diffusion, etc.
 - OpenRouter: Gemini image generation, etc.
 """
 
@@ -13,7 +13,7 @@ from typing import Any, Optional
 from hanzo_agents.logger import log_error
 
 
-async def generate_image_litellm(
+async def generate_image_llm(
     prompt: str,
     model: str,
     size: str,
@@ -23,13 +23,13 @@ async def generate_image_litellm(
     **kwargs,
 ) -> Any:
     """
-    Generate image using LiteLLM's image generation API.
+    Generate image using LLM's image generation API.
 
-    This function uses LiteLLM's `aimage_generation()` which supports:
+    This function uses LLM's `aimage_generation()` which supports:
     - OpenAI DALL-E (dall-e-3, dall-e-2)
     - Azure DALL-E
     - AWS Bedrock Stable Diffusion
-    - And other LiteLLM-supported image generation models
+    - And other LLM-supported image generation models
 
     Args:
         prompt: Text prompt for image generation
@@ -38,20 +38,20 @@ async def generate_image_litellm(
         quality: Image quality ("standard", "hd")
         style: Image style ("vivid", "natural") - DALL-E 3 only
         response_format: Response format ("url", "b64_json")
-        **kwargs: Additional LiteLLM parameters
+        **kwargs: Additional LLM parameters
 
     Returns:
         MultimodalResponse with generated image(s)
 
     Raises:
-        ImportError: If litellm is not installed
+        ImportError: If llm is not installed
         Exception: If image generation fails
     """
     try:
-        import litellm
+        import llm
     except ImportError:
         raise ImportError(
-            "litellm is not installed. Please install it with `pip install litellm`."
+            "llm is not installed. Please install it with `pip install llm`."
         )
 
     # Prepare image generation parameters
@@ -69,8 +69,8 @@ async def generate_image_litellm(
         image_params["style"] = style
 
     try:
-        # Use LiteLLM's image generation function
-        response = await litellm.aimage_generation(**image_params)
+        # Use LLM's image generation function
+        response = await llm.aimage_generation(**image_params)
 
         # Import multimodal response detection
         from hanzo_agents.multimodal_response import detect_multimodal_response
@@ -79,7 +79,7 @@ async def generate_image_litellm(
         return detect_multimodal_response(response)
 
     except Exception as e:
-        log_error(f"LiteLLM image generation failed: {e}")
+        log_error(f"LLM image generation failed: {e}")
         raise
 
 
@@ -97,7 +97,7 @@ async def generate_image_openrouter(
 
     OpenRouter uses modalities to enable image generation through
     the standard chat completions endpoint. This is different from
-    LiteLLM's dedicated image generation API.
+    LLM's dedicated image generation API.
 
     Supported models:
     - google/gemini-2.5-flash-image-preview
@@ -116,7 +116,7 @@ async def generate_image_openrouter(
         MultimodalResponse with generated image(s)
 
     Raises:
-        ImportError: If litellm is not installed
+        ImportError: If llm is not installed
         Exception: If image generation fails
 
     Note:
@@ -124,10 +124,10 @@ async def generate_image_openrouter(
         Example: image_config={"aspect_ratio": "16:9"}
     """
     try:
-        import litellm
+        import llm
     except ImportError:
         raise ImportError(
-            "litellm is not installed. Please install it with `pip install litellm`."
+            "llm is not installed. Please install it with `pip install llm`."
         )
 
     from hanzo_agents.multimodal_response import ImageOutput, MultimodalResponse
@@ -145,8 +145,8 @@ async def generate_image_openrouter(
     }
 
     try:
-        # Use LiteLLM's completion function (OpenRouter uses chat API)
-        response = await litellm.acompletion(**completion_params)
+        # Use LLM's completion function (OpenRouter uses chat API)
+        response = await llm.acompletion(**completion_params)
 
         # Extract images from OpenRouter response
         # OpenRouter returns images in choices[0].message.images

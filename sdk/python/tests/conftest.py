@@ -185,10 +185,10 @@ def env_patch():
         patcher.restore()
 
 
-# ---------------------------- 2) LiteLLM Mock Fixture ----------------------------
-class _FakeLiteLLMModule(types.ModuleType):
+# ---------------------------- 2) LLM Mock Fixture ----------------------------
+class _FakeLLMModule(types.ModuleType):
     """
-    Minimal fake of the 'litellm' module providing:
+    Minimal fake of the 'llm' module providing:
     - get_model_info(model)
     - token_counter(messages=..., model=...)
     - completion(**kwargs)
@@ -204,7 +204,7 @@ class _FakeLiteLLMModule(types.ModuleType):
             self.max_tokens = max_tokens
             self.max_output_tokens = max_output_tokens
 
-    def __init__(self, name="litellm"):
+    def __init__(self, name="llm"):
         super().__init__(name)
         # Defaults
         self._model_info: Dict[str, Any] = {}
@@ -275,9 +275,9 @@ class _FakeLiteLLMModule(types.ModuleType):
 
 
 @dataclass
-class LiteLLMMockController:
+class LLMMockController:
     """
-    Controller for configuring the fake LiteLLM behavior.
+    Controller for configuring the fake LLM behavior.
 
     Methods:
         set_model_info(model, max_tokens, max_output_tokens)
@@ -286,7 +286,7 @@ class LiteLLMMockController:
         set_token_counter(func)
     """
 
-    module: _FakeLiteLLMModule
+    module: _FakeLLMModule
 
     def set_model_info(
         self,
@@ -307,37 +307,37 @@ class LiteLLMMockController:
 
 
 @pytest.fixture
-def litellm_mock(monkeypatch) -> LiteLLMMockController:
+def llm_mock(monkeypatch) -> LLMMockController:
     """
-    Provides a fake 'litellm' module injected into sys.modules, covering:
+    Provides a fake 'llm' module injected into sys.modules, covering:
     - get_model_info
     - token_counter
     - completion / acompletion
 
     Example:
-        def test_model_limits_caching(litellm_mock):
-            litellm_mock.set_model_info("openai/gpt-4o-mini", max_tokens=128000, max_output_tokens=4096)
+        def test_model_limits_caching(llm_mock):
+            llm_mock.set_model_info("openai/gpt-4o-mini", max_tokens=128000, max_output_tokens=4096)
             # ... call ai_config.get_model_limits() and assert ...
 
-        async def test_ai_completion_success(litellm_mock):
-            litellm_mock.set_completion_response({"choices": [{"message": {"content": "hello"}}]})
+        async def test_ai_completion_success(llm_mock):
+            llm_mock.set_completion_response({"choices": [{"message": {"content": "hello"}}]})
             # ... call Agent.ai() and assert ...
 
-        def test_ai_completion_error(litellm_mock):
-            litellm_mock.set_completion_error(RuntimeError("LLM down"))
+        def test_ai_completion_error(llm_mock):
+            llm_mock.set_completion_error(RuntimeError("LLM down"))
             # ... exercise error path/fallbacks ...
     """
-    fake = _FakeLiteLLMModule()
-    # If real litellm is present, we still shadow it within this test scope
-    monkeypatch.setitem(sys.modules, "litellm", fake)
+    fake = _FakeLLMModule()
+    # If real llm is present, we still shadow it within this test scope
+    monkeypatch.setitem(sys.modules, "llm", fake)
 
-    # Also shadow the symbol imported as: from litellm import completion as litellm_completion
+    # Also shadow the symbol imported as: from llm import completion as llm_completion
     def _completion_alias(**kwargs):
         return fake.completion(**kwargs)
 
-    monkeypatch.setitem(sys.modules, "litellm.completion", _completion_alias)  # type: ignore
+    monkeypatch.setitem(sys.modules, "llm.completion", _completion_alias)  # type: ignore
 
-    return LiteLLMMockController(module=fake)
+    return LLMMockController(module=fake)
 
 
 class Hanzo AgentsHTTPMocks:
@@ -478,7 +478,7 @@ def sample_ai_config() -> AIConfig:
         stream=False,
         timeout=10.0,
         retry_attempts=0,
-        litellm_params={},
+        llm_params={},
     )
 
 
@@ -675,7 +675,7 @@ def fake_server(monkeypatch, request):
 # - Agent.__init__ callback URL resolution is exercised via env_patch + mock_container_detection + mock_ip_detection
 # - Hanzo AgentsClient request/header propagation is covered by http_mocks and fake_server
 # - MemoryClient serialization and HTTP fallback paths are supported by http_mocks and fake_server
-# - AgentAI model limits caching and message trimming rely on litellm_mock + sample_ai_config
+# - AgentAI model limits caching and message trimming rely on llm_mock + sample_ai_config
 # - AIConfig parameter merging and fallback logic can be tested via sample_ai_config overrides
 
 
