@@ -1,6 +1,6 @@
 module github.com/hanzoai/agents/control-plane
 
-go 1.24.0
+go 1.26
 
 toolchain go1.24.2
 

@@ -60,7 +60,7 @@ func RegisterAuthRoutes(router *gin.Engine, authCfg config.AuthConfig) {
 		state := fmt.Sprintf("%d", time.Now().UnixNano()) // Simple state for CSRF protection
 
 		authorizeURL := fmt.Sprintf(
-			"%s/login/oauth/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s",
+			"%s/oauth/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s",
 			publicEndpoint,
 			url.QueryEscape(authCfg.IAMClientID),
 			url.QueryEscape(redirectURI),
@@ -83,7 +83,7 @@ func RegisterAuthRoutes(router *gin.Engine, authCfg config.AuthConfig) {
 		}
 
 		// Exchange code for tokens using the internal IAM endpoint.
-		tokenURL := internalEndpoint + "/api/login/oauth/access_token"
+		tokenURL := internalEndpoint + "/oauth/token"
 		redirectURI := buildRedirectURI(c, authCfg)
 
 		formData := url.Values{
