@@ -42,7 +42,7 @@ const TERMINAL_THEME = {
   white: '#e5e7eb',
 } as const
 
-const FONT_FAMILY = "'JetBrains Mono', 'Fira Code', 'Menlo', monospace"
+const FONT_FAMILY = "'Geist Mono', 'JetBrains Mono', 'Menlo', monospace"
 const FONT_SIZE = 13
 
 // ---------------------------------------------------------------------------
