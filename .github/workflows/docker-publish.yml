@@ -17,4 +17,6 @@ jobs:
       image: ghcr.io/hanzoai/agent
       context: control-plane
       dockerfile: Dockerfile
+      platforms: linux/amd64
+      runner-amd64: ubuntu-latest
     secrets: inherit
