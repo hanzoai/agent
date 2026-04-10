@@ -4,9 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
+	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,21 +31,17 @@ import (
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
-	"github.com/hanzoai/agents/control-plane/pkg/adminpb"
 	"github.com/hanzoai/agents/control-plane/pkg/types"
 	client "github.com/hanzoai/agents/control-plane/web/client"
 
 	"github.com/gin-contrib/cors" // CORS middleware
 	"github.com/gin-gonic/gin"
+	"github.com/luxfi/zap"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // HanzoAgentsServer represents the core HanzoAgents orchestration service.
 type HanzoAgentsServer struct {
-	adminpb.UnimplementedAdminReasonerServiceServer
 	storage               storage.StorageProvider
 	cache                 storage.CacheProvider
 	Router                *gin.Engine
@@ -70,9 +65,8 @@ type HanzoAgentsServer struct {
 	cleanupService        *handlers.ExecutionCleanupService
 	payloadStore          services.PayloadStore
 	registryWatcherCancel context.CancelFunc
-	adminGRPCServer       *grpc.Server
-	adminListener         net.Listener
-	adminGRPCPort            int
+	zapAdmin              *zapAdminNode
+	zapAdminPort          int
 	webhookDispatcher        services.WebhookDispatcher
 	observabilityForwarder   services.ObservabilityForwarder
 	// Cloud provisioning
@@ -317,12 +311,17 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 	})
 	logger.Logger.Info().Str("commerce_url", cfg.Billing.CommerceURL).Msg("billing enforcement active")
 
-	adminPort := cfg.HanzoAgents.Port + 100
-	if envPort := os.Getenv("HANZO_AGENTS_ADMIN_GRPC_PORT"); envPort != "" {
+	adminPort := 9310 // Default ZAP port for agent inter-service transport
+	if envPort := os.Getenv("AGENT_ZAP_PORT"); envPort != "" {
 		if parsedPort, parseErr := strconv.Atoi(envPort); parseErr == nil {
 			adminPort = parsedPort
 		} else {
-			logger.Logger.Warn().Err(parseErr).Str("value", envPort).Msg("invalid HANZO_AGENTS_ADMIN_GRPC_PORT, using default offset")
+			logger.Logger.Warn().Err(parseErr).Str("value", envPort).Msg("invalid AGENT_ZAP_PORT, using default")
+		}
+	} else if envPort := os.Getenv("HANZO_AGENTS_ADMIN_GRPC_PORT"); envPort != "" {
+		// Legacy fallback
+		if parsedPort, parseErr := strconv.Atoi(envPort); parseErr == nil {
+			adminPort = parsedPort
 		}
 	}
 
@@ -348,7 +347,7 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 		webhookDispatcher:        webhookDispatcher,
 		observabilityForwarder:   observabilityForwarder,
 		registryWatcherCancel:    nil,
-		adminGRPCPort:            adminPort,
+		zapAdminPort:             adminPort,
 		cloudManager:             cloudManager,
 		cloudMonitor:             cloudMonitor,
 		billingService:           billingService,
@@ -413,80 +412,25 @@ func (s *HanzoAgentsServer) Start() error {
 		}
 	}
 
-	if err := s.startAdminGRPCServer(); err != nil {
-		return fmt.Errorf("failed to start admin gRPC server: %w", err)
+	// Start ZAP admin node for zero-copy inter-service operations
+	zapAdmin, err := startZAPAdminNode(s.zapAdminPort, s.storage)
+	if err != nil {
+		logger.Logger.Warn().Err(err).Msg("failed to start ZAP admin node (continuing with REST only)")
+	} else {
+		s.zapAdmin = zapAdmin
 	}
 
-	// TODO: Implement WebSocket, gRPC
+	// Register REST admin endpoints on the main router
+	registerAdminRESTRoutes(s.Router, s.storage)
+
 	// Start HTTP server
 	return s.Router.Run(":" + strconv.Itoa(s.config.HanzoAgents.Port))
 }
 
-func (s *HanzoAgentsServer) startAdminGRPCServer() error {
-	if s.adminGRPCServer != nil {
-		return nil
-	}
-
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.adminGRPCPort))
-	if err != nil {
-		return err
-	}
-
-	s.adminListener = lis
-	opts := []grpc.ServerOption{}
-	if s.config.API.Auth.APIKey != "" {
-		opts = append(opts, grpc.UnaryInterceptor(
-			middleware.APIKeyUnaryInterceptor(s.config.API.Auth.APIKey),
-		))
-	}
-	s.adminGRPCServer = grpc.NewServer(opts...)
-	adminpb.RegisterAdminReasonerServiceServer(s.adminGRPCServer, s)
-
-	go func() {
-		if serveErr := s.adminGRPCServer.Serve(lis); serveErr != nil && !errors.Is(serveErr, grpc.ErrServerStopped) {
-			logger.Logger.Error().Err(serveErr).Msg("admin gRPC server stopped unexpectedly")
-		}
-	}()
-
-	logger.Logger.Info().Int("port", s.adminGRPCPort).Msg("admin gRPC server listening")
-	return nil
-}
-
-// ListReasoners implements the admin gRPC surface for listing registered reasoners.
-func (s *HanzoAgentsServer) ListReasoners(ctx context.Context, _ *adminpb.ListReasonersRequest) (*adminpb.ListReasonersResponse, error) {
-	nodes, err := s.storage.ListAgents(ctx, types.AgentFilters{})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list agent nodes: %v", err)
-	}
-
-	resp := &adminpb.ListReasonersResponse{}
-	for _, node := range nodes {
-		if node == nil {
-			continue
-		}
-		for _, reasoner := range node.Reasoners {
-			resp.Reasoners = append(resp.Reasoners, &adminpb.Reasoner{
-				ReasonerId:    fmt.Sprintf("%s.%s", node.ID, reasoner.ID),
-				AgentNodeId:   node.ID,
-				Name:          reasoner.ID,
-				Description:   fmt.Sprintf("Reasoner %s from node %s", reasoner.ID, node.ID),
-				Status:        string(node.HealthStatus),
-				NodeVersion:   node.Version,
-				LastHeartbeat: node.LastHeartbeat.Format(time.RFC3339),
-			})
-		}
-	}
-
-	return resp, nil
-}
-
 // Stop gracefully shuts down the HanzoAgentsServer.
 func (s *HanzoAgentsServer) Stop() error {
-	if s.adminGRPCServer != nil {
-		s.adminGRPCServer.GracefulStop()
-	}
-	if s.adminListener != nil {
-		_ = s.adminListener.Close()
+	if s.zapAdmin != nil {
+		s.zapAdmin.stop()
 	}
 
 	// Stop status manager service
@@ -701,6 +645,34 @@ func (s *HanzoAgentsServer) setupRoutes() {
 	}
 
 	s.Router.Use(cors.New(corsConfig))
+
+	// Rewrite /v1/agents/* -> /api/v1/* so the public-facing URL pattern
+	// /<version>/<service>/<path> maps to internal routes without duplicating
+	// every route registration.
+	s.Router.Use(func(c *gin.Context) {
+		p := c.Request.URL.Path
+		switch {
+		case strings.HasPrefix(p, "/v1/agents/ui/v2/"):
+			c.Request.URL.Path = "/api/ui/v2/" + strings.TrimPrefix(p, "/v1/agents/ui/v2/")
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		case p == "/v1/agents/ui/v2":
+			c.Request.URL.Path = "/api/ui/v2"
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		case strings.HasPrefix(p, "/v1/agents/ui/"):
+			c.Request.URL.Path = "/api/ui/v1/" + strings.TrimPrefix(p, "/v1/agents/ui/")
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		case p == "/v1/agents/ui":
+			c.Request.URL.Path = "/api/ui/v1"
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		case strings.HasPrefix(p, "/v1/agents/"):
+			c.Request.URL.Path = "/api/v1/" + strings.TrimPrefix(p, "/v1/agents/")
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		case p == "/v1/agents":
+			c.Request.URL.Path = "/api/v1/"
+			c.Request.RequestURI = c.Request.URL.RequestURI()
+		}
+		c.Next()
+	})
 
 	// Add request logging middleware
 	s.Router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
