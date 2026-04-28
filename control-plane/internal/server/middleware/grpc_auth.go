@@ -11,6 +11,9 @@ import (
 )
 
 // APIKeyUnaryInterceptor enforces API key authentication on gRPC calls.
+// All key comparisons are constant-time (subtle.ConstantTimeCompare via
+// constantTimeStringEqual) to avoid leaking the prefix length of the
+// supplied key on a timing side channel.
 func APIKeyUnaryInterceptor(apiKey string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// No auth configured, allow everything.
@@ -24,13 +27,13 @@ func APIKeyUnaryInterceptor(apiKey string) grpc.UnaryServerInterceptor {
 		}
 
 		// Check x-api-key
-		if keys := md.Get("x-api-key"); len(keys) > 0 && keys[0] == apiKey {
+		if keys := md.Get("x-api-key"); len(keys) > 0 && constantTimeStringEqual(keys[0], apiKey) {
 			return handler(ctx, req)
 		}
 
 		// Check Authorization: Bearer
 		if auths := md.Get("authorization"); len(auths) > 0 && strings.HasPrefix(auths[0], "Bearer ") {
-			if strings.TrimPrefix(auths[0], "Bearer ") == apiKey {
+			if constantTimeStringEqual(strings.TrimPrefix(auths[0], "Bearer "), apiKey) {
 				return handler(ctx, req)
 			}
 		}
