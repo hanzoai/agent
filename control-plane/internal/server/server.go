@@ -29,6 +29,7 @@ import (
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
+	"github.com/hanzoai/agents/control-plane/admin"
 	client "github.com/hanzoai/agents/control-plane/web/client"
 
 	"github.com/gin-contrib/cors" // CORS middleware
@@ -716,6 +717,16 @@ func (s *HanzoAgentsServer) setupRoutes() {
 
 	// Public health check endpoint for load balancers and container orchestration (e.g., Railway, K8s)
 	s.Router.GET("/health", s.healthCheckHandler)
+
+	// Mount the embedded admin SPA at /_/agents/. This is the
+	// canonical Hanzo admin chrome — operator pages for orgs, API
+	// keys, billing, observability. Lives ALONGSIDE the existing
+	// product UI (workflow viz / react-flow / xterm) which keeps
+	// mounting at '/' below. Different concerns, different mounts.
+	if admin.IsBuilt() {
+		s.Router.GET("/_/agents/*filepath", gin.WrapH(http.StripPrefix("/_/agents", admin.Handler())))
+		fmt.Println("Admin SPA mounted at /_/agents/")
+	}
 
 	// Serve UI files - embedded or filesystem based on availability
 	if s.config.UI.Enabled {
