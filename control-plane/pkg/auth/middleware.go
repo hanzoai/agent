@@ -61,6 +61,16 @@ func UserID(ctx context.Context) string { return strFromCtx(ctx, ctxKeyUserID) }
 // UserEmail returns the user email attached by RequireIdentity, or "".
 func UserEmail(ctx context.Context) string { return strFromCtx(ctx, ctxKeyUserEmail) }
 
+// WithOrgContext returns ctx with org pinned. Used by the gin
+// adapter (and any non-stdlib transport) so the SQL layer can read
+// OrgID(ctx) without going through the gin Request.
+func WithOrgContext(ctx context.Context, orgID string) context.Context {
+	if orgID == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxKeyOrgID, orgID)
+}
+
 func strFromCtx(ctx context.Context, k ctxKey) string {
 	if v, ok := ctx.Value(k).(string); ok {
 		return v

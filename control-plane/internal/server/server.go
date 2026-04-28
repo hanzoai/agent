@@ -27,7 +27,6 @@ import (
 	infrastorage "github.com/hanzoai/agents/control-plane/internal/infrastructure/storage"
 	"github.com/hanzoai/agents/control-plane/internal/logger"
 	"github.com/hanzoai/agents/control-plane/internal/server/middleware"
-	"github.com/hanzoai/agents/control-plane/internal/server/routes"
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
@@ -700,33 +699,24 @@ func (s *HanzoAgentsServer) setupRoutes() {
 		c.Next()
 	})
 
-	// Register IAM/OAuth auth routes BEFORE auth middleware (they must be unauthenticated).
-	routes.RegisterAuthRoutes(s.Router, s.config.API.Auth)
+	// Gateway-trust auth: hanzoai/gateway validates the IAM JWT and
+	// injects X-Org-Id, X-User-Id, X-User-Email after stripping any
+	// client-supplied identity headers. The binary trusts those —
+	// in-binary userinfo/JWKS calls are gone (deleted iam_auth.go,
+	// 2026-04-27). AGENTD_REQUIRE_IDENTITY=true (cloud) rejects
+	// requests without identity; default false keeps the solo path
+	// working without a gateway in front.
+	s.Router.Use(middleware.RequireIdentity(envBool("AGENTD_REQUIRE_IDENTITY", false)))
 
-	// Combined authentication middleware: tries IAM first, then API key.
-	iamConfig := middleware.IAMConfig{
-		Enabled:        s.config.API.Auth.IAMEnabled,
-		Endpoint:       s.config.API.Auth.IAMEndpoint,
-		PublicEndpoint: s.config.API.Auth.IAMPublicEndpoint,
-		ClientID:       s.config.API.Auth.IAMClientID,
-		ClientSecret:   s.config.API.Auth.IAMClientSecret,
-		Organization:   s.config.API.Auth.IAMOrganization,
-		Application:    s.config.API.Auth.IAMApplication,
-	}
-	apiKeyConfig := middleware.AuthConfig{
-		APIKey:    s.config.API.Auth.APIKey,
-		SkipPaths: s.config.API.Auth.SkipPaths,
-	}
-	s.Router.Use(middleware.CombinedAuth(iamConfig, apiKeyConfig))
-
-	if s.config.API.Auth.IAMEnabled {
-		logger.Logger.Info().
-			Str("iam_endpoint", s.config.API.Auth.IAMEndpoint).
-			Str("iam_public_endpoint", s.config.API.Auth.IAMPublicEndpoint).
-			Str("iam_application", s.config.API.Auth.IAMApplication).
-			Msg("IAM (Casdoor) authentication enabled")
-	}
+	// Legacy API-key auth path: when the operator pins an API key
+	// (HANZO_AGENTS_API_KEY) we still gate request access on it.
+	// This is orthogonal to identity; both must pass when both
+	// are configured.
 	if s.config.API.Auth.APIKey != "" {
+		s.Router.Use(middleware.APIKeyAuth(middleware.AuthConfig{
+			APIKey:    s.config.API.Auth.APIKey,
+			SkipPaths: s.config.API.Auth.SkipPaths,
+		}))
 		logger.Logger.Info().Msg("API key authentication enabled")
 	}
 
@@ -1260,4 +1250,19 @@ func generateHanzoAgentsServerID(hanzoAgentsHome string) string {
 	hanzoAgentsServerID := hex.EncodeToString(hash[:])[:16]
 
 	return hanzoAgentsServerID
+}
+
+// envBool reads a boolean env var; missing or unparseable → def.
+// Used for the AGENTD_REQUIRE_IDENTITY switch that flips the
+// binary into multitenant gateway-trust mode.
+func envBool(k string, def bool) bool {
+	v := os.Getenv(k)
+	if v == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return def
+	}
+	return b
 }
