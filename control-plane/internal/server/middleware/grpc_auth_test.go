@@ -4,12 +4,32 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hanzoai/agents/control-plane/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+// grpcFakeValidator mirrors fakeValidator in auth_test.go for the
+// gRPC interceptor's bound-org path. Kept in this file to avoid
+// cross-test-file globals.
+type grpcFakeValidator struct {
+	want string
+	key  *auth.APIKey
+	err  error
+}
+
+func (f *grpcFakeValidator) Validate(_ context.Context, raw string) (*auth.APIKey, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	if raw != f.want {
+		return nil, auth.ErrKeyInvalid
+	}
+	return f.key, nil
+}
 
 // mockHandler is a simple handler for testing
 func mockHandler(ctx context.Context, req interface{}) (interface{}, error) {
@@ -228,4 +248,103 @@ func TestAPIKeyUnaryInterceptor_MultipleValues(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "success", resp)
+}
+
+// ---- Bound-org tests (Red 2026-04-27 P0-2) -------------------------
+
+// orgEchoHandler reads the bound OrgID off the ctx pinned by the
+// interceptor and echoes it as the response. Lets the bound-org
+// tests assert on the "key wins" property.
+func orgEchoHandler(ctx context.Context, _ interface{}) (interface{}, error) {
+	return auth.OrgID(ctx), nil
+}
+
+func TestAPIKeyUnaryInterceptor_BoundKey_MatchingOrg(t *testing.T) {
+	v := &grpcFakeValidator{
+		want: "hk-good",
+		key:  &auth.APIKey{ID: "k1", OrgID: "hanzo", UserID: "u1"},
+	}
+	interceptor := APIKeyUnaryInterceptor("", WithValidator(v))
+
+	md := metadata.Pairs("x-api-key", "hk-good", "x-org-id", "hanzo")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	resp, err := interceptor(ctx, "req", mockServerInfo, orgEchoHandler)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "hanzo", resp)
+}
+
+func TestAPIKeyUnaryInterceptor_BoundKey_MismatchedOrg_403(t *testing.T) {
+	v := &grpcFakeValidator{
+		want: "hk-good",
+		key:  &auth.APIKey{ID: "k1", OrgID: "hanzo", UserID: "u1"},
+	}
+	interceptor := APIKeyUnaryInterceptor("", WithValidator(v))
+
+	md := metadata.Pairs("x-api-key", "hk-good", "x-org-id", "victim")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	resp, err := interceptor(ctx, "req", mockServerInfo, mockHandler)
+
+	assert.Nil(t, resp)
+	st, ok := status.FromError(err)
+	assert.True(t, ok)
+	assert.Equal(t, codes.PermissionDenied, st.Code())
+	assert.Contains(t, st.Message(), "different org")
+}
+
+func TestAPIKeyUnaryInterceptor_BoundKey_NoOrgHeader_KeyWins(t *testing.T) {
+	v := &grpcFakeValidator{
+		want: "hk-good",
+		key:  &auth.APIKey{ID: "k1", OrgID: "hanzo", UserID: "u1"},
+	}
+	interceptor := APIKeyUnaryInterceptor("", WithValidator(v))
+
+	md := metadata.Pairs("x-api-key", "hk-good")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	resp, err := interceptor(ctx, "req", mockServerInfo, orgEchoHandler)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "hanzo", resp)
+}
+
+func TestAPIKeyUnaryInterceptor_BoundKey_Revoked_401(t *testing.T) {
+	v := &grpcFakeValidator{want: "hk-good", err: auth.ErrKeyRevoked}
+	interceptor := APIKeyUnaryInterceptor("", WithValidator(v))
+
+	md := metadata.Pairs("x-api-key", "hk-good")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	_, err := interceptor(ctx, "req", mockServerInfo, mockHandler)
+
+	st, ok := status.FromError(err)
+	assert.True(t, ok)
+	assert.Equal(t, codes.Unauthenticated, st.Code())
+}
+
+func TestAPIKeyUnaryInterceptor_BoundKey_Expired_401(t *testing.T) {
+	v := &grpcFakeValidator{want: "hk-good", err: auth.ErrKeyExpired}
+	interceptor := APIKeyUnaryInterceptor("", WithValidator(v))
+
+	md := metadata.Pairs("x-api-key", "hk-good")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	_, err := interceptor(ctx, "req", mockServerInfo, mockHandler)
+
+	st, ok := status.FromError(err)
+	assert.True(t, ok)
+	assert.Equal(t, codes.Unauthenticated, st.Code())
+}
+
+func TestAPIKeyUnaryInterceptor_StaticKey_DefersOrgToGateway(t *testing.T) {
+	// Legacy single-key shape: APIKeyUnaryInterceptor("hk-static")
+	// auto-wraps as a StaticValidator. No org binding → no PD on
+	// org-mismatch (the gateway-trust path handles org).
+	interceptor := APIKeyUnaryInterceptor("hk-static")
+
+	md := metadata.Pairs("x-api-key", "hk-static", "x-org-id", "any-org")
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	resp, err := interceptor(ctx, "req", mockServerInfo, orgEchoHandler)
+
+	assert.NoError(t, err)
+	// Static path: org context not pinned by the interceptor —
+	// auth.OrgID returns whatever was in ctx before, which is "".
+	assert.Equal(t, "", resp)
 }
