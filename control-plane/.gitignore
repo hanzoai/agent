@@ -1,0 +1,11 @@
+# build artifacts
+agentd
+hanzo-agents-server
+bin/
+tmp/
+
+# local dev
+.DS_Store
+
+# Go test cache
+*.test
