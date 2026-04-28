@@ -1,0 +1,37 @@
+{{- if .Values.controlPlane.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hanzo-agents.controlPlane.fullname" . }}
+  labels:
+    {{- include "hanzo-agents.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hanzo-agents.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: control-plane
+  policyTypes:
+    - Ingress
+  ingress:
+    # Default-deny: only allow ingress from hanzoai/gateway. The
+    # gateway is the trust boundary — it validates the IAM JWT and
+    # injects X-Org-Id, X-User-Id, X-User-Email after stripping any
+    # client-supplied headers. Direct pod-to-pod traffic from any
+    # other workload is refused, closing the
+    # "valid-API-key-from-misconfigured-pod + attacker X-Org-Id"
+    # cross-tenant attack surface.
+    - from:
+        - podSelector:
+            matchLabels:
+              app: hanzoai-gateway
+      ports:
+        - protocol: TCP
+          port: {{ .Values.controlPlane.service.port }}
+        - protocol: TCP
+          port: {{ include "hanzo-agents.controlPlane.grpcPort" . }}
+    # Operator extras: e.g. observability scrapers, internal
+    # admin tooling. Keep narrow — only label-selected workloads.
+    {{- with .Values.controlPlane.networkPolicy.additionalIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}
