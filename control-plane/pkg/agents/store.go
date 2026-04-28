@@ -4,22 +4,16 @@ package agents
 
 import (
 	"context"
+
+	"github.com/hanzoai/agents/control-plane/pkg/auth"
 )
 
-// orgCtxKey is the context key carrying the per-request org id
-// flowing from pkg/auth.RequireIdentity → pkg/agents.Store.WithOrg
-// → storage filters. Untyped string would collide with foreign keys;
-// the unexported type guarantees isolation.
-type orgCtxKey struct{}
-
-// WithOrgContext returns ctx with org pinned. Called by the HTTP
-// router after pkg/auth populates the request context with the
-// gateway-supplied org id.
+// WithOrgContext returns ctx with org pinned. Thin re-export of
+// pkg/auth.WithOrgContext — keeps callers that want to scope by
+// org from importing pkg/auth directly. Exactly one way to set
+// the context key (pkg/auth owns it).
 func WithOrgContext(ctx context.Context, orgID string) context.Context {
-	if orgID == "" {
-		return ctx
-	}
-	return context.WithValue(ctx, orgCtxKey{}, orgID)
+	return auth.WithOrgContext(ctx, orgID)
 }
 
 // OrgFromContext returns the active org id for ctx, or "" when none.
@@ -27,10 +21,7 @@ func WithOrgContext(ctx context.Context, orgID string) context.Context {
 // reaches the binary through hanzoai/gateway will always have an org;
 // developer/embed traffic without a gateway will not.
 func OrgFromContext(ctx context.Context) string {
-	if v, ok := ctx.Value(orgCtxKey{}).(string); ok {
-		return v
-	}
-	return ""
+	return auth.OrgID(ctx)
 }
 
 // Storage is the minimal interface pkg/agents.Store wraps. Kept
