@@ -2,8 +2,12 @@ controlPlane:
   replicaCount: 1
 
   image:
-    repository: hanzo-agents/control-plane
-    tag: latest
+    # Canonical Hanzo Go binary: ghcr.io/hanzoai/<svc>:vN.M.P. The
+    # 'agents' image carries the agentd binary built from
+    # ~/work/hanzo/agent/control-plane/cmd/agentd via CI (no local
+    # docker build per ~/.claude/CLAUDE.md).
+    repository: ghcr.io/hanzoai/agents
+    tag: v0.1.0
     pullPolicy: IfNotPresent
 
   service:
@@ -13,23 +17,38 @@ controlPlane:
     grpcPort: 0
 
   ingress:
-    enabled: false
-    className: ""
+    # Canonical Hanzo ingress is hanzoai/ingress + hanzoai/static
+    # plugin (NEVER nginx, NEVER caddy per ~/.claude/CLAUDE.md).
+    # Operators set className to 'hanzoai-ingress' in their cluster
+    # values to attach the right controller.
+    enabled: true
+    className: "hanzoai-ingress"
     annotations: {}
-    hosts: []
-    tls: []
+    hosts:
+      - host: agents.hanzo.ai
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: agents-hanzo-ai-tls
+        hosts:
+          - agents.hanzo.ai
 
   storage:
-    # local (SQLite/Bolt under HANZO_AGENTS_HOME) or postgres
+    # local (SQLite/Bolt under AGENTD_DATA_DIR) or postgres
     mode: local
     # If mode=postgres and this is empty, and postgres.enabled=true, the chart will auto-wire it.
     postgresUrl: ""
 
   env:
-    HANZO_AGENTS_HOME: /data
-    # Use defaults + env vars (avoids relying on a bundled config file).
-    # You can set this to a real path if you mount your own config.
-    HANZO_AGENTS_CONFIG_FILE: /dev/null
+    # Canonical agentd env. Older HANZO_AGENTS_* names still work
+    # for backward compatibility while the operator migrates.
+    AGENTD_DATA_DIR: /data
+    AGENTD_HTTP_ADDR: ":8080"
+    # Multitenant gateway-trust mode. hanzoai/gateway sits in front,
+    # validates the IAM JWT, and emits X-Org-Id / X-User-Id /
+    # X-User-Email. Set to "false" only for solo dev clusters.
+    AGENTD_REQUIRE_IDENTITY: "true"
 
   extraEnv: []
 
