@@ -66,6 +66,36 @@ func TestRequireIdentity_RejectsMissingInCloud(t *testing.T) {
 	}
 }
 
+func TestRequireIdentity_RejectsEmptyOrgWithUser(t *testing.T) {
+	// Empty X-Org-Id with X-User-Id present must 401 in cloud mode:
+	// org is the trust pivot for SQL scoping, user is informational.
+	// Mirrors pkg/auth.RequireIdentity contract so the gin and stdlib
+	// paths reject identically.
+	status, _, _, _, _ := runWithIdentity(t, true,
+		map[string]string{HeaderUserID: "u-1"},
+		"/v1/agents/echo",
+	)
+	if status != http.StatusUnauthorized {
+		t.Errorf("status: want 401, got %d", status)
+	}
+}
+
+func TestRequireIdentity_AcceptsOrgWithoutUser(t *testing.T) {
+	// Org-only is allowed: this is the canonical M2M shape where
+	// the gateway authenticated by API key and emits X-Org-Id but
+	// no user. Org pins the request context for SQL scoping.
+	status, org, _, _, ctxOrg := runWithIdentity(t, true,
+		map[string]string{HeaderOrgID: "hanzo"},
+		"/v1/agents/echo",
+	)
+	if status != http.StatusOK {
+		t.Errorf("status: want 200, got %d", status)
+	}
+	if org != "hanzo" || ctxOrg != "hanzo" {
+		t.Errorf("ctx org: gin=%q request=%q", org, ctxOrg)
+	}
+}
+
 func TestRequireIdentity_AllowsMissingInSolo(t *testing.T) {
 	status, _, _, _, _ := runWithIdentity(t, false, nil, "/v1/agents/echo")
 	if status != http.StatusOK {
