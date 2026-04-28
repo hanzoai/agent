@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -64,7 +65,11 @@ func APIKeyAuth(config AuthConfig) gin.HandlerFunc {
 			apiKey = c.Query("api_key")
 		}
 
-		if apiKey != config.APIKey {
+		// Constant-time compare. Go string compare is byte-by-byte
+		// with early exit, leaking the prefix length of the supplied
+		// key on a timing side channel. subtle.ConstantTimeCompare
+		// only returns 1 for equal-length, byte-equal inputs.
+		if !constantTimeStringEqual(apiKey, config.APIKey) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error":   "unauthorized",
 				"message": "invalid or missing API key",
@@ -74,4 +79,15 @@ func APIKeyAuth(config AuthConfig) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+// constantTimeStringEqual returns true iff a and b are byte-equal,
+// using crypto/subtle for a constant-time compare on the bytes. We
+// short-circuit on length mismatch — leaking "wrong length" is fine
+// because length is observable from the request itself.
+func constantTimeStringEqual(a, b string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
