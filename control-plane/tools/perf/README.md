@@ -5,7 +5,7 @@ path introduced in the orchestration refactor.
 
 ## Quick start
 
-1. Build the gateway binary (or run `go run ./cmd/hanzo-agents-server`). The production
+1. Build the gateway binary (or run `go run ./cmd/agentd`). The production
    build script is still the source of truth:
 
    ```bash

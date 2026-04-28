@@ -83,7 +83,7 @@ check_hanzo_agents_server() {
     else
         log_error "Hanzo Agents server is not responding at $HANZO_AGENTS_SERVER"
         log_error "Please ensure the Hanzo Agents server is running:"
-        log_error "  cd hanzo-agents/apps/platform/hanzo-agents && go run cmd/hanzo-agents-server/main.go"
+        log_error "  cd hanzo-agents/apps/platform/hanzo-agents && go run cmd/agentd/main.go"
         exit 1
     fi
 }
@@ -404,7 +404,7 @@ main() {
     log_info "  - Server restart: Success confirmation message"
     log_info ""
     log_info "Common troubleshooting:"
-    log_info "  - Ensure Hanzo Agents server is running: go run cmd/hanzo-agents-server/main.go"
+    log_info "  - Ensure Hanzo Agents server is running: go run cmd/agentd/main.go"
     log_info "  - Ensure at least one agent is running and registered"
     log_info "  - Check agent MCP server configurations"
     log_info "  - Verify network connectivity to $HANZO_AGENTS_SERVER"

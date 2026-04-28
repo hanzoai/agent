@@ -32,8 +32,8 @@ ARG DATE=unknown
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
     -tags embedded \
     -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
-    -o /hanzo-agents-server \
-    ./cmd/hanzo-agents-server
+    -o /agentd \
+    ./cmd/agentd
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
 FROM --platform=$TARGETPLATFORM alpine:3.20
@@ -41,7 +41,7 @@ FROM --platform=$TARGETPLATFORM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata
 RUN adduser -D -u 1000 hanzo
 
-COPY --from=backend /hanzo-agents-server /usr/local/bin/hanzo-agents-server
+COPY --from=backend /agentd /usr/local/bin/agentd
 
 # Default config location
 RUN mkdir -p /var/hanzo-agents/data /var/hanzo-agents/config /var/hanzo-agents/logs \
@@ -55,5 +55,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s \
     CMD wget -qO- http://localhost:8080/health || exit 1
 
-ENTRYPOINT ["hanzo-agents-server"]
-CMD ["serve"]
+ENTRYPOINT ["agentd"]
