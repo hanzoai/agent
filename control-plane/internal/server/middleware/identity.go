@@ -59,7 +59,14 @@ func RequireIdentity(require bool) gin.HandlerFunc {
 		user := c.GetHeader(HeaderUserID)
 		email := c.GetHeader(HeaderUserEmail)
 
-		if require && org == "" && user == "" {
+		// Empty X-Org-Id collapses to the solo bucket and falls
+		// through to handlers with empty org → unscoped queries
+		// until 021_org_id_not_null lands. Defense-in-depth: in
+		// cloud mode we reject any request without an org header
+		// regardless of X-User-Id presence. Mirrors pkg/auth
+		// middleware so the gin and stdlib paths are byte-for-byte
+		// equivalent.
+		if require && org == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "identity required",
 				"code":  401,

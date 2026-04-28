@@ -38,7 +38,13 @@ func RequireIdentity(require bool) func(http.Handler) http.Handler {
 			user := r.Header.Get(HeaderUserID)
 			email := r.Header.Get(HeaderUserEmail)
 
-			if require && org == "" && user == "" {
+			// Empty org collapses to the solo bucket and would
+			// reach handlers with unscoped context until the
+			// 021_org_id_not_null migration lands. Reject any
+			// request without an org header in cloud mode,
+			// regardless of X-User-Id presence — org is the
+			// trust pivot, user is informational.
+			if require && org == "" {
 				http.Error(w, `{"error":"identity required","code":401}`, http.StatusUnauthorized)
 				return
 			}
