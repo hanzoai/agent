@@ -6,9 +6,9 @@ tmp_dir = "tmp"
 
 [build]
 # Build command - builds the control plane server
-cmd = "go build -tags 'sqlite_fts5' -o ./tmp/hanzo-agents-server ./cmd/hanzo-agents-server"
+cmd = "go build -tags 'sqlite_fts5' -o ./tmp/agentd ./cmd/agentd"
 # Binary to run
-bin = "./tmp/hanzo-agents-server"
+bin = "./tmp/agentd"
 # Watch these file extensions
 include_ext = ["go", "yaml", "yml"]
 # Exclude directories from watching
