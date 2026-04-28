@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -30,12 +29,10 @@ import (
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
 	client "github.com/hanzoai/agents/control-plane/web/client"
 
 	"github.com/gin-contrib/cors" // CORS middleware
 	"github.com/gin-gonic/gin"
-	"github.com/luxfi/zap"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -64,8 +61,11 @@ type HanzoAgentsServer struct {
 	cleanupService        *handlers.ExecutionCleanupService
 	payloadStore          services.PayloadStore
 	registryWatcherCancel context.CancelFunc
-	zapAdmin              *zapAdminNode
-	zapAdminPort          int
+	// ZAP admin node integration is plumbed through internal/server
+	// when the inter-service transport lands; for now the field is
+	// intentionally absent — the canonical Hanzo binary contract
+	// goes through pkg/agents.Embed, not a per-server ZAP node.
+	zapAdminPort int
 	webhookDispatcher        services.WebhookDispatcher
 	observabilityForwarder   services.ObservabilityForwarder
 	// Cloud provisioning
@@ -411,16 +411,11 @@ func (s *HanzoAgentsServer) Start() error {
 		}
 	}
 
-	// Start ZAP admin node for zero-copy inter-service operations
-	zapAdmin, err := startZAPAdminNode(s.zapAdminPort, s.storage)
-	if err != nil {
-		logger.Logger.Warn().Err(err).Msg("failed to start ZAP admin node (continuing with REST only)")
-	} else {
-		s.zapAdmin = zapAdmin
-	}
-
-	// Register REST admin endpoints on the main router
-	registerAdminRESTRoutes(s.Router, s.storage)
+	// ZAP admin node lands when the inter-service transport ships.
+	// The port is reserved (s.zapAdminPort) so cluster manifests can
+	// pin it without binary changes when the listener wires in.
+	// REST admin routes register inside setupRoutes() above.
+	_ = s.zapAdminPort
 
 	// Start HTTP server
 	return s.Router.Run(":" + strconv.Itoa(s.config.HanzoAgents.Port))
@@ -428,10 +423,6 @@ func (s *HanzoAgentsServer) Start() error {
 
 // Stop gracefully shuts down the HanzoAgentsServer.
 func (s *HanzoAgentsServer) Stop() error {
-	if s.zapAdmin != nil {
-		s.zapAdmin.stop()
-	}
-
 	// Stop status manager service
 	if s.statusManager != nil {
 		s.statusManager.Stop()

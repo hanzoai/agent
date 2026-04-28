@@ -23,7 +23,7 @@ frontend:
 binary: frontend
 	CGO_ENABLED=0 go build -tags embedded \
 		-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)" \
-		-o bin/hanzo-agents-server ./cmd/hanzo-agents-server
+		-o bin/agentd ./cmd/agentd
 
 ## Build Docker image
 build:
