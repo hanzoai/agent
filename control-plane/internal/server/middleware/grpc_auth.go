@@ -1,3 +1,5 @@
+//go:build grpc
+
 // Copyright © 2026 Hanzo AI. MIT License.
 
 package middleware
