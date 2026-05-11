@@ -212,26 +212,30 @@ func applyEnvOverrides(cfg *Config) {
 		cfg.API.Auth.APIKey = apiKey
 	}
 
-	// IAM Authentication overrides
-	if val := os.Getenv("HANZO_AGENTS_IAM_ENABLED"); val != "" {
+	// IAM Authentication overrides — canonical names match the rest of
+	// the Hanzo stack (kms, iam, base). IAM_URL is the in-cluster URL
+	// the agent fetches JWKS from; IAM_ISSUER is the public iss the
+	// browser-issued tokens carry (often different from IAM_URL when
+	// the cluster and the public hostname differ).
+	if val := os.Getenv("IAM_ENABLED"); val != "" {
 		cfg.API.Auth.IAMEnabled = val == "true" || val == "1"
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_ENDPOINT"); val != "" {
+	if val := os.Getenv("IAM_URL"); val != "" {
 		cfg.API.Auth.IAMEndpoint = val
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_PUBLIC_ENDPOINT"); val != "" {
+	if val := os.Getenv("IAM_ISSUER"); val != "" {
 		cfg.API.Auth.IAMPublicEndpoint = val
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_CLIENT_ID"); val != "" {
+	if val := os.Getenv("IAM_CLIENT_ID"); val != "" {
 		cfg.API.Auth.IAMClientID = val
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_CLIENT_SECRET"); val != "" {
+	if val := os.Getenv("IAM_CLIENT_SECRET"); val != "" {
 		cfg.API.Auth.IAMClientSecret = val
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_ORGANIZATION"); val != "" {
+	if val := os.Getenv("IAM_ORG"); val != "" {
 		cfg.API.Auth.IAMOrganization = val
 	}
-	if val := os.Getenv("HANZO_AGENTS_IAM_APPLICATION"); val != "" {
+	if val := os.Getenv("IAM_APP"); val != "" {
 		cfg.API.Auth.IAMApplication = val
 	}
 
