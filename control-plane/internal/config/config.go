@@ -141,7 +141,7 @@ type AuthConfig struct {
 	// SkipPaths allows bypassing auth for specific endpoints (e.g., health).
 	SkipPaths []string `yaml:"skip_paths" mapstructure:"skip_paths"`
 
-	// IAM (Casdoor) OAuth configuration
+	// Hanzo IAM OAuth configuration
 	IAMEnabled        bool   `yaml:"iam_enabled" mapstructure:"iam_enabled"`
 	IAMEndpoint       string `yaml:"iam_endpoint" mapstructure:"iam_endpoint"`               // Internal endpoint (e.g., http://iam.hanzo.svc:8000)
 	IAMPublicEndpoint string `yaml:"iam_public_endpoint" mapstructure:"iam_public_endpoint"` // External endpoint (e.g., https://hanzo.id)
