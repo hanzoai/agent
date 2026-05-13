@@ -1,8 +1,8 @@
 module github.com/hanzoai/agents/control-plane
 
-go 1.26
+go 1.26.3
 
-toolchain go1.26.1
+toolchain go1.26.3
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.1
