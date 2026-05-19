@@ -127,7 +127,7 @@ def test_discover_capabilities_json(responses):
     }
     responses.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/discovery/capabilities",
+        "http://localhost:8080/v1/discovery/capabilities",
         json=payload,
         status=200,
     )
@@ -159,13 +159,13 @@ def test_discover_capabilities_compact_and_xml(responses):
     }
     responses.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/discovery/capabilities",
+        "http://localhost:8080/v1/discovery/capabilities",
         json=compact_payload,
         status=200,
     )
     responses.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/discovery/capabilities",
+        "http://localhost:8080/v1/discovery/capabilities",
         body="<discovery/>",
         status=200,
         content_type="application/xml",
