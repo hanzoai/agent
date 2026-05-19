@@ -1921,7 +1921,7 @@ class Agent(FastAPI):
             return None
         return (
             self.hanzo_agents_server.rstrip("/")
-            + f"/api/v1/executions/{execution_id}/status"
+            + f"/v1/executions/{execution_id}/status"
         )
 
     def on_change(self, pattern: Union[str, List[str]]):
@@ -3414,8 +3414,8 @@ class Agent(FastAPI):
 
                     timeout = aiohttp.ClientTimeout(total=5.0)  # 5 second timeout
                     # Use UI API base URL to match where frontend fetches notes from
-                    # Replace the last occurrence of /api/v1 with /api/ui/v1
-                    ui_api_base = self.client.api_base.replace("/api/v1", "/api/ui/v1")
+                    # Replace the last occurrence of /v1 with /v1/ui
+                    ui_api_base = self.client.api_base.replace("/v1", "/v1/ui")
 
                     if self.dev_mode:
                         from hanzo_agents.logger import log_debug
@@ -3459,7 +3459,7 @@ class Agent(FastAPI):
                     try:
                         # Use UI API base URL to match where frontend fetches notes from
                         ui_api_base = self.client.api_base.replace(
-                            "/api/v1", "/api/ui/v1"
+                            "/v1", "/v1/ui"
                         )
 
                         if self.dev_mode:
@@ -3700,7 +3700,7 @@ class Agent(FastAPI):
         if duration_ms is not None:
             payload["duration_ms"] = duration_ms
 
-        url = self.hanzo_agents_server.rstrip("/") + "/api/v1/workflow/executions/events"
+        url = self.hanzo_agents_server.rstrip("/") + "/v1/workflow/executions/events"
         try:
             headers = {"Content-Type": "application/json"}
             if self.api_key:
