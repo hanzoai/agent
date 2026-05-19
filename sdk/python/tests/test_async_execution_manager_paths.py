@@ -47,7 +47,7 @@ async def test_poll_single_execution_targets_canonical_endpoint():
     assert request_mock.await_count == 1
     call = request_mock.await_args
     assert call.args[0] == "GET"
-    assert call.args[1].endswith(f"/api/v1/executions/{execution.execution_id}")
+    assert call.args[1].endswith(f"/v1/executions/{execution.execution_id}")
     assert call.kwargs["timeout"] == cfg.polling_timeout
 
 
@@ -84,7 +84,7 @@ async def test_batch_poll_uses_canonical_endpoint():
     assert len(batch_requests) == len(executions)
     for exec_state, request in zip(executions, batch_requests):
         assert request["method"] == "GET"
-        assert request["url"].endswith(f"/api/v1/executions/{exec_state.execution_id}")
+        assert request["url"].endswith(f"/v1/executions/{exec_state.execution_id}")
         assert request["timeout"] == cfg.polling_timeout
 
 
@@ -128,7 +128,7 @@ async def test_submit_execution_wraps_payload(monkeypatch):
 
     assert session_post.await_count == 1
     call = session_post.await_args
-    assert call.args[0] == "http://example/api/v1/execute/async/node.reasoner"
+    assert call.args[0] == "http://example/v1/execute/async/node.reasoner"
     assert call.kwargs["json"] == {"input": {"foo": "bar"}}
 
 
