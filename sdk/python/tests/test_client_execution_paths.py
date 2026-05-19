@@ -23,14 +23,14 @@ def test_call_sync_execution(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-123"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-123",
+        "http://localhost:8080/v1/executions/exec-123",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -48,14 +48,14 @@ def test_call_async_execution(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-456"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-456",
+        "http://localhost:8080/v1/executions/exec-456",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -74,14 +74,14 @@ def test_call_with_context_headers(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-789"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-789",
+        "http://localhost:8080/v1/executions/exec-789",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -111,7 +111,7 @@ def test_call_error_handling(client):
     # Mock error response from the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"error": "Network error"},
         status=500,
     )
@@ -125,21 +125,21 @@ def test_call_retry_logic(client):
     # First call fails with 500
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"error": "Transient error"},
         status=500,
     )
     # Second call succeeds
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-retry"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-retry",
+        "http://localhost:8080/v1/executions/exec-retry",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -162,14 +162,14 @@ def test_call_with_webhook_config(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-webhook"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-webhook",
+        "http://localhost:8080/v1/executions/exec-webhook",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -194,14 +194,14 @@ def test_call_header_propagation(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-header"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-header",
+        "http://localhost:8080/v1/executions/exec-header",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -229,14 +229,14 @@ def test_call_event_stream_handling(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-stream"},
         status=200,
     )
     # Mock the status polling endpoint with streaming response
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-stream",
+        "http://localhost:8080/v1/executions/exec-stream",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -254,7 +254,7 @@ def test_call_timeout_handling(client):
     # Mock timeout error using responses
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         body=asyncio.TimeoutError(),
     )
 
@@ -270,26 +270,26 @@ def test_call_with_different_execution_modes(client):
     # Mock first call
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-mode1"},
         status=200,
     )
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-mode1",
+        "http://localhost:8080/v1/executions/exec-mode1",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
     # Mock second call
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-mode2"},
         status=200,
     )
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-mode2",
+        "http://localhost:8080/v1/executions/exec-mode2",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -314,26 +314,26 @@ def test_call_result_caching(client):
     # Mock first call
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-cache1"},
         status=200,
     )
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-cache1",
+        "http://localhost:8080/v1/executions/exec-cache1",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
     # Mock second call
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-cache2"},
         status=200,
     )
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-cache2",
+        "http://localhost:8080/v1/executions/exec-cache2",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -359,14 +359,14 @@ def test_call_with_custom_headers(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-custom"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-custom",
+        "http://localhost:8080/v1/executions/exec-custom",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -387,14 +387,14 @@ def test_call_context_management(client):
     # Mock the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"execution_id": "exec-context"},
         status=200,
     )
     # Mock the status polling endpoint
     responses_lib.add(
         responses_lib.GET,
-        "http://localhost:8080/api/v1/executions/exec-context",
+        "http://localhost:8080/v1/executions/exec-context",
         json={"status": "succeeded", "result": {"key": "value"}},
         status=200,
     )
@@ -426,7 +426,7 @@ def test_call_error_response_handling(client):
     # Mock error response from the async execution endpoint
     responses_lib.add(
         responses_lib.POST,
-        "http://localhost:8080/api/v1/execute/async/agent.reasoner",
+        "http://localhost:8080/v1/execute/async/agent.reasoner",
         json={"error": "Internal server error"},
         status=500,
     )

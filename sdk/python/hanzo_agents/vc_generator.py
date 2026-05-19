@@ -138,7 +138,7 @@ class VCGenerator:
             headers = {"Content-Type": "application/json"}
             headers.update(self._get_auth_headers())
             response = requests.post(
-                f"{self.hanzo_agents_server_url}/api/v1/execution/vc",
+                f"{self.hanzo_agents_server_url}/v1/execution/vc",
                 json=vc_data,
                 headers=headers,
                 timeout=10,
@@ -176,7 +176,7 @@ class VCGenerator:
             headers = {"Content-Type": "application/json"}
             headers.update(self._get_auth_headers())
             response = requests.post(
-                f"{self.hanzo_agents_server_url}/api/v1/did/verify",
+                f"{self.hanzo_agents_server_url}/v1/did/verify",
                 json=verification_data,
                 headers=headers,
                 timeout=10,
@@ -206,7 +206,7 @@ class VCGenerator:
         """
         try:
             response = requests.get(
-                f"{self.hanzo_agents_server_url}/api/v1/did/workflow/{workflow_id}/vc-chain",
+                f"{self.hanzo_agents_server_url}/v1/did/workflow/{workflow_id}/vc-chain",
                 headers=self._get_auth_headers(),
                 timeout=10,
             )
@@ -246,7 +246,7 @@ class VCGenerator:
             headers = {"Content-Type": "application/json"}
             headers.update(self._get_auth_headers())
             response = requests.post(
-                f"{self.hanzo_agents_server_url}/api/v1/did/workflow/{workflow_id}/vc",
+                f"{self.hanzo_agents_server_url}/v1/did/workflow/{workflow_id}/vc",
                 json=workflow_data,
                 headers=headers,
                 timeout=10,
@@ -281,7 +281,7 @@ class VCGenerator:
             params = filters or {}
 
             response = requests.get(
-                f"{self.hanzo_agents_server_url}/api/v1/did/export/vcs",
+                f"{self.hanzo_agents_server_url}/v1/did/export/vcs",
                 params=params,
                 headers=self._get_auth_headers(),
                 timeout=30,

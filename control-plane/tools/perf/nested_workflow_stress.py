@@ -175,16 +175,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--async-status-endpoint",
-        default="/api/v1/executions",
+        default="/v1/executions",
         help="Status endpoint base path",
     )
     parser.add_argument(
         "--async-submit-prefix",
-        default="/api/v1/execute/async",
+        default="/v1/execute/async",
         help="Async submission prefix",
     )
     parser.add_argument(
-        "--sync-prefix", default="/api/v1/execute", help="Sync submission prefix"
+        "--sync-prefix", default="/v1/execute", help="Sync submission prefix"
     )
     parser.add_argument(
         "--verify-ssl",

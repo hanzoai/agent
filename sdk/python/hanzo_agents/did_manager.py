@@ -114,7 +114,7 @@ class DIDManager:
             headers = {"Content-Type": "application/json"}
             headers.update(self._get_auth_headers())
             response = requests.post(
-                f"{self.hanzo_agents_server_url}/api/v1/did/register",
+                f"{self.hanzo_agents_server_url}/v1/did/register",
                 json=registration_data,
                 headers=headers,
                 timeout=30,
@@ -229,7 +229,7 @@ class DIDManager:
         """
         try:
             response = requests.get(
-                f"{self.hanzo_agents_server_url}/api/v1/did/resolve/{did}",
+                f"{self.hanzo_agents_server_url}/v1/did/resolve/{did}",
                 headers=self._get_auth_headers(),
                 timeout=10,
             )
