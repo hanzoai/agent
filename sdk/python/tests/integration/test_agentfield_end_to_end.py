@@ -12,7 +12,7 @@ async def _wait_for_node(
     client: httpx.AsyncClient, node_id: str, attempts: int = 40
 ) -> Dict[str, Any]:
     for _ in range(attempts):
-        response = await client.get(f"/api/v1/nodes/{node_id}")
+        response = await client.get(f"/v1/nodes/{node_id}")
         if response.status_code == 200:
             payload = response.json()
             if payload.get("id") == node_id:
@@ -28,7 +28,7 @@ async def _wait_for_status(
     attempts: int = 40,
 ) -> Dict[str, Any]:
     for _ in range(attempts):
-        response = await client.get(f"/api/v1/nodes/{node_id}/status")
+        response = await client.get(f"/v1/nodes/{node_id}/status")
         if response.status_code == 200:
             data = response.json().get("status", {})
             lifecycle = data.get("lifecycle_status")
@@ -98,7 +98,7 @@ async def test_reasoner_execution_roundtrip(hanzo_agents_server, run_agent):
         await _wait_for_status(client, agent.node_id, expected="ready")
 
         response = await client.post(
-            f"/api/v1/reasoners/{agent.node_id}.double",
+            f"/v1/reasoners/{agent.node_id}.double",
             json={"input": {"value": 7}},
         )
 
@@ -154,7 +154,7 @@ async def test_app_ctx_available_during_execution(hanzo_agents_server, run_agent
         await _wait_for_status(client, agent.node_id, expected="ready")
 
         response = await client.post(
-            f"/api/v1/reasoners/{agent.node_id}.get_context_info",
+            f"/v1/reasoners/{agent.node_id}.get_context_info",
             json={"input": {}},
         )
 

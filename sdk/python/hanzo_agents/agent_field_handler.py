@@ -179,7 +179,7 @@ class HanzoAgentsHandler:
             if self.agent.api_key:
                 headers["X-API-Key"] = self.agent.api_key
             response = requests.post(
-                f"{self.agent.hanzo_agents_server}/api/v1/nodes/{self.agent.node_id}/heartbeat",
+                f"{self.agent.hanzo_agents_server}/v1/nodes/{self.agent.node_id}/heartbeat",
                 headers=headers,
                 timeout=5,
             )

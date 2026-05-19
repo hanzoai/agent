@@ -571,11 +571,11 @@ def fake_server(monkeypatch, request):
     This is suitable for contract tests while keeping network isolation.
 
     Endpoints:
-      - POST /api/v1/nodes/register          -> 201 Created
-      - POST /api/v1/execute/{target}        -> 200 with {"result": {...}, "metadata": {...}}
-      - POST /api/v1/memory/get              -> 200 with {"data": ...} or 404
-      - POST /api/v1/memory/delete           -> 200
-      - GET /api/v1/memory/list?scope=...    -> 200 with [{"key": ...}, ...]
+      - POST /v1/nodes/register          -> 201 Created
+      - POST /v1/execute/{target}        -> 200 with {"result": {...}, "metadata": {...}}
+      - POST /v1/memory/get              -> 200 with {"data": ...} or 404
+      - POST /v1/memory/delete           -> 200
+      - GET /v1/memory/list?scope=...    -> 200 with [{"key": ...}, ...]
 
     How it works:
       - Patches httpx.AsyncClient to use httpx.ASGITransport against the in-process FastAPI app.
@@ -595,14 +595,14 @@ def fake_server(monkeypatch, request):
 
     memory_store: Dict[str, Any] = {}
 
-    @app.post("/api/v1/nodes/register")
+    @app.post("/v1/nodes/register")
     async def register_node(payload: Dict[str, Any]):
         # Minimal 201 response for contract expectations
         return JSONResponse(
             status_code=201, content={"ok": True, "node": payload.get("id")}
         )
 
-    @app.post("/api/v1/execute/{target}")
+    @app.post("/v1/execute/{target}")
     async def execute_target(target: str, payload: Dict[str, Any]):
         # Echo input, fake metadata headers as body fields (clients parse json)
         result = {
@@ -617,7 +617,7 @@ def fake_server(monkeypatch, request):
         }
         return JSONResponse(status_code=200, content=result)
 
-    @app.post("/api/v1/memory/get")
+    @app.post("/v1/memory/get")
     async def memory_get(payload: Dict[str, Any]):
         key = payload.get("key")
         if key in memory_store:
@@ -633,13 +633,13 @@ def fake_server(monkeypatch, request):
             )
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
-    @app.post("/api/v1/memory/delete")
+    @app.post("/v1/memory/delete")
     async def memory_delete(payload: Dict[str, Any]):
         key = payload.get("key")
         memory_store.pop(key, None)
         return JSONResponse(status_code=200, content={"ok": True})
 
-    @app.get("/api/v1/memory/list")
+    @app.get("/v1/memory/list")
     async def memory_list(scope: Optional[str] = None):
         # Scope is ignored in this simple fake; return all keys
         return JSONResponse(

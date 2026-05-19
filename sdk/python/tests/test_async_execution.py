@@ -79,7 +79,7 @@ async def test_post_execution_status_retries(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
 
     await agent._post_execution_status(
-        "http://control/api/v1/executions/exec-1/status",
+        "http://control/v1/executions/exec-1/status",
         {"status": "running"},
         "exec-1",
         max_retries=5,

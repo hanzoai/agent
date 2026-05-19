@@ -88,7 +88,7 @@ async def test_child_execution_registration():
     assert agent.client.calls, "registration request not sent"
     method, url, kwargs = agent.client.calls[0]
     assert method == "POST"
-    assert url.endswith("/api/v1/workflow/executions")
+    assert url.endswith("/v1/workflow/executions")
     assert kwargs["json"]["parent_execution_id"] == parent.execution_id
     assert kwargs["json"]["run_id"] == "run-1"
 

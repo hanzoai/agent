@@ -49,7 +49,7 @@ async def test_router_requires_agent_before_use():
 
 
 def test_reasoner_and_skill_registration():
-    router = AgentRouter(prefix="/api/v1", tags=["base"])
+    router = AgentRouter(prefix="/v1", tags=["base"])
 
     @router.reasoner(path="/foo")
     def sample_reasoner():

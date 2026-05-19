@@ -110,11 +110,11 @@ def test_execute_sync_injects_run_id(monkeypatch):
 
     assert result["status"] == "succeeded"
     post_url, post_headers = captured["post"]
-    assert post_url.endswith("/api/v1/execute/async/node.reasoner")
+    assert post_url.endswith("/v1/execute/async/node.reasoner")
     assert post_headers["Content-Type"] == "application/json"
     assert post_headers["X-Run-ID"].startswith("run_")
     get_url, get_headers = captured["get"]
-    assert get_url.endswith("/api/v1/executions/exec-1")
+    assert get_url.endswith("/v1/executions/exec-1")
     assert get_headers["X-Run-ID"] == post_headers["X-Run-ID"]
 
 
