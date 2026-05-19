@@ -182,7 +182,7 @@ class AgentWorkflow:
         if not client or not hasattr(client, "_async_request") or not base_url:
             return
 
-        url = base_url.rstrip("/") + "/api/v1/workflow/executions/events"
+        url = base_url.rstrip("/") + "/v1/workflow/executions/events"
         try:
             safe_payload = jsonable_encoder(payload)
             await client._async_request("POST", url, json=safe_payload)
@@ -249,7 +249,7 @@ class AgentWorkflow:
             "agent_node_did": context.agent_node_did,
         }
 
-        url = base_url.rstrip("/") + "/api/v1/workflow/executions"
+        url = base_url.rstrip("/") + "/v1/workflow/executions"
         try:
             response = await client._async_request("POST", url, json=payload)
             body = response.json() if hasattr(response, "json") else response

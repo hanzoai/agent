@@ -169,7 +169,7 @@ def hanzo_agents_server(
     )
 
     try:
-        health_url = f"{base_url}/api/v1/health"
+        health_url = f"{base_url}/v1/health"
         deadline = time.time() + 60
         while time.time() < deadline:
             if process.poll() is not None:
