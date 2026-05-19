@@ -81,7 +81,7 @@ class AsyncConfig:
 
     # Event streaming (SSE) configuration
     enable_event_stream: bool = False  # Subscribe to SSE updates when available
-    event_stream_path: str = "/api/ui/v1/executions/events"
+    event_stream_path: str = "/v1/ui/executions/events"
     event_stream_retry_backoff: float = (
         3.0  # Seconds before reconnect after stream errors
     )

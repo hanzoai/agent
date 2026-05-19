@@ -238,7 +238,7 @@ def test_send_heartbeat(monkeypatch):
 
     monkeypatch.setattr("requests.post", fake_post)
     hanzo_agents.send_heartbeat()
-    assert calls["url"].endswith(f"/api/v1/nodes/{agent.node_id}/heartbeat")
+    assert calls["url"].endswith(f"/v1/nodes/{agent.node_id}/heartbeat")
 
 
 def test_send_heartbeat_warns_on_non_200(monkeypatch):

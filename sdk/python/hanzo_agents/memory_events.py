@@ -144,7 +144,7 @@ class MemoryEventClient:
                 headers = self.execution_context.to_headers()
                 if self.api_key:
                     headers["X-API-Key"] = self.api_key
-                ws_url = f"{self.base_url}/api/v1/memory/events/ws"
+                ws_url = f"{self.base_url}/v1/memory/events/ws"
 
                 # Add query parameters for server-side filtering
                 query_params = []
@@ -343,7 +343,7 @@ class MemoryEventClient:
                 # Make request to history endpoint
                 http_url = self.base_url.replace("ws", "http")
                 response = await client.get(
-                    f"{http_url}/api/v1/memory/events/history",
+                    f"{http_url}/v1/memory/events/history",
                     params=params,
                     headers=headers,
                     timeout=10.0,
@@ -388,7 +388,7 @@ class MemoryEventClient:
             # Make request to history endpoint
             http_url = self.base_url.replace("ws", "http")
             response = requests.get(
-                f"{http_url}/api/v1/memory/events/history",
+                f"{http_url}/v1/memory/events/history",
                 params=params,
                 headers=headers,
                 timeout=10.0,
