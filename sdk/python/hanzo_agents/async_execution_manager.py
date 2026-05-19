@@ -364,7 +364,7 @@ class AsyncExecutionManager:
         await self._capacity_semaphore.acquire()
 
         # Prepare request
-        url = urljoin(self.base_url, f"/api/v1/execute/async/{target}")
+        url = urljoin(self.base_url, f"/v1/execute/async/{target}")
         request_headers = {"Content-Type": "application/json", **(headers or {})}
         payload: Dict[str, Any] = {
             "input": input_data,
@@ -1076,7 +1076,7 @@ class AsyncExecutionManager:
 
     def _execution_status_url(self, execution_id: str) -> str:
         """Return the canonical status endpoint for an execution."""
-        return urljoin(self.base_url, f"/api/v1/executions/{execution_id}")
+        return urljoin(self.base_url, f"/v1/executions/{execution_id}")
 
     async def _update_execution_from_status(
         self, execution: ExecutionState, status_data: Dict[str, Any]
