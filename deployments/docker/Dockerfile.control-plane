@@ -38,9 +38,13 @@ RUN cd control-plane && \
 # has UID/GID 65532 in the base image, so match that here.
 RUN mkdir -p /tmp/hanzo-agents-data && chown 65532:65532 /tmp/hanzo-agents-data
 
-FROM gcr.io/distroless/base-debian12
+FROM ghcr.io/hanzoai/debian12:base
 COPY --from=go-builder /app/bin/hanzo-agents-server /usr/local/bin/hanzo-agents-server
 COPY --from=go-builder /app/control-plane/config /etc/hanzo-agents/config
 COPY --from=go-builder --chown=nonroot:nonroot /tmp/hanzo-agents-data /data
 USER nonroot:nonroot
 ENTRYPOINT ["/usr/local/bin/hanzo-agents-server"]
+
+# TODO(ghcr-auth): CI workflows building this image must `docker login`
+# to ghcr.io/hanzoai with a PAT (secret: GHCR_PULL_TOKEN) — the default
+# GITHUB_TOKEN scopes to the repo's own package only.
