@@ -1,4 +1,6 @@
 FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+RUN apk add --no-cache ca-certificates tzdata
+RUN addgroup -g 65532 -S nonroot && adduser -u 65532 -S nonroot -G nonroot
 WORKDIR /workspace
 
 COPY sdk/go ./sdk/go
@@ -8,8 +10,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/g
     cd examples/go_agent_nodes && go mod download && \
     CGO_ENABLED=0 go build -o /out/hanzo-agents-demo-go-agent ./main.go
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM scratch
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 COPY --from=builder /out/hanzo-agents-demo-go-agent /usr/local/bin/hanzo-agents-demo-go-agent
 EXPOSE 8001
+USER 65532:65532
 ENTRYPOINT ["/usr/local/bin/hanzo-agents-demo-go-agent"]
 
