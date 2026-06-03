@@ -1,6 +1,6 @@
 # Hanzo Agents Control Plane
 
-The Hanzo Agents control plane orchestrates agent workflows, manages verifiable credentials, serves the admin UI, and exposes REST/gRPC APIs consumed by the SDKs.
+The Hanzo Agents control plane orchestrates agent workflows, manages verifiable credentials, serves the admin UI, and exposes REST and ZAP-native APIs (LP-200) consumed by the SDKs.
 
 ## Requirements
 
