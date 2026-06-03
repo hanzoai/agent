@@ -19,6 +19,7 @@ from ..run_context import RunContextWrapper, TContext
 from ..state.store import StateStore, InMemoryStateStore
 from ..tracing import custom_span, get_current_trace
 from .node import NetworkNode, NodeStatus
+from .remote import RemoteAgentProxy, is_zap_wire_enabled
 from .router import Router, RoutingDecision, SemanticRouter
 
 
@@ -116,6 +117,68 @@ class AgentNetwork:
         
         return node
         
+    def add_remote_agent(
+        self,
+        name: str,
+        zap_uri: str,
+        *,
+        handoff_description: str | None = None,
+        capabilities: List[str] | None = None,
+        dependencies: List[str] | None = None,
+        metadata: Dict[str, Any] | None = None,
+    ) -> NetworkNode:
+        """Add a *remote* agent that lives at the other end of a ZAP wire.
+
+        The local network holds only a `RemoteAgentProxy`; invocations are
+        dispatched over ZAP to the peer endpoint, which is expected to expose
+        the named agent as a ZAP tool (`agent/<name>`). This is the
+        cross-process counterpart of `add_agent` and is gated on the
+        `HANZO_AGENT_WIRE=zap` env var at invocation time. Registering a
+        remote agent without the env set is legal — it errors at dispatch.
+
+        Args:
+            name: Remote agent name (matches the peer-side registration).
+            zap_uri: ZAP endpoint URI for the peer.
+            handoff_description: Description used when the agent is handed off.
+            capabilities: Router capabilities advertised by the remote peer.
+            dependencies: Dependency names this remote depends on.
+            metadata: Additional routing metadata.
+
+        Returns:
+            The network node wrapping the remote agent proxy.
+        """
+        if name in self.nodes:
+            raise AgentsException(f"Agent '{name}' already exists in network")
+
+        proxy = RemoteAgentProxy(
+            name=name,
+            zap_uri=zap_uri,
+            handoff_description=handoff_description,
+            capabilities=list(capabilities or []),
+            metadata=dict(metadata or {}),
+        )
+
+        # NetworkNode is typed `Agent`-shaped; RemoteAgentProxy carries the
+        # same minimal public surface (name + handoff_description + handoffs),
+        # so it satisfies the structural needs of the router and dispatcher.
+        # We `cast` rather than widen NetworkNode's type to keep the local-
+        # agent path unchanged.
+        node = NetworkNode(
+            agent=cast(Agent, proxy),
+            capabilities=list(capabilities or []),
+            dependencies=list(dependencies or []),
+            metadata=dict(metadata or {}),
+        )
+
+        self.nodes[name] = node
+        self.router.update_agent_info(name, node.capabilities, node.metadata)
+
+        logger.debug(
+            "Added remote agent '%s' via ZAP at %s (capabilities: %s)",
+            name, zap_uri, node.capabilities,
+        )
+        return node
+
     def remove_agent(self, agent_name: str) -> None:
         """Remove an agent from the network."""
         if agent_name not in self.nodes:
