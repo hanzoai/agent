@@ -311,13 +311,24 @@ class AgentWallet:
     def verify_signature(
         self, message: str, signature: str, expected_address: str
     ) -> bool:
-        """Verify a signature matches expected address.
+        """Verify ``signature`` was produced by ``expected_address`` over ``message``.
 
-        This is a simplified version. Real implementation would
-        recover the address from signature and compare.
+        Uses :func:`eth_account.Account.recover_message` with the standard
+        EIP-191 prefix (the same prefix :meth:`sign_message` applies via
+        :func:`encode_defunct`). Returns ``False`` rather than raising when
+        the signature is malformed, so callers can treat verification as a
+        boolean test.
         """
-        # TODO: Implement proper signature verification
-        return True  # Placeholder
+        if not signature or not expected_address:
+            return False
+        try:
+            from eth_account.messages import encode_defunct
+            recovered = Account.recover_message(
+                encode_defunct(text=message), signature=signature
+            )
+        except Exception:
+            return False
+        return recovered.lower() == expected_address.lower()
 
 
 def generate_shared_mnemonic() -> str:
