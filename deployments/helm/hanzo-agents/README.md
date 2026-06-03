@@ -92,4 +92,4 @@ curl -H "X-API-Key: change-me" http://localhost:8080/api/v1/nodes
 ## Notes
 
 - The chart defaults `HANZO_AGENTS_CONFIG_FILE=/dev/null` so the control plane uses built-in defaults + environment variables.
-- Admin gRPC listens on `(HANZO_AGENTS_PORT + 100)` and is exposed via the Service port named `grpc`.
+- Admin ZAP wire listens on `(HANZO_AGENTS_PORT + 100)` and is exposed via the Service port named `zap`.
