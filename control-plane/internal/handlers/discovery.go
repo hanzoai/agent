@@ -12,11 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/hanzoai/agents/control-plane/internal/logger"
 	"github.com/hanzoai/agents/control-plane/pkg/types"
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	metric "github.com/luxfi/metric"
 )
 
 // AgentLister is the minimal dependency required for discovery.
@@ -126,24 +125,24 @@ var (
 )
 
 var (
-	discoveryRequestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+	discoveryRequestCounter = metric.NewCounterVec(metric.CounterOpts{
 		Name: "hanzo_agents_discovery_requests_total",
 		Help: "Total number of discovery requests processed by the control plane.",
 	}, []string{"format", "status"})
-	discoveryRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	discoveryRequestDuration = metric.NewHistogramVec(metric.HistogramOpts{
 		Name:    "hanzo_agents_discovery_request_duration_seconds",
 		Help:    "Latency distribution for discovery responses.",
 		Buckets: []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2},
 	}, []string{"format"})
-	discoveryCacheHits = promauto.NewCounter(prometheus.CounterOpts{
+	discoveryCacheHits = metric.NewCounter(metric.CounterOpts{
 		Name: "hanzo_agents_discovery_cache_hits_total",
 		Help: "Count of discovery cache hits within the TTL window.",
 	})
-	discoveryCacheMisses = promauto.NewCounter(prometheus.CounterOpts{
+	discoveryCacheMisses = metric.NewCounter(metric.CounterOpts{
 		Name: "hanzo_agents_discovery_cache_misses_total",
 		Help: "Count of discovery cache refreshes due to TTL expiry or cold starts.",
 	})
-	discoveryFilterUsage = promauto.NewCounterVec(prometheus.CounterOpts{
+	discoveryFilterUsage = metric.NewCounterVec(metric.CounterOpts{
 		Name: "hanzo_agents_discovery_filter_usage_total",
 		Help: "Usage count for discovery filters.",
 	}, []string{"filter_type"})
