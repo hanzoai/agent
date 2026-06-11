@@ -3,7 +3,7 @@ package services
 import (
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus/testutil"
+	metric "github.com/luxfi/metric"
 	"github.com/stretchr/testify/require"
 )
 
