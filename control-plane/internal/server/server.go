@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"        // Cloud provisioning
+	"github.com/hanzoai/agents/control-plane/admin"
+	"github.com/hanzoai/agents/control-plane/internal/cloud" // Cloud provisioning
 	cloudaws "github.com/hanzoai/agents/control-plane/internal/cloud/aws"
 	cloudk8s "github.com/hanzoai/agents/control-plane/internal/cloud/k8s"
 	"github.com/hanzoai/agents/control-plane/internal/config"
@@ -29,12 +30,11 @@ import (
 	"github.com/hanzoai/agents/control-plane/internal/services" // Services
 	"github.com/hanzoai/agents/control-plane/internal/storage"
 	"github.com/hanzoai/agents/control-plane/internal/utils"
-	"github.com/hanzoai/agents/control-plane/admin"
 	client "github.com/hanzoai/agents/control-plane/web/client"
 
 	"github.com/gin-contrib/cors" // CORS middleware
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	metric "github.com/luxfi/metric"
 )
 
 // HanzoAgentsServer represents the core HanzoAgents orchestration service.
@@ -57,7 +57,7 @@ type HanzoAgentsServer struct {
 	didService      *services.DIDService
 	vcService       *services.VCService
 	didRegistry     *services.DIDRegistry
-	hanzoAgentsHome  string
+	hanzoAgentsHome string
 	// Cleanup service
 	cleanupService        *handlers.ExecutionCleanupService
 	payloadStore          services.PayloadStore
@@ -66,14 +66,14 @@ type HanzoAgentsServer struct {
 	// when the inter-service transport lands; for now the field is
 	// intentionally absent — the canonical Hanzo binary contract
 	// goes through pkg/agents.Embed, not a per-server ZAP node.
-	zapAdminPort int
-	webhookDispatcher        services.WebhookDispatcher
-	observabilityForwarder   services.ObservabilityForwarder
+	zapAdminPort           int
+	webhookDispatcher      services.WebhookDispatcher
+	observabilityForwarder services.ObservabilityForwarder
 	// Cloud provisioning
-	cloudManager             *cloud.CloudManager
-	cloudMonitor             *cloud.CloudInstanceMonitor
+	cloudManager *cloud.CloudManager
+	cloudMonitor *cloud.CloudInstanceMonitor
 	// Billing
-	billingService           *services.BillingService
+	billingService *services.BillingService
 }
 
 // NewHanzoAgentsServer creates a new instance of the HanzoAgentsServer.
@@ -326,31 +326,31 @@ func NewHanzoAgentsServer(cfg *config.Config) (*HanzoAgentsServer, error) {
 	}
 
 	return &HanzoAgentsServer{
-		storage:               storageProvider,
-		cache:                 cacheProvider,
-		Router:                Router,
-		uiService:             uiService,
-		executionsUIService:   executionsUIService,
-		healthMonitor:         healthMonitor,
-		presenceManager:       presenceManager,
-		statusManager:         statusManager,
-		agentService:          agentService,
-		agentClient:           agentClient,
-		config:                cfg,
-		keystoreService:       keystoreService,
-		didService:            didService,
-		vcService:             vcService,
-		didRegistry:           didRegistry,
+		storage:                storageProvider,
+		cache:                  cacheProvider,
+		Router:                 Router,
+		uiService:              uiService,
+		executionsUIService:    executionsUIService,
+		healthMonitor:          healthMonitor,
+		presenceManager:        presenceManager,
+		statusManager:          statusManager,
+		agentService:           agentService,
+		agentClient:            agentClient,
+		config:                 cfg,
+		keystoreService:        keystoreService,
+		didService:             didService,
+		vcService:              vcService,
+		didRegistry:            didRegistry,
 		hanzoAgentsHome:        hanzoAgentsHome,
-		cleanupService:        cleanupService,
-		payloadStore:          payloadStore,
-		webhookDispatcher:        webhookDispatcher,
-		observabilityForwarder:   observabilityForwarder,
-		registryWatcherCancel:    nil,
-		zapAdminPort:             adminPort,
-		cloudManager:             cloudManager,
-		cloudMonitor:             cloudMonitor,
-		billingService:           billingService,
+		cleanupService:         cleanupService,
+		payloadStore:           payloadStore,
+		webhookDispatcher:      webhookDispatcher,
+		observabilityForwarder: observabilityForwarder,
+		registryWatcherCancel:  nil,
+		zapAdminPort:           adminPort,
+		cloudManager:           cloudManager,
+		cloudMonitor:           cloudMonitor,
+		billingService:         billingService,
 	}, nil
 }
 
@@ -713,7 +713,7 @@ func (s *HanzoAgentsServer) setupRoutes() {
 	}
 
 	// Expose Prometheus metrics
-	s.Router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	s.Router.GET("/metrics", gin.WrapH(metric.NewHTTPHandler(metric.DefaultGatherer, metric.HandlerOpts{})))
 
 	// Public health check endpoint for load balancers and container orchestration (e.g., Railway, K8s)
 	s.Router.GET("/health", s.healthCheckHandler)
@@ -1115,7 +1115,7 @@ func (s *HanzoAgentsServer) setupRoutes() {
 				c.JSON(http.StatusOK, gin.H{
 					"hanzo_agents_server_id":  "default",
 					"hanzo_agents_server_did": registry.RootDID,
-					"message":               "HanzoAgents server DID retrieved successfully",
+					"message":                 "HanzoAgents server DID retrieved successfully",
 				})
 			})
 		} else {
