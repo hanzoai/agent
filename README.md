@@ -87,27 +87,27 @@ print(result.final_output)
 ### Multi-Agent Network
 
 ```python
-from agents import Agent, create_network
-from agents.routers import SemanticRouter
+from agents import Agent
+from agents.network import create_network, SemanticRouter
 
 # Create specialized agents
 researcher = Agent(
     name="Researcher",
     instructions="You find and analyze information.",
-    tools=[search_tool, analyze_tool]
+    tools=[search_tool, analyze_tool],
 )
 
 writer = Agent(
     name="Writer",
     instructions="You create content based on research.",
-    tools=[format_tool]
+    tools=[format_tool],
 )
 
 # Create a network
 network = create_network(
     agents=[researcher, writer],
     router=SemanticRouter(),
-    default_model="gpt-4"
+    default_model="gpt-4",
 )
 
 # Run the network
@@ -117,27 +117,37 @@ result = await network.run("Research and write about quantum computing")
 ### Orchestrated Workflow
 
 ```python
-from agents import create_workflow, Step
+from agents import Agent
+from agents.orchestration import Orchestrator, OrchestrationConfig
 
-workflow = create_workflow(
-    name="Content Pipeline",
-    steps=[
-        Step.agent("researcher", "Research {topic}"),
-        Step.parallel([
-            Step.agent("writer", "Write introduction"),
-            Step.agent("writer", "Write main content")
-        ]),
-        Step.agent("reviewer", "Review and edit"),
-        Step.conditional(
-            condition=lambda state: state.get("quality_score") < 8,
-            true_step=Step.agent("writer", "Revise based on feedback"),
-            false_step=Step.transform(lambda x: {"status": "published"})
-        )
-    ]
+# Define agents (omitted: see Multi-Agent Network above)
+researcher = Agent(name="researcher", instructions="...")
+writer     = Agent(name="writer",     instructions="...")
+reviewer   = Agent(name="reviewer",   instructions="...")
+
+# Orchestrator owns the agent registry and workflow execution
+orchestrator = Orchestrator(
+    config=OrchestrationConfig(name="Content Pipeline"),
 )
+orchestrator.register_agent(researcher, capabilities=["research"])
+orchestrator.register_agent(writer,     capabilities=["writing"])
+orchestrator.register_agent(reviewer,   capabilities=["review"])
 
-result = await workflow.run({"topic": "AI Safety"})
+# Build a workflow from registered agents and execute it
+workflow = orchestrator.create_workflow_from_agents(
+    name="Article Workflow",
+    agents=["researcher", "writer", "reviewer"],
+)
+orchestrator.register_workflow(workflow)
+
+result = await orchestrator.execute_workflow(
+    workflow_id=workflow.id,
+    input="Research and write about AI safety.",
+)
+print(result.success, result.output)
 ```
+
+For lower-level control — composing parallel, conditional, and loop steps directly — see `agents.orchestration.Workflow` plus the `Step` helpers (`Step.agent`, `Step.parallel`, `Step.conditional`, `Step.loop`).
 
 (_Configure backend with `HANZO_ROUTER_URL` and `HANZO_API_KEY` environment variables_)
 
