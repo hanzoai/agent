@@ -1,4 +1,4 @@
-# LLM.md - Hanzo AI Agent SDK
+# Hanzo AI Agent SDK
 
 ## Overview
 Python framework for building AI agents and multi-agent systems with orchestration, MCP tools, memory, and observability via Hanzo Cloud.
