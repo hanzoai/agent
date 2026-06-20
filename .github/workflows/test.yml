@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
@@ -69,7 +69,7 @@ jobs:
         name: codecov-umbrella
     
   test-docs:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     
     steps:
     - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
       run: uv run mkdocs build --strict
     
   integration-test:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
@@ -109,7 +109,7 @@ jobs:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     
   security-scan:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     
     steps:
     - uses: actions/checkout@v4
