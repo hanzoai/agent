@@ -12,7 +12,7 @@ permissions:
 jobs:
   deploy_docs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: hanzo-deploy-linux-amd64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

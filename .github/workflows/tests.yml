@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
         run: make lint
 
   typecheck:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
         run: make mypy
 
   tests:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     env:
       OPENAI_API_KEY: fake-for-tests
     steps:
@@ -54,7 +54,7 @@ jobs:
         run: make tests
 
   build-docs:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     env:
       OPENAI_API_KEY: fake-for-tests
     steps:
@@ -70,7 +70,7 @@ jobs:
         run: make build-docs
 
   old_versions:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     env:
       OPENAI_API_KEY: fake-for-tests
     steps:
