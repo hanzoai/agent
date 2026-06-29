@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/hero.svg" alt="agent" width="880"></p>
+
 # Hanzo AI Agent SDK
 
 A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration.
