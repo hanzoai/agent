@@ -12,7 +12,7 @@ import (
 
 	"github.com/hanzoai/agents/control-plane/pkg/types"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/hanzoai/sqlite"
 )
 
 func setupTestDB(t *testing.T) (*LocalStorage, func()) {
@@ -121,31 +121,31 @@ func TestWorkflowUnitOfWork_AtomicWorkflowExecution(t *testing.T) {
 	}
 
 	execution := &types.WorkflowExecution{
-		WorkflowID:          "test-workflow-001",
-		ExecutionID:         "test-execution-001",
+		WorkflowID:           "test-workflow-001",
+		ExecutionID:          "test-execution-001",
 		HanzoAgentsRequestID: "test-request-001",
-		SessionID:           ptrString("test-session-001"),
-		ActorID:             ptrString("test-actor-001"),
-		AgentNodeID:         "test-agent-001",
-		ParentWorkflowID:    nil,
-		ParentExecutionID:   nil,
-		RootWorkflowID:      ptrString("test-workflow-001"),
-		WorkflowDepth:       0,
-		ReasonerID:          "test-reasoner",
-		InputData:           []byte(`{"input": "test"}`),
-		OutputData:          []byte(`{"output": "test"}`),
-		InputSize:           18,
-		OutputSize:          19,
-		Status:              string(types.ExecutionStatusSucceeded),
-		StartedAt:           time.Now().Add(-time.Minute),
-		CompletedAt:         ptrTime(time.Now()),
-		DurationMS:          ptrInt64(60000),
-		ErrorMessage:        nil,
-		RetryCount:          0,
-		WorkflowName:        ptrString("Test Workflow"),
-		WorkflowTags:        []string{"test", "unit-test"},
-		CreatedAt:           time.Now(),
-		UpdatedAt:           time.Now(),
+		SessionID:            ptrString("test-session-001"),
+		ActorID:              ptrString("test-actor-001"),
+		AgentNodeID:          "test-agent-001",
+		ParentWorkflowID:     nil,
+		ParentExecutionID:    nil,
+		RootWorkflowID:       ptrString("test-workflow-001"),
+		WorkflowDepth:        0,
+		ReasonerID:           "test-reasoner",
+		InputData:            []byte(`{"input": "test"}`),
+		OutputData:           []byte(`{"output": "test"}`),
+		InputSize:            18,
+		OutputSize:           19,
+		Status:               string(types.ExecutionStatusSucceeded),
+		StartedAt:            time.Now().Add(-time.Minute),
+		CompletedAt:          ptrTime(time.Now()),
+		DurationMS:           ptrInt64(60000),
+		ErrorMessage:         nil,
+		RetryCount:           0,
+		WorkflowName:         ptrString("Test Workflow"),
+		WorkflowTags:         []string{"test", "unit-test"},
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
 	}
 
 	// Create workflow unit of work
@@ -239,22 +239,22 @@ func TestWorkflowUnitOfWork_UpdateWorkflowStatus(t *testing.T) {
 
 	// Create new execution
 	execution := &types.WorkflowExecution{
-		WorkflowID:          "test-workflow-002",
-		ExecutionID:         "test-execution-002",
+		WorkflowID:           "test-workflow-002",
+		ExecutionID:          "test-execution-002",
 		HanzoAgentsRequestID: "test-request-002",
-		AgentNodeID:         "test-agent-002",
-		ReasonerID:          "test-reasoner",
-		InputData:           json.RawMessage(`{"test": "input"}`),
-		OutputData:          json.RawMessage(`{"test": "output"}`),
-		InputSize:           15,
-		OutputSize:          16,
-		Status:              string(types.ExecutionStatusSucceeded),
-		StartedAt:           time.Now().Add(-time.Minute),
-		CompletedAt:         ptrTime(time.Now()),
-		DurationMS:          ptrInt64(60000),
-		WorkflowName:        ptrString("Test Workflow"),
-		CreatedAt:           time.Now(),
-		UpdatedAt:           time.Now(),
+		AgentNodeID:          "test-agent-002",
+		ReasonerID:           "test-reasoner",
+		InputData:            json.RawMessage(`{"test": "input"}`),
+		OutputData:           json.RawMessage(`{"test": "output"}`),
+		InputSize:            15,
+		OutputSize:           16,
+		Status:               string(types.ExecutionStatusSucceeded),
+		StartedAt:            time.Now().Add(-time.Minute),
+		CompletedAt:          ptrTime(time.Now()),
+		DurationMS:           ptrInt64(60000),
+		WorkflowName:         ptrString("Test Workflow"),
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
 	}
 
 	// Update workflow status with new execution atomically
