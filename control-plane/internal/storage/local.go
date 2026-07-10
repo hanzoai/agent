@@ -22,9 +22,9 @@ import (
 	"github.com/hanzoai/agents/control-plane/pkg/types"
 
 	"github.com/boltdb/bolt"
+	_ "github.com/hanzoai/sqlite" // Hanzo SQLite driver (the one driver; !cgo → pure-Go modernc)
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver for PostgreSQL
-	_ "modernc.org/sqlite"             // Import pure-Go sqlite driver
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
