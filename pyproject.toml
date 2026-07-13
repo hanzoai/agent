@@ -1,7 +1,7 @@
 [project]
 name = "hanzoai"
 version = "0.0.4"
-description = "Hanzo AI SDK"
+description = "Hanzo Agent SDK"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
