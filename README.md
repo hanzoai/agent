@@ -4,6 +4,8 @@
 
 A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration.
 
+Forked from [openai/openai-agents-python](https://github.com/openai/openai-agents-python) (MIT).
+
 <img src="https://cdn.openai.com/API/docs/images/orchestration.png" alt="Image of the Agents Tracing UI" style="max-height: 803px;">
 
 ## ✨ Features
