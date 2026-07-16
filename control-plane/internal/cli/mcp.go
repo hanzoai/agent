@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hanzoai/agents/control-plane/internal/config" // Ensured this import is correct
-	"github.com/hanzoai/agents/control-plane/internal/mcp"
+	"github.com/hanzoai/agent/control-plane/internal/config" // Ensured this import is correct
+	"github.com/hanzoai/agent/control-plane/internal/mcp"
 
 	"github.com/spf13/cobra"
 )

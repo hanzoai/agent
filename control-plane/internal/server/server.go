@@ -12,25 +12,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/admin"
-	"github.com/hanzoai/agents/control-plane/internal/cloud" // Cloud provisioning
-	cloudaws "github.com/hanzoai/agents/control-plane/internal/cloud/aws"
-	cloudk8s "github.com/hanzoai/agents/control-plane/internal/cloud/k8s"
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
-	coreservices "github.com/hanzoai/agents/control-plane/internal/core/services" // Core services
-	"github.com/hanzoai/agents/control-plane/internal/events"                     // Event system
-	"github.com/hanzoai/agents/control-plane/internal/handlers"                   // Agent handlers
-	"github.com/hanzoai/agents/control-plane/internal/handlers/ui"                // UI handlers
-	"github.com/hanzoai/agents/control-plane/internal/infrastructure/communication"
-	"github.com/hanzoai/agents/control-plane/internal/infrastructure/process"
-	infrastorage "github.com/hanzoai/agents/control-plane/internal/infrastructure/storage"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/internal/server/middleware"
-	"github.com/hanzoai/agents/control-plane/internal/services" // Services
-	"github.com/hanzoai/agents/control-plane/internal/storage"
-	"github.com/hanzoai/agents/control-plane/internal/utils"
-	client "github.com/hanzoai/agents/control-plane/web/client"
+	"github.com/hanzoai/agent/control-plane/admin"
+	"github.com/hanzoai/agent/control-plane/internal/cloud" // Cloud provisioning
+	cloudaws "github.com/hanzoai/agent/control-plane/internal/cloud/aws"
+	cloudk8s "github.com/hanzoai/agent/control-plane/internal/cloud/k8s"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
+	coreservices "github.com/hanzoai/agent/control-plane/internal/core/services" // Core services
+	"github.com/hanzoai/agent/control-plane/internal/events"                     // Event system
+	"github.com/hanzoai/agent/control-plane/internal/handlers"                   // Agent handlers
+	"github.com/hanzoai/agent/control-plane/internal/handlers/ui"                // UI handlers
+	"github.com/hanzoai/agent/control-plane/internal/infrastructure/communication"
+	"github.com/hanzoai/agent/control-plane/internal/infrastructure/process"
+	infrastorage "github.com/hanzoai/agent/control-plane/internal/infrastructure/storage"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/server/middleware"
+	"github.com/hanzoai/agent/control-plane/internal/services" // Services
+	"github.com/hanzoai/agent/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/utils"
+	client "github.com/hanzoai/agent/control-plane/web/client"
 
 	"github.com/gin-contrib/cors" // CORS middleware
 	"github.com/gin-gonic/gin"

@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
 	"gopkg.in/yaml.v3"
 )
 

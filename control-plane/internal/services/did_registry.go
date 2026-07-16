@@ -6,8 +6,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/hanzoai/agents/control-plane/internal/storage"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // DIDRegistry manages the storage and retrieval of DID registries using database-only operations.

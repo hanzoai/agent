@@ -14,9 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/events"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/events"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 	"github.com/google/uuid"
 )
 

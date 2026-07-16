@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // UnitOfWork manages a collection of changes as a single transaction

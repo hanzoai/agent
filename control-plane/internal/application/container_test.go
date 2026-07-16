@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	storagecfg "github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	storagecfg "github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 func TestCreateServiceContainerWithoutDID(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/config"
 )
 
 // MCPCapability represents a discovered MCP server capability

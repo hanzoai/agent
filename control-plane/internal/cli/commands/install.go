@@ -3,8 +3,8 @@ package commands
 import (
 	"fmt"
 
-	"github.com/hanzoai/agents/control-plane/internal/cli/framework"
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/cli/framework"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
 	"github.com/spf13/cobra"
 )
 

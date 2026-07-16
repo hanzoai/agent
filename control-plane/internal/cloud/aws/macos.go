@@ -10,8 +10,8 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/rs/zerolog/log"
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/cloud"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 // launchMacOSInstance provisions a macOS EC2 instance on a Dedicated Host.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
 )
 
 // DefaultPortManager provides a default implementation for managing network ports.

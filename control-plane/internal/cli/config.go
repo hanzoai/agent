@@ -13,7 +13,7 @@ import (
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 
-	"github.com/hanzoai/agents/control-plane/internal/packages"
+	"github.com/hanzoai/agent/control-plane/internal/packages"
 )
 
 var (

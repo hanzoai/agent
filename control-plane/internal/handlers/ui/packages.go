@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hanzoai/agents/control-plane/internal/storage"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 
 	"github.com/gin-gonic/gin"
 )

@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/cli"
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/internal/server"
-	"github.com/hanzoai/agents/control-plane/internal/utils"
-	"github.com/hanzoai/agents/control-plane/web/client"
+	"github.com/hanzoai/agent/control-plane/internal/cli"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/server"
+	"github.com/hanzoai/agent/control-plane/internal/utils"
+	"github.com/hanzoai/agent/control-plane/web/client"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

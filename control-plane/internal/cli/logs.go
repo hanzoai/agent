@@ -7,8 +7,8 @@ import (
 	"os/exec" // Added missing import
 	"path/filepath"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/internal/packages"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/packages"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

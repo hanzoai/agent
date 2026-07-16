@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hanzoai/agents/control-plane/pkg/auth"
+	"github.com/hanzoai/agent/control-plane/pkg/auth"
 )
 
 // AuthConfig wires the validator and skip-list into the middleware.

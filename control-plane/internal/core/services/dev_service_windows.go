@@ -5,8 +5,8 @@ package services
 import (
 	"fmt"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
 )
 
 // DefaultDevService is a stub for Windows builds.

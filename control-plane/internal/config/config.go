@@ -9,8 +9,8 @@ import (
 
 	"gopkg.in/yaml.v3" // Added for yaml.Unmarshal
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/cloud"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 // Config holds the entire configuration for the HanzoAgents server.

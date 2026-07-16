@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/events"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/events"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

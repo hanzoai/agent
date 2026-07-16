@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/hanzoai/agents/control-plane/pkg/auth"
+	"github.com/hanzoai/agent/control-plane/pkg/auth"
 )
 
 // APIKeyUnaryInterceptor enforces API key authentication on gRPC

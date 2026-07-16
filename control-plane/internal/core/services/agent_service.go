@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
-	"github.com/hanzoai/agents/control-plane/internal/packages"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/packages"
 	"gopkg.in/yaml.v3"
 )
 

@@ -5,7 +5,7 @@ package agents
 import (
 	"context"
 
-	"github.com/hanzoai/agents/control-plane/pkg/auth"
+	"github.com/hanzoai/agent/control-plane/pkg/auth"
 )
 
 // WithOrgContext returns ctx with org pinned. Thin re-export of

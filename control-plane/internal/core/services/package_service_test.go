@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
-	"github.com/hanzoai/agents/control-plane/internal/packages"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/packages"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"

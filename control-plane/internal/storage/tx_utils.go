@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
 )
 
 type rollbacker interface {

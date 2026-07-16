@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/events"
-	"github.com/hanzoai/agents/control-plane/internal/services"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/events"
+	"github.com/hanzoai/agent/control-plane/internal/services"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"

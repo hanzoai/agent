@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hanzoai/agents/control-plane/internal/services"
+	"github.com/hanzoai/agent/control-plane/internal/services"
 )
 
 // BillingBalanceHandler proxies balance queries to Commerce, scoped to

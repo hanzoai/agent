@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/cloud"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 // Provisioner implements cloud.CloudProvisioner for AWS EC2 instances.

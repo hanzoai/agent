@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
 	"gopkg.in/yaml.v3"
 )
 

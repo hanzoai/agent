@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // EnhancedVCVerifier provides comprehensive VC verification with all integrity checks

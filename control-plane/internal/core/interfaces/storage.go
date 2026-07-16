@@ -1,7 +1,7 @@
 // hanzo-agents/internal/core/interfaces/storage.go
 package interfaces
 
-import "github.com/hanzoai/agents/control-plane/internal/core/domain"
+import "github.com/hanzoai/agent/control-plane/internal/core/domain"
 
 type FileSystemAdapter interface {
 	ReadFile(path string) ([]byte, error)
