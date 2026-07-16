@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // maxNodesForDepthCalc caps the number of executions for which we compute DAG depth to avoid heavy queries.

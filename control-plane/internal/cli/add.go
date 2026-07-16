@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/mcp"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/mcp"
 
 	"github.com/spf13/cobra"
 )

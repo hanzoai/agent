@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
 )
 
 // NodeEventType represents the type of node event

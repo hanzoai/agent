@@ -5,14 +5,14 @@ import (
 	"encoding/hex"
 	"path/filepath"
 
-	"github.com/hanzoai/agents/control-plane/internal/cli/framework"
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/core/services"
-	"github.com/hanzoai/agents/control-plane/internal/infrastructure/process"
-	"github.com/hanzoai/agents/control-plane/internal/infrastructure/storage"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	didServices "github.com/hanzoai/agents/control-plane/internal/services"
-	storageInterface "github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/cli/framework"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/core/services"
+	"github.com/hanzoai/agent/control-plane/internal/infrastructure/process"
+	"github.com/hanzoai/agent/control-plane/internal/infrastructure/storage"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	didServices "github.com/hanzoai/agent/control-plane/internal/services"
+	storageInterface "github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 // CreateServiceContainer creates and wires up all services for the CLI commands

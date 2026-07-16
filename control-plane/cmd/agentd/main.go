@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/server"
-	"github.com/hanzoai/agents/control-plane/pkg/agents"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/server"
+	"github.com/hanzoai/agent/control-plane/pkg/agents"
 )
 
 // Build-time version stamps (-ldflags).

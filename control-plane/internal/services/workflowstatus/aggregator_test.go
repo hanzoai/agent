@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 func makeExecution(status string, startedAt time.Time, completedAt *time.Time, parent bool) *types.WorkflowExecution {

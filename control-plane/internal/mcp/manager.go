@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

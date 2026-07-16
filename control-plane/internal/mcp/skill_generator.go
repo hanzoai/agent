@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/config"
 )
 
 // SkillGenerator handles the generation of Python skill files from MCP tools

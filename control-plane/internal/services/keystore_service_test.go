@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/config"
 
 	"github.com/stretchr/testify/require"
 )

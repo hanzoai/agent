@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

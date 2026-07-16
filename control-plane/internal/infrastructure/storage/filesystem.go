@@ -4,7 +4,7 @@ package storage
 import (
 	"os"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
 )
 
 type DefaultFileSystemAdapter struct{}

@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hanzoai/agents/control-plane/pkg/auth"
+	"github.com/hanzoai/agent/control-plane/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

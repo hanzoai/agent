@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/hanzoai/agents/control-plane/internal/packages"
+	"github.com/hanzoai/agent/control-plane/internal/packages"
 	"github.com/spf13/cobra"
 )
 

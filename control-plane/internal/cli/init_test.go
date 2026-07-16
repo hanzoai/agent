@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hanzoai/agents/control-plane/internal/templates"
+	"github.com/hanzoai/agent/control-plane/internal/templates"
 )
 
 // TestUpdate_TextInput_AcceptsJK verifies that j and k can be typed during text input steps

@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
 )
 
 // Sentinel errors for billing operations.

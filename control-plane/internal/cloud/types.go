@@ -1,7 +1,7 @@
 package cloud
 
 import (
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // Re-export public types for internal use.

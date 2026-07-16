@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 
-	cloudcfg "github.com/hanzoai/agents/control-plane/internal/cloud"
+	cloudcfg "github.com/hanzoai/agent/control-plane/internal/cloud"
 )
 
 // Clients holds initialized AWS service clients.

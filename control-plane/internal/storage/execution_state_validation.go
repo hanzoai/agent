@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 type InvalidExecutionStateTransitionError struct {

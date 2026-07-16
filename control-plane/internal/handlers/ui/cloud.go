@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/internal/cloud"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // CloudHandler provides UI-friendly cloud instance endpoints.

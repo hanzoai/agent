@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/interfaces"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
-	"github.com/hanzoai/agents/control-plane/internal/storage"
+	"github.com/hanzoai/agent/control-plane/internal/core/interfaces"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/storage"
 )
 
 // HTTPAgentClient implements the AgentClient interface using HTTP communication

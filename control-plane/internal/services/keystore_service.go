@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hanzoai/agents/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/config"
 )
 
 // KeystoreService handles secure storage and management of cryptographic keys.

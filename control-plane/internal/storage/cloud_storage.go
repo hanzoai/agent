@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 	"gorm.io/gorm"
 )
 

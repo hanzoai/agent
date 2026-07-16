@@ -1,4 +1,4 @@
-module github.com/hanzoai/agents/control-plane
+module github.com/hanzoai/agent/control-plane
 
 go 1.26.4
 

@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/hanzoai/agents/control-plane/internal/cloud"
+	"github.com/hanzoai/agent/control-plane/internal/cloud"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

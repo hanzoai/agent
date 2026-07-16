@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"github.com/hanzoai/agents/control-plane/pkg/agents"
+	"github.com/hanzoai/agent/control-plane/pkg/agents"
 )
 
 func TestPortFromAddr(t *testing.T) {

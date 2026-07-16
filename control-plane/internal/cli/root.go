@@ -5,10 +5,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/hanzoai/agents/control-plane/internal/application"
-	"github.com/hanzoai/agents/control-plane/internal/cli/commands"
-	"github.com/hanzoai/agents/control-plane/internal/config"
-	"github.com/hanzoai/agents/control-plane/internal/logger"
+	"github.com/hanzoai/agent/control-plane/internal/application"
+	"github.com/hanzoai/agent/control-plane/internal/cli/commands"
+	"github.com/hanzoai/agent/control-plane/internal/config"
+	"github.com/hanzoai/agent/control-plane/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

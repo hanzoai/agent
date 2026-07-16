@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/hanzoai/agents/control-plane/internal/core/domain"
+	"github.com/hanzoai/agent/control-plane/internal/core/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

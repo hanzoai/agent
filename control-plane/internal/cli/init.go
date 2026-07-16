@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/hanzoai/agents/control-plane/internal/templates"
+	"github.com/hanzoai/agent/control-plane/internal/templates"
 )
 
 var (

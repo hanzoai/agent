@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/control-plane/pkg/types"
+	"github.com/hanzoai/agent/control-plane/pkg/types"
 )
 
 // AggregatedWorkflowStatus captures lifecycle information derived from execution nodes and pending steps.
