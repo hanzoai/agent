@@ -43,7 +43,7 @@ func (p *stubPlane) List(context.Context, Scope) []Tool { return p.tools }
 func (p *stubPlane) Exists(_ context.Context, _ Scope, name string) bool {
 	return p.known[name]
 }
-func (p *stubPlane) Dispatch(_ context.Context, _ Principal, name string, _ map[string]any) (any, error) {
+func (p *stubPlane) Dispatch(_ *zip.Ctx, name string, _ map[string]any) (any, error) {
 	p.dispatched = append(p.dispatched, name)
 	return map[string]any{"ok": true, "tool": name}, nil
 }
