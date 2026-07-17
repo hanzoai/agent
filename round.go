@@ -114,7 +114,7 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 		args := decodeArgs(tc.Function.Arguments)
 		if mode.ServerExecuted && s.plane.Exists(ctx, scope, name) {
 			a := action{Name: name, Args: args}
-			if result, derr := s.plane.Dispatch(ctx, p, name, args); derr != nil {
+			if result, derr := s.plane.Dispatch(c, name, args); derr != nil {
 				a.Error = derr.Error()
 			} else {
 				a.Result = result
