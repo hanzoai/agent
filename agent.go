@@ -57,13 +57,17 @@ type Scope struct {
 	Project string
 }
 
-// ToolPlane is the org's registered tool registry seam: list the tools offered
-// to the model, test whether a call is server-known, and dispatch a call bound to
-// the principal. The host injects its unified tool plane; tests inject a stub.
+// ToolPlane is the org's registered tool registry seam: list the tools offered to
+// the model, test whether a call is server-known, and dispatch a call. Dispatch
+// takes the live request so the host resolves the caller the ONE canonical way (its
+// PrincipalFrom) — the credential is never reconstructed or passed as a value, only
+// read from the validated request. List/Exists take a plain (org, project) Scope;
+// that carries no credential, so it is safe by value. The host injects its unified
+// tool plane; tests inject a stub.
 type ToolPlane interface {
 	List(ctx context.Context, scope Scope) []Tool
 	Exists(ctx context.Context, scope Scope, name string) bool
-	Dispatch(ctx context.Context, p Principal, name string, args map[string]any) (any, error)
+	Dispatch(c *zip.Ctx, name string, args map[string]any) (any, error)
 }
 
 // Principal is the VALIDATED caller a round runs as. Org scopes persistence AND
