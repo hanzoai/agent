@@ -40,6 +40,22 @@ type Completer interface {
 	Complete(ctx context.Context, cred map[string]string, req openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error)
 }
 
+// UpstreamError is returned by a Completer when the completion service refuses the
+// request for the CALLER's OWN reason — a 4xx like 402 insufficient_balance, 429
+// rate-limit, or 403 — that must reach the caller intact, not be masked as a
+// gateway 502. Body is the completion's verbatim error payload; the round passes
+// Status + Body straight through so a client shows the real message ("add credits")
+// instead of an opaque "agent: completion" wrapper. A non-4xx completion failure
+// (5xx, transport) stays a 502 — that IS a gateway fault.
+type UpstreamError struct {
+	Status int
+	Body   []byte
+}
+
+func (e *UpstreamError) Error() string {
+	return fmt.Sprintf("upstream completion %d: %s", e.Status, e.Body)
+}
+
 // Tool is the agent-facing projection of one registered tool offered to the
 // model. Schema is the JSON-Schema of the call arguments; Dispatchable is false
 // for a listing-only entry; Activated is true only for tools the org turned on.
