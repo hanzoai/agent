@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -101,6 +102,15 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 
 	resp, err := s.completer.Complete(ctx, p.Cred, req)
 	if err != nil {
+		// A completion refused for the caller's OWN reason (402 insufficient_balance,
+		// 429 rate-limit, 403) is the caller's error, not a gateway fault — pass its
+		// status + body through verbatim so the client shows the real billing message,
+		// never an opaque 502. Any other failure (5xx, transport) IS a gateway fault.
+		var up *UpstreamError
+		if errors.As(err, &up) && up.Status >= 400 && up.Status < 500 {
+			c.SetHeader("Content-Type", "application/json")
+			return c.Bytes(up.Status, up.Body)
+		}
 		return zip.Errorf(http.StatusBadGateway, "agent: completion: %v", err)
 	}
 	if len(resp.Choices) == 0 {

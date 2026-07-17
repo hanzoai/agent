@@ -395,6 +395,38 @@ func TestRequiresMessages(t *testing.T) {
 	}
 }
 
+// TestUpstreamBillingPassthrough: a completion refused for the caller's own reason
+// (402 insufficient_balance) reaches the caller VERBATIM — status + body — not a 502.
+func TestUpstreamBillingPassthrough(t *testing.T) {
+	billing := []byte(`{"error":{"message":"Insufficient balance. Add credits.","code":"insufficient_balance"}}`)
+	comp := &stubCompleter{err: &UpstreamError{Status: http.StatusPaymentRequired, Body: billing}}
+	app := newApp(t, comp, &stubPlane{known: map[string]bool{}})
+	status, raw := do(t, app, http.MethodPost, "/v1/agent", "acme", map[string]any{
+		"preset":   "graph",
+		"messages": []inMessage{{Role: "user", Content: "hi"}},
+	})
+	if status != http.StatusPaymentRequired {
+		t.Fatalf("billing refusal: want 402 passthrough, got %d: %s", status, raw)
+	}
+	if !bytes.Equal(raw, billing) {
+		t.Fatalf("billing body not verbatim: got %s", raw)
+	}
+}
+
+// TestUpstreamServerErrorIs502: a non-4xx upstream failure (5xx / transport) IS a
+// gateway fault and stays 502 — only a caller-facing 4xx passes through.
+func TestUpstreamServerErrorIs502(t *testing.T) {
+	comp := &stubCompleter{err: &UpstreamError{Status: http.StatusServiceUnavailable, Body: []byte("upstream down")}}
+	app := newApp(t, comp, &stubPlane{known: map[string]bool{}})
+	status, _ := do(t, app, http.MethodPost, "/v1/agent", "acme", map[string]any{
+		"preset":   "graph",
+		"messages": []inMessage{{Role: "user", Content: "hi"}},
+	})
+	if status != http.StatusBadGateway {
+		t.Fatalf("5xx upstream: want 502, got %d", status)
+	}
+}
+
 // TestPresetsLibrary: the preset library is listed and seeded with graph + create.
 func TestPresetsLibrary(t *testing.T) {
 	app := newApp(t, &stubCompleter{resp: completion("x")}, &stubPlane{known: map[string]bool{}})
