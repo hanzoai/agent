@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	luxlog "github.com/luxfi/log"
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/hanzoai/go-openai"
 	"github.com/zap-proto/zip"
 )
 

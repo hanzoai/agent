@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/hanzoai/go-openai"
 	"github.com/zap-proto/zip"
 )
 
