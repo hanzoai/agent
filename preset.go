@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/hanzoai/go-openai"
 )
 
 // Preset is one named agent type in the preset LIBRARY — a first-class, extensible
