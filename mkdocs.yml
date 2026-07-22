@@ -1,4 +1,4 @@
-site_name: Hanzo AI Agent SDK
+site_name: Hanzo Agent SDK
 theme:
     name: material
     features:
