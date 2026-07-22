@@ -1,12 +1,8 @@
 <p align="center"><img src=".github/hero.svg" alt="agent" width="880"></p>
 
-# Hanzo AI Agent SDK
+# Hanzo Agent SDK
 
 A powerful Python framework for building AI agents and multi-agent systems with built-in orchestration.
-
-Forked from [openai/openai-agents-python](https://github.com/openai/openai-agents-python) (MIT).
-
-<img src="https://cdn.openai.com/API/docs/images/orchestration.png" alt="Image of the Agents Tracing UI" style="max-height: 803px;">
 
 ## ✨ Features
 
@@ -36,7 +32,7 @@ Forked from [openai/openai-agents-python](https://github.com/openai/openai-agent
 5. [**Tools**](docs/tools.md): Enhanced tool system with MCP support
 6. [**Tracing**](docs/tracing.md): Built-in tracking and observability
 
-Explore the [examples](examples) directory to see the SDK in action, and read our [documentation](https://openai.github.io/openai-agents-python/) for more details.
+Explore the [examples](examples) directory to see the SDK in action, and read our [documentation](docs/) for more details.
 
 Notably, our SDK [is compatible](https://openai.github.io/openai-agents-python/models/) with any model providers that support the Open AI Chat Completions API format.
 
@@ -49,7 +45,7 @@ python -m venv env
 source env/bin/activate
 ```
 
-2. Install Hanzo AI SDK
+2. Install Hanzo Agent SDK
 
 ```bash
 # Basic installation
@@ -248,7 +244,7 @@ The Agent SDK is designed to be highly flexible, allowing you to model a wide ra
 
 ## Tracing
 
-The Agent SDK automatically traces your agent runs, making it easy to track and debug the behavior of your agents. Tracing is extensible by design, supporting custom spans and a wide variety of external destinations, including [Logfire](https://logfire.pydantic.dev/docs/integrations/llms/openai/#openai-agents), [AgentOps](https://docs.agentops.ai/v1/integrations/agentssdk), [Braintrust](https://braintrust.dev/docs/guides/traces/integrations#openai-agents-sdk), [Scorecard](https://docs.scorecard.io/docs/documentation/features/tracing#openai-agents-sdk-integration), and [Keywords AI](https://docs.keywordsai.co/integration/development-frameworks/openai-agent). For more details about how to customize or disable tracing, see [Tracing](http://openai.github.io/openai-agents-python/tracing).
+The Agent SDK automatically traces your agent runs, making it easy to track and debug the behavior of your agents. Tracing is extensible by design, supporting custom spans and a wide variety of external destinations, including [Logfire](https://logfire.pydantic.dev/docs/integrations/llms/openai/#openai-agents), [AgentOps](https://docs.agentops.ai/v1/integrations/agentssdk), [Braintrust](https://braintrust.dev/docs/guides/traces/integrations#openai-agents-sdk), [Scorecard](https://docs.scorecard.io/docs/documentation/features/tracing#openai-agents-sdk-integration), and [Keywords AI](https://docs.keywordsai.co/integration/development-frameworks/openai-agent). For more details about how to customize or disable tracing, see [Tracing](docs/tracing.md).
 
 ## Development (only needed if you need to edit the SDK/examples)
 
