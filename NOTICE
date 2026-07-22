@@ -1,6 +1,37 @@
-agent
-Copyright (c) 2025 Hanzo Industries, Inc.
+Hanzo Agent SDK
+Copyright (c) 2025 Hanzo AI, Inc.
+
+Forked from OpenAI Agents SDK (https://github.com/openai/openai-agents-python).
+Upstream release: not pinned in this repository; the source was vendored rather
+than tracked as the upstream `openai-agents` package, so no upstream version
+tag is recorded here.
 
 This product includes software from OpenAI Agents SDK (https://github.com/openai/openai-agents-python), licensed under MIT:
 
     Copyright (c) 2025 OpenAI
+
+DEVIATIONS FROM UPSTREAM
+========================
+- Rebranded to the Hanzo Agent SDK: pyproject `name = "hanzoai"`, description
+  "Hanzo Agent SDK"; the public import namespace `agents` is retained so the
+  OpenAI-compatible source stays drop-in.
+- Added HanzoNodeProvider (src/agents/models/hanzo_node_provider.py): a model
+  provider that connects directly to a Hanzo Node (hanzod) at localhost:3690,
+  keyed by the HANZO_NODE_API_KEY environment variable.
+- Added the ZAP (Zero-copy Agent Protocol) subpackage (src/agents/zap/):
+  ZapClient, ZapAgent, gateway-coordinated consensus, and ZAP-gateway tool
+  discovery.
+- Added an enhanced tool layer with MCP (Model Context Protocol) support
+  (src/agents/tool_enhanced.py): MCPServer, MCPTool, and MCPToolAdapter.
+- Added a multi-agent network and routing subsystem (src/agents/network/):
+  network, node, remote, and router.
+- Added an orchestration and workflow engine with UI streaming
+  (src/agents/orchestration/): orchestrator, executor, workflow, ui_stream.
+- Added a long-term memory subsystem with vector retrieval
+  (src/agents/memory/): store, retriever, memory.
+- Added a shared network state store (src/agents/state/): namespace,
+  serializer, store.
+- Added optional extensions (src/agents/extensions/ with matching pyproject
+  extras): web3, tee, marketplace, cli, plus the zap and full bundles.
+- Added Web3, TEE, and marketplace runtime dependency extras in pyproject.toml
+  (web3/eth-account/eth-utils, cryptography, aiohttp/redis).
