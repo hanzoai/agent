@@ -32,7 +32,7 @@ require (
 	github.com/hanzoai/sqlcipher v0.1.0 // indirect
 	github.com/hanzoai/sqlite v0.3.2 // indirect
 	github.com/hanzoai/xorm v1.4.4 // indirect
-	github.com/hanzokv/go/v9 v9.21.1 // indirect
+	github.com/hanzokv/go/v9 v9.22.0 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
