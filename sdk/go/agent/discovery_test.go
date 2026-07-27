@@ -41,8 +41,8 @@ func TestDiscoverJSON(t *testing.T) {
 	defer server.Close()
 
 	a, err := New(Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL,
 	})
 	require.NoError(t, err)
@@ -77,8 +77,8 @@ func TestDiscoverCompactAndXML(t *testing.T) {
 	defer xmlServer.Close()
 
 	aCompact, err := New(Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: compactServer.URL,
 	})
 	require.NoError(t, err)
@@ -90,8 +90,8 @@ func TestDiscoverCompactAndXML(t *testing.T) {
 	assert.Equal(t, "a1", compactResult.Compact.Reasoners[0].AgentID)
 
 	aXML, err := New(Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: xmlServer.URL,
 	})
 	require.NoError(t, err)
@@ -106,8 +106,8 @@ func TestDiscoverCompactAndXML(t *testing.T) {
 
 func TestDiscoverRejectsInvalidFormat(t *testing.T) {
 	a, err := New(Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "http://localhost:8080",
 	})
 	require.NoError(t, err)

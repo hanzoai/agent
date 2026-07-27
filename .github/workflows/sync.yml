@@ -1,60 +1,102 @@
-name: Sync to git.hanzo.ai
-# DIRECTION: this repo on git.hanzo.ai is a PULL MIRROR fetching github.com/hanzoai/agent.
-# GitHub is UPSTREAM, git.hanzo.ai is DOWNSTREAM. The giveaway is what this file does:
-# mirror-sync tells Gitea to PULL, which only makes sense if GitHub is the source.
+name: sync
+
+# Carries pushed refs to git.hanzo.ai, the canonical forge, and does nothing
+# else: build, test and release run natively there.
 #
-# This matters beyond labeling: a pull mirror force-updates its refs from upstream on
-# every fetch, so anything committed directly on git.hanzo.ai is DISCARDED on the next
-# sync. Do not treat the mirror as writable, and do not reword this into a "native on
-# git.hanzo.ai" claim — that is the intended end state, not today's.
-#
-# What IS true: CI/CD runs on git.hanzo.ai — arcd executes .hanzo/workflows/ on the
-# Hanzo git-runner. Making git.hanzo.ai canonical means converting the repo
-# pull-mirror -> native and flipping the write path; an ops migration, not a config edit.
-#
-# So this nudge is a LATENCY fix, not a canonicality one: it asks Gitea to pull now
-# instead of waiting out the ~10-minute mirror interval, so arcd sees the new commit
-# sooner. Without this file the repo still mirrors — just later.
-#
-# IDEMPOTENT: mirror-sync just tells Gitea to pull HEAD, so N nudges == 1 (same latest
-# state); concurrency coalesces a burst of pushes to a single in-flight sync. FAST: no
-# checkout, one bounded curl, hard timeouts. FAIL-SOFT: a missing token or hiccup never
-# fails the push (the App webhook still mirrors). Set HANZO_GIT_TOKEN to enable the nudge.
+# Repo-agnostic. owner/name come from ${{ github.repository }}, so this file is
+# dropped into every repo unchanged as .github/workflows/sync.yml and is the
+# only workflow GitHub is permitted to run.
+
 on:
   push:
-    branches: [main]
+    # '**' matches slashes; '*' does not, and would skip feature/foo.
+    branches: ['**']
+    tags: ['**']
   workflow_dispatch:
 
-# Only the newest push's sync needs to run — cancel any older in-flight one (it would
-# pull a now-stale HEAD). This is what makes rapid pushes idempotent + cheap.
+# Serialize per ref. Never cancel: a cancelled run drops that ref and nothing
+# reconciles it afterwards.
 concurrency:
-  group: sync-git-hanzo-ai
-  cancel-in-progress: true
+  group: sync-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   sync:
-    # `.github/workflows` is also on Gitea's WORKFLOW_DIRS, so with Actions enabled on
-    # the mirror this file runs THERE too on every sync — where asking git.hanzo.ai to
-    # pull is circular. github.server_url is setting.AppURL on Gitea
-    # (services/actions/context.go:89), so this is the exact test for "am I upstream".
-    if: ${{ github.server_url == 'https://github.com' }}
+    # .github/workflows is also on the forge's own workflow search path, so this
+    # file executes there too in any repo without .hanzo/workflows, where it
+    # would push the forge to itself. server_url is the forge's AppURL, which
+    # makes this the test for "running on GitHub".
+    if: github.server_url == 'https://github.com'
+    # GitHub-hosted on purpose. This is the one workflow that must run ON GitHub,
+    # and the self-hosted pool that used to serve it is retired — a job asking for
+    # it now queues forever against a label nothing answers. Carrying refs is a
+    # push, not a build, so it does not belong on the build fabric anyway: builds
+    # run natively on git.hanzo.ai, which is the whole point of this file.
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 15
+
     steps:
-      - name: Nudge git.hanzo.ai to pull HEAD (mirror-sync)
-        continue-on-error: true
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Push refs to git.hanzo.ai
         env:
-          HANZO_GIT_TOKEN: ${{ secrets.HANZO_GIT_TOKEN }}
+          FORGE: https://git.hanzo.ai
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
-          set -u
-          if [ -z "${HANZO_GIT_TOKEN:-}" ]; then
-            echo "HANZO_GIT_TOKEN not set — relying on the mirror App webhook. Skipping nudge."
-            exit 0
+          set -euo pipefail
+
+          if [ -z "${GIT_TOKEN}" ]; then
+            echo "::error::GIT_TOKEN is unset, so this push never reached the canonical forge. Add the org secret."
+            exit 1
           fi
-          if curl -fsS --max-time 20 --retry 2 --retry-delay 2 -X POST \
-               -H "Authorization: token ${HANZO_GIT_TOKEN}" \
-               "https://git.hanzo.ai/api/v1/repos/hanzoai/agent/mirror-sync"; then
-            echo "git.hanzo.ai mirror-sync triggered"
-          else
-            echo "mirror-sync nudge failed (non-fatal) — the App webhook still mirrors"
+
+          REMOTE="${FORGE}/${GITHUB_REPOSITORY}.git"
+
+          # The forge reads the token from the basic-auth password and ignores
+          # the username. base64 of a secret is not masked automatically.
+          AUTH="$(printf 'x-access-token:%s' "${GIT_TOKEN}" | base64 -w0)"
+          echo "::add-mask::${AUTH}"
+          # Host-scoped, so the forge token is never sent to github.com.
+          git config --local "http.${FORGE}/.extraheader" "Authorization: Basic ${AUTH}"
+
+          # Reachability is the only transient failure here, so it is the only
+          # thing retried. ls-remote exits 0 on an existing empty repo and
+          # non-zero when the forge is down or the repo is absent.
+          ERR="$(mktemp)"
+          REACHED=""
+          for attempt in 1 2 3; do
+            if git ls-remote "${REMOTE}" >/dev/null 2>"${ERR}"; then
+              REACHED=1
+              break
+            fi
+            echo "forge probe failed (attempt ${attempt}/3): $(cat "${ERR}")"
+            if [ "${attempt}" -lt 3 ]; then
+              sleep $((attempt * 5))
+            fi
+          done
+          if [ -z "${REACHED}" ]; then
+            echo "::error::git.hanzo.ai is unreachable or ${GITHUB_REPOSITORY} does not exist there. $(cat "${ERR}")"
+            exit 1
+          fi
+
+          # Additive and fast-forward-only: no leading '+', no --force, no
+          # --prune, no --mirror. Tags go every run so a tag that missed its own
+          # event still lands; git refuses to move one that already differs.
+          REFS=('refs/tags/*:refs/tags/*')
+          case "${GITHUB_REF}" in
+            refs/heads/*) REFS+=("${GITHUB_REF}:${GITHUB_REF}") ;;
+          esac
+
+          # Not --atomic: a diverged ref must not hold back the refs that are
+          # clean. Rejections still fail the job.
+          if ! git push "${REMOTE}" "${REFS[@]}"; then
+            echo "::error::git.hanzo.ai rejected a ref for ${GITHUB_REPOSITORY}. The forge is canonical and is never force-updated from here; reconcile the diverged branch or tag by hand."
+            exit 1
           fi

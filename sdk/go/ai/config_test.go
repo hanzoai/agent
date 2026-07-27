@@ -41,9 +41,9 @@ func TestDefaultConfig(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name           string
-		setupEnv       func()
-		checkConfig    func(t *testing.T, cfg *Config)
+		name        string
+		setupEnv    func()
+		checkConfig func(t *testing.T, cfg *Config)
 	}{
 		{
 			name: "default OpenAI config",

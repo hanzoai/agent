@@ -11,8 +11,8 @@ import (
 	"sort"
 	"testing"
 
-	luxlog "github.com/luxfi/log"
 	openai "github.com/hanzoai/go-openai"
+	luxlog "github.com/luxfi/log"
 	fiber "github.com/zap-proto/fiber/v3"
 	"github.com/zap-proto/zip"
 )
