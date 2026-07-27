@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/hanzoai/go-openai v1.41.0
-	github.com/hanzoai/orm v0.6.15
+	github.com/hanzoai/orm v0.6.16
 	github.com/luxfi/log v1.5.0
 	github.com/zap-proto/fiber/v3 v3.2.1
 	github.com/zap-proto/zip v1.10.0
