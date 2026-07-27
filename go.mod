@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/hanzoai/go-openai v1.41.0
-	github.com/hanzoai/orm v0.6.8-0.20260726065619-7b3c62da906d
+	github.com/hanzoai/orm v0.6.14
 	github.com/luxfi/log v1.5.0
 	github.com/zap-proto/fiber/v3 v3.2.1
 	github.com/zap-proto/zip v1.8.2
@@ -28,7 +28,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hanzoai/builder v0.3.13 // indirect
 	github.com/hanzoai/csqlite v0.1.0 // indirect
-	github.com/hanzoai/dbx v1.16.0 // indirect
+	github.com/hanzoai/dbx v1.17.2 // indirect
 	github.com/hanzoai/sqlcipher v0.1.0 // indirect
 	github.com/hanzoai/sqlite v0.3.2 // indirect
 	github.com/hanzoai/xorm v1.4.4 // indirect
