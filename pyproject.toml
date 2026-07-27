@@ -1,5 +1,5 @@
 [project]
-name = "hanzoai"
+name = "hanzo-agent"
 version = "0.0.4"
 description = "Hanzo Agent SDK"
 readme = "README.md"
@@ -72,7 +72,7 @@ zap = [
 
 # All extensions
 full = [
-    "hanzoai[web3,tee,marketplace,cli,zap]",
+    "hanzo-agent[web3,tee,marketplace,cli,zap]",
 ]
 
 [dependency-groups]

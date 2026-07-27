@@ -23,5 +23,5 @@ jobs:
       context: control-plane
       dockerfile: Dockerfile
       platforms: linux/amd64
-      runner-amd64: ubuntu-latest
+      runner-amd64: '["hanzo-build-linux-amd64"]'
     secrets: inherit

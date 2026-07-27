@@ -6,7 +6,7 @@ Python framework for building AI agents and multi-agent systems with orchestrati
 ## Architecture
 ```
 agent/
-├── src/hanzoai/agents/    # Core agent SDK (multi-agent, routing, orchestration)
+├── src/agents/            # Core agent SDK (multi-agent, routing, orchestration)
 ├── sdk/                   # Extended SDK packages
 ├── control-plane/         # Agent control plane
 ├── deployments/           # K8s deployment manifests
@@ -18,7 +18,7 @@ agent/
 
 ## Tech Stack
 - **Language**: Python 3.9+
-- **Package**: `hanzoai` on PyPI (v0.0.4)
+- **Package**: `hanzo-agent` on PyPI (v0.0.4) — `hanzoai` is the API client from hanzoai/python-sdk
 - **Dependencies**: openai, pydantic, griffe, requests
 - **Optional extras**: `[web3]`, `[tee]`, `[marketplace]`, `[cli]`
 - **Docs**: MkDocs
@@ -42,7 +42,7 @@ make test                   # Run test suite
 
 ## Key Files
 - `pyproject.toml` — Package config and dependencies
-- `src/hanzoai/agents/` — Core agent implementation
+- `src/agents/` — Core agent implementation
 - `docs/agents.md` — Agent documentation
 - `docs/networks-and-orchestration.md` — Multi-agent docs
 - `examples/` — Working examples
