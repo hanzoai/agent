@@ -355,8 +355,8 @@ func (s *ScopedMemory) GetTyped(ctx context.Context, key string, dest any) error
 // InMemoryBackend provides a thread-safe in-memory implementation of MemoryBackend.
 // Data is lost when the process exits.
 type InMemoryBackend struct {
-	mu   sync.RWMutex
-	data map[string]map[string]any // "scope:scopeID" -> key -> value
+	mu         sync.RWMutex
+	data       map[string]map[string]any          // "scope:scopeID" -> key -> value
 	vectorData map[string]map[string]vectorRecord // "scope:scopeID" -> key -> vectorRecord
 }
 

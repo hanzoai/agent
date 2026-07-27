@@ -28,8 +28,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "valid config",
 			cfg: Config{
-				NodeID:        "node-1",
-				Version:       "1.0.0",
+				NodeID:         "node-1",
+				Version:        "1.0.0",
 				HanzoAgentsURL: "https://api.example.com",
 			},
 			wantErr: false,
@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "missing NodeID",
 			cfg: Config{
-				Version:       "1.0.0",
+				Version:        "1.0.0",
 				HanzoAgentsURL: "https://api.example.com",
 			},
 			wantErr: true,
@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "missing Version",
 			cfg: Config{
-				NodeID:        "node-1",
+				NodeID:         "node-1",
 				HanzoAgentsURL: "https://api.example.com",
 			},
 			wantErr: true,
@@ -69,8 +69,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "defaults applied",
 			cfg: Config{
-				NodeID:        "node-1",
-				Version:       "1.0.0",
+				NodeID:         "node-1",
+				Version:        "1.0.0",
 				HanzoAgentsURL: "https://api.example.com",
 			},
 			wantErr: false,
@@ -84,8 +84,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "with AIConfig",
 			cfg: Config{
-				NodeID:        "node-1",
-				Version:       "1.0.0",
+				NodeID:         "node-1",
+				Version:        "1.0.0",
 				HanzoAgentsURL: "https://api.example.com",
 				AIConfig: &ai.Config{
 					APIKey:  "test-key",
@@ -101,10 +101,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "invalid AIConfig",
 			cfg: Config{
-				NodeID:        "node-1",
-				Version:       "1.0.0",
+				NodeID:         "node-1",
+				Version:        "1.0.0",
 				HanzoAgentsURL: "https://api.example.com",
-				AIConfig:      &ai.Config{
+				AIConfig:       &ai.Config{
 					// Missing required fields
 				},
 			},
@@ -131,10 +131,10 @@ func TestNew(t *testing.T) {
 
 func TestRegisterReasoner(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -155,10 +155,10 @@ func TestRegisterReasoner(t *testing.T) {
 
 func TestRegisterReasoner_WithOptions(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -182,10 +182,10 @@ func TestRegisterReasoner_WithOptions(t *testing.T) {
 
 func TestRegisterReasoner_NilHandler(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -225,7 +225,7 @@ func TestInitialize(t *testing.T) {
 		NodeID:           "node-1",
 		Version:          "1.0.0",
 		TeamID:           "team-1",
-		HanzoAgentsURL:    server.URL,
+		HanzoAgentsURL:   server.URL,
 		Logger:           log.New(io.Discard, "", 0),
 		DisableLeaseLoop: true, // Disable for testing
 	}
@@ -244,10 +244,10 @@ func TestInitialize(t *testing.T) {
 
 func TestInitialize_NoReasoners(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -260,10 +260,10 @@ func TestInitialize_NoReasoners(t *testing.T) {
 
 func TestHandler(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -289,10 +289,10 @@ func TestHandler(t *testing.T) {
 
 func TestHandleReasoner_Sync(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -323,10 +323,10 @@ func TestHandleReasoner_Sync(t *testing.T) {
 
 func TestHandleReasoner_NotFound(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -347,10 +347,10 @@ func TestHandleReasoner_NotFound(t *testing.T) {
 
 func TestHandleReasoner_WrongMethod(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -371,10 +371,10 @@ func TestHandleReasoner_WrongMethod(t *testing.T) {
 
 func TestHandleReasoner_Error(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -428,10 +428,10 @@ func TestCall(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL,
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -485,10 +485,10 @@ func TestCall_ErrorHandling(t *testing.T) {
 			defer server.Close()
 
 			cfg := Config{
-				NodeID:        "node-1",
-				Version:       "1.0.0",
+				NodeID:         "node-1",
+				Version:        "1.0.0",
 				HanzoAgentsURL: server.URL,
-				Logger:        log.New(io.Discard, "", 0),
+				Logger:         log.New(io.Discard, "", 0),
 			}
 
 			agent, err := New(cfg)
@@ -523,10 +523,10 @@ func TestAI(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 		AIConfig: &ai.Config{
 			APIKey:  "test-key",
 			BaseURL: server.URL,
@@ -545,10 +545,10 @@ func TestAI(t *testing.T) {
 
 func TestAI_NotConfigured(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 		// No AIConfig
 	}
 
@@ -582,10 +582,10 @@ func TestAIStream(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 		AIConfig: &ai.Config{
 			APIKey:  "test-key",
 			BaseURL: server.URL,
@@ -627,10 +627,10 @@ func TestAIStream(t *testing.T) {
 
 func TestAIStream_NotConfigured(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "https://api.example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -688,13 +688,13 @@ func TestHandleReasonerAsyncPostsStatus(t *testing.T) {
 	defer callbackServer.Close()
 
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
-		TeamID:        "team",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
+		TeamID:         "team",
 		HanzoAgentsURL: callbackServer.URL,
-		ListenAddress: ":0",
-		PublicURL:     "http://localhost:0",
-		Logger:        log.New(io.Discard, "[test] ", 0),
+		ListenAddress:  ":0",
+		PublicURL:      "http://localhost:0",
+		Logger:         log.New(io.Discard, "[test] ", 0),
 	}
 
 	agent, err := New(cfg)
@@ -770,10 +770,10 @@ func TestChildContextGeneratesRunID(t *testing.T) {
 
 func TestBuildChildContext(t *testing.T) {
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: "http://example.com",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	ag, err := New(cfg)
@@ -836,10 +836,10 @@ func TestCallLocalEmitsEvents(t *testing.T) {
 	defer eventServer.Close()
 
 	cfg := Config{
-		NodeID:        "node-1",
-		Version:       "1.0.0",
+		NodeID:         "node-1",
+		Version:        "1.0.0",
 		HanzoAgentsURL: eventServer.URL,
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	ag, err := New(cfg)

@@ -37,10 +37,10 @@ func TestNote_Basic(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1", // Will be converted to /api/ui/v1
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -95,10 +95,10 @@ func TestNotef_Formatted(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -132,10 +132,10 @@ func TestNote_NoTags(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -189,10 +189,10 @@ func TestNote_ServerError(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -221,19 +221,19 @@ func TestNote_URLConversion(t *testing.T) {
 	defer server.Close()
 
 	tests := []struct {
-		name           string
-		controlPlaneURL  string
-		expectedPath   string
+		name            string
+		controlPlaneURL string
+		expectedPath    string
 	}{
 		{
-			name:          "Standard /api/v1 URL",
+			name:            "Standard /api/v1 URL",
 			controlPlaneURL: server.URL + "/api/v1",
-			expectedPath:  "/api/ui/v1/executions/note",
+			expectedPath:    "/api/ui/v1/executions/note",
 		},
 		{
-			name:          "URL without /api/v1",
+			name:            "URL without /api/v1",
 			controlPlaneURL: server.URL,
-			expectedPath:  "/api/ui/v1/executions/note",
+			expectedPath:    "/api/ui/v1/executions/note",
 		},
 	}
 
@@ -243,10 +243,10 @@ func TestNote_URLConversion(t *testing.T) {
 			requestPath = ""
 
 			cfg := Config{
-				NodeID:        "test-node",
-				Version:       "1.0.0",
+				NodeID:         "test-node",
+				Version:        "1.0.0",
 				HanzoAgentsURL: tt.controlPlaneURL,
-				Logger:        log.New(io.Discard, "", 0),
+				Logger:         log.New(io.Discard, "", 0),
 			}
 
 			agent, err := New(cfg)
@@ -280,11 +280,11 @@ func TestNote_WithToken(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1",
-		Token:         "test-token-123",
-		Logger:        log.New(io.Discard, "", 0),
+		Token:          "test-token-123",
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -314,10 +314,10 @@ func TestNote_FireAndForget(t *testing.T) {
 	defer slowServer.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: slowServer.URL + "/api/v1",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)
@@ -348,10 +348,10 @@ func TestNote_MultipleNotes(t *testing.T) {
 	defer server.Close()
 
 	cfg := Config{
-		NodeID:        "test-node",
-		Version:       "1.0.0",
+		NodeID:         "test-node",
+		Version:        "1.0.0",
 		HanzoAgentsURL: server.URL + "/api/v1",
-		Logger:        log.New(io.Discard, "", 0),
+		Logger:         log.New(io.Discard, "", 0),
 	}
 
 	agent, err := New(cfg)

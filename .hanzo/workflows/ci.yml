@@ -1,0 +1,80 @@
+# Native CI on git.hanzo.ai.
+#
+# This replaces tests.yml and test.yml, which were two workflows checking the
+# same things (the second with `|| true` on most steps, so it could not fail).
+# One file, one way.
+#
+# It gates what is actually verifiable on main today, and no more. Measured on
+# this commit:
+#
+#   go build/vet/test ./...          pass          <- gated below
+#   uv sync --frozen                 pass          <- gated below
+#   make sync (uv sync --all-extras --all-packages --group dev)
+#                                    CANNOT RESOLVE: requires-python is >=3.9
+#                                    and a transitive numpy needs >=3.10
+#   make lint (ruff check)           2337 errors
+#   make tests (pytest)              INTERNALERROR at collection — a test module
+#                                    sys.exit(1)s at import without ANTHROPIC_API_KEY
+#
+# tests.yml ran `make sync` as the first step of all five of its jobs, so none of
+# them could have gone green here. Restoring it would add a workflow that is red
+# on arrival for reasons no CI change can fix, and a permanently red check is
+# read as broken CI rather than as broken code. The three failures above are
+# recorded in LLM.md as work, not hidden behind `|| true` or a missing check.
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  go:
+    runs-on: hanzo-build-linux-amd64
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # gofmt reports on stdout and exits 0, so the file list is the check.
+      - name: gofmt
+        run: |
+          set -euo pipefail
+          unformatted="$(gofmt -l .)"
+          if [ -n "${unformatted}" ]; then
+            echo "::error::gofmt would rewrite these files:"
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./...
+
+  python:
+    runs-on: hanzo-build-linux-amd64
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # --frozen, so this fails when uv.lock and pyproject.toml disagree rather
+      # than silently re-resolving to something the image will never install.
+      # It is the same step Dockerfile.sdk's builder stage runs, which is why a
+      # break here means the image cannot be built.
+      - name: the lock installs
+        run: uv sync --frozen --no-dev
+
+      # Dockerfile.sdk's HEALTHCHECK is `import agents`, and its CMD is
+      # `python -m agents`. If the package does not import, the container is
+      # unhealthy the moment it starts.
+      - name: the package imports
+        run: uv run --no-sync python -c "import agents; print(agents.__name__)"

@@ -26,8 +26,8 @@ import (
 	"fmt"
 	"strings"
 
-	luxlog "github.com/luxfi/log"
 	openai "github.com/hanzoai/go-openai"
+	luxlog "github.com/luxfi/log"
 	"github.com/zap-proto/zip"
 )
 

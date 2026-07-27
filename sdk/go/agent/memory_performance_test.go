@@ -10,14 +10,14 @@ import (
 
 // MemoryMetrics holds memory measurement results
 type MemoryMetrics struct {
-	Name          string
-	AllocBytes    uint64
-	TotalAlloc    uint64
-	HeapAlloc     uint64
-	HeapInuse     uint64
-	NumGC         uint32
-	Iterations    int
-	Duration      time.Duration
+	Name       string
+	AllocBytes uint64
+	TotalAlloc uint64
+	HeapAlloc  uint64
+	HeapInuse  uint64
+	NumGC      uint32
+	Iterations int
+	Duration   time.Duration
 }
 
 // PerIterationKB returns memory per iteration in KB

@@ -157,4 +157,9 @@ control-plane/web/client/node_modules/
 
 # IDE
 .idea/
-.hanzo/
+# Local scratch under .hanzo/ stays ignored, but not .hanzo/workflows: that is
+# where git.hanzo.ai reads this repo's CI from, so ignoring it silently drops
+# the build. `.hanzo/*` rather than `.hanzo/` so git descends far enough to see
+# the negation.
+.hanzo/*
+!.hanzo/workflows/
