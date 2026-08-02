@@ -7,7 +7,7 @@ require (
 	github.com/hanzoai/orm v0.6.16
 	github.com/luxfi/log v1.5.0
 	github.com/zap-proto/fiber/v3 v3.2.1
-	github.com/zap-proto/zip v1.18.1
+	github.com/zap-proto/zip v1.18.22
 )
 
 require (
