@@ -1,0 +1,37 @@
+# hanzoai/agent — the agent runtime: a Go module at the root and a Python SDK
+# (uv) beside it.
+#
+# Gate only, no `images:`. ghcr.io/hanzoai/agent is built by
+# .hanzo/workflows/deploy.yml from Dockerfile.sdk — the sole producer of that
+# image, restored there for exactly that reason. Declaring `images:` here would
+# make it the second.
+#
+# The Go half only. That is measured, not assumed: on this tree `go build`,
+# `go vet` and `go test ./...` all pass, while `make sync` cannot resolve
+# (requires-python >=3.9 against a transitive numpy needing >=3.10), `make lint`
+# reports 2337 ruff errors and `make tests` dies at collection because a test
+# module sys.exit(1)s on import without a provider key. Those three are recorded
+# in LLM.md as work; a gate that is red on arrival for reasons no commit can fix
+# gets read as broken CI rather than as broken code. The Python lane that DOES
+# hold today — `uv sync --frozen` plus an import of the package — already runs
+# natively in .hanzo/workflows/ci.yml.
+#
+# gofmt is checked by hand because gofmt reports on stdout and exits 0: the file
+# list is the verdict, so an unchecked `gofmt -l` is a gate that cannot fail.
+test:
+  - name: gofmt
+    run: |
+      set -euo pipefail
+      unformatted="$(gofmt -l .)"
+      if [ -n "$unformatted" ]; then
+        echo "::error::gofmt would rewrite these files:"
+        echo "$unformatted"
+        exit 1
+      fi
+      echo "gofmt: clean"
+  - name: build-vet-test
+    run: |
+      set -e
+      go build ./...
+      go vet ./...
+      go test -count=1 ./...
