@@ -1,7 +1,6 @@
 Hanzo Agent SDK
 Copyright (c) 2025 Hanzo AI, Inc.
 
-Forked from OpenAI Agents SDK (https://github.com/openai/openai-agents-python).
 Upstream release: not pinned in this repository; the source was vendored rather
 than tracked as the upstream `openai-agents` package, so no upstream version
 tag is recorded here.
