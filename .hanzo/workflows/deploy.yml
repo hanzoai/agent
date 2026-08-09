@@ -92,9 +92,18 @@ jobs:
       # build-push-action can exit 0 before the manifest resolves, so a green
       # run could still mean a later ImagePullBackOff. Prove it pulls.
       - name: the pushed image resolves
+        # `list` is one tag per line, which is what build-push-action wants. Fed
+        # to a `for` word list it lands as a bare newline mid-statement and bash
+        # never reaches the loop body — so this step failed on its own syntax
+        # while the images it was meant to check were pushed fine. Read it a
+        # line at a time, through the environment rather than interpolated into
+        # the script.
+        env:
+          TAGS: ${{ steps.tags.outputs.list }}
         run: |
           set -euo pipefail
-          for img in ${{ steps.tags.outputs.list }}; do
+          while IFS= read -r img; do
+            [ -n "${img}" ] || continue
             for i in 1 2 3 4 5 6; do
               if docker buildx imagetools inspect "${img}" >/dev/null 2>&1; then
                 echo "resolved ${img}"
@@ -106,4 +115,4 @@ jobs:
               fi
               sleep 5
             done
-          done
+          done <<< "${TAGS}"
