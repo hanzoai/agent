@@ -139,8 +139,8 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 	if app == nil {
 		return nil, fmt.Errorf("agent.Mount: nil zip.App")
 	}
-	if deps.Logger == nil {
-		return nil, fmt.Errorf("agent.Mount: nil deps.Logger")
+	if luxlog.Default() == nil {
+		return nil, fmt.Errorf("agent.Mount: nil luxlog.Default()")
 	}
 	if completer == nil {
 		return nil, fmt.Errorf("agent.Mount: nil Completer")
@@ -156,7 +156,7 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 		resolve = headerPrincipal
 	}
 	s := &Service{
-		log:       deps.Logger.New("subsystem", "agent"),
+		log:       luxlog.Default().New("subsystem", "agent"),
 		model:     strings.TrimSpace(deps.Model),
 		store:     newStore(deps.DataDir),
 		completer: completer,
