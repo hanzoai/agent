@@ -1,3 +1,10 @@
+> **Retired — this is a stale copy of `hanzoai/agent`.**
+>
+> Every branch here is reachable from `hanzoai/agent` — 21 refs, not one commit it lacks — and this copy has no push mirror, so anything committed here reached nothing.
+>
+> It also declared `ghcr.io/hanzoai/agent`, the tag `hanzoai/agent` owns, so a push here
+> could have published over it. That declaration is removed.
+
 <p align="center"><img src=".github/hero.svg" alt="agent" width="880"></p>
 
 # Hanzo Agent SDK
