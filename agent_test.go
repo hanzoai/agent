@@ -61,6 +61,17 @@ func newApp(t *testing.T, comp Completer, plane ToolPlane) *zip.App {
 	return app
 }
 
+func newAppAt(t *testing.T, prefix string, comp Completer, plane ToolPlane) *zip.App {
+	t.Helper()
+	app := zip.New(zip.Config{Logger: luxlog.New("test")})
+	svc, err := MountAt(app, prefix, Deps{Logger: luxlog.New("test"), DataDir: t.TempDir(), Model: "zen"}, comp, plane)
+	if err != nil {
+		t.Fatalf("MountAt %s: %v", prefix, err)
+	}
+	t.Cleanup(func() { _ = svc.Close() })
+	return app
+}
+
 // do issues one request. org != "" sets the validated identity headers exactly as
 // the gateway would; org == "" sends none — the anonymous path the 403 test needs.
 func do(t *testing.T, app *zip.App, method, path, org string, body any) (int, []byte) {
@@ -446,5 +457,61 @@ func TestPresetsLibrary(t *testing.T) {
 	}
 	if !found["graph"] || !found["create"] {
 		t.Fatalf("preset library missing seeds: %+v", body.Presets)
+	}
+}
+
+// ── the address ──────────────────────────────────────────────────────────────────
+
+// TestFoldedPrefix: a host whose own router already spends /v1/agent gets the whole
+// surface — round, presets, threads — under an address it chooses, and gets nothing
+// at the default it did not ask for.
+func TestFoldedPrefix(t *testing.T) {
+	const prefix = "/v1/agents/chat"
+	app := newAppAt(t, prefix, &stubCompleter{resp: completion("folded")}, &stubPlane{known: map[string]bool{}})
+
+	status, raw := do(t, app, http.MethodPost, prefix, "acme", map[string]any{
+		"messages": []inMessage{{Role: "user", Content: "hi"}},
+	})
+	if status != http.StatusOK {
+		t.Fatalf("round at %s: %d %s", prefix, status, raw)
+	}
+	out := decodeRun(t, raw)
+	if out.Reply != "folded" {
+		t.Fatalf("reply: want folded, got %q", out.Reply)
+	}
+	if out.ConversationID == "" {
+		t.Fatal("round persisted no conversation")
+	}
+	for _, path := range []string{prefix + "/presets", prefix + "/conversations", prefix + "/conversations/" + out.ConversationID} {
+		if status, raw := do(t, app, http.MethodGet, path, "acme", nil); status != http.StatusOK {
+			t.Fatalf("GET %s: %d %s", path, status, raw)
+		}
+	}
+	if status, _ := do(t, app, http.MethodPost, DefaultPrefix, "acme", map[string]any{
+		"messages": []inMessage{{Role: "user", Content: "hi"}},
+	}); status != http.StatusNotFound {
+		t.Fatalf("folded mount still answers %s: %d", DefaultPrefix, status)
+	}
+}
+
+// TestPrefixMustBeAbsolute: a prefix that is not a path is refused at mount rather
+// than registering routes nothing can reach.
+func TestPrefixMustBeAbsolute(t *testing.T) {
+	for _, prefix := range []string{"", "/", "v1/agents/chat"} {
+		app := zip.New(zip.Config{Logger: luxlog.New("test")})
+		svc, err := MountAt(app, prefix, Deps{Logger: luxlog.New("test"), DataDir: t.TempDir()}, &stubCompleter{}, &stubPlane{})
+		if err == nil {
+			_ = svc.Close()
+			t.Fatalf("MountAt(%q): want error, got none", prefix)
+		}
+	}
+}
+
+// TestTrailingSlashIsTheSameAddress: /v1/agents/chat/ and /v1/agents/chat mount the
+// same four routes, so a host cannot end up with //presets.
+func TestTrailingSlashIsTheSameAddress(t *testing.T) {
+	app := newAppAt(t, "/v1/agents/chat/", &stubCompleter{resp: completion("x")}, &stubPlane{known: map[string]bool{}})
+	if status, raw := do(t, app, http.MethodGet, "/v1/agents/chat/presets", "acme", nil); status != http.StatusOK {
+		t.Fatalf("presets: %d %s", status, raw)
 	}
 }
