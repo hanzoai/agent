@@ -19,7 +19,7 @@ type inMessage struct {
 	Content string `json:"content"`
 }
 
-// runRequest is the POST /v1/agent body. Preset is the primary selector;
+// runRequest is the round's POST body. Preset is the primary selector;
 // Capability is a legacy alias for the same field. Org is NEVER read from the
 // body — it comes only from the validated principal.
 type runRequest struct {

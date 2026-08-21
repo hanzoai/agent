@@ -9,7 +9,7 @@ import (
 )
 
 // Preset is one named agent type in the preset LIBRARY — a first-class, extensible
-// catalog the /v1/agent API creates rounds from and lists at GET /v1/agent/presets.
+// catalog the round is created from and the presets route lists.
 // It frames a tool-calling round: the system prompt that instructs the model, the
 // builtin tool defs offered alongside the caller's and the org's registered tools,
 // and whether the model's tool calls are EXECUTED server-side (registry Dispatch →

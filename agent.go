@@ -1,8 +1,8 @@
-// Package agent is a reusable agentic-chat orchestrator: POST /v1/agent runs a
-// single LLM tool-calling round that lets a model manage a system through tools,
-// and it PERSISTS conversation history (per-org SQLite via hanzoai/orm). It is a
+// Package agent is a reusable agentic-chat orchestrator: one POST runs a single
+// LLM tool-calling round that lets a model manage a system through tools, and it
+// PERSISTS conversation history (per-org SQLite via hanzoai/orm). It is a
 // library — a host (hanzoai/ai / hanzoai/cloud) mounts it on its OWN zip router so
-// /v1/agent registers in the SAME router as /v1/chat/completions (a distinct path,
+// the round registers in the SAME router as /v1/chat/completions (a distinct path,
 // no route-precedence gamble), and injects the two dependency seams:
 //
 //   - Completer — the host's in-process LLM completion (the ONLY path that both
@@ -127,15 +127,26 @@ type Service struct {
 	principal func(*zip.Ctx) (Principal, bool)
 }
 
-// Mount registers the /v1/agent routes on app using the injected Completer and
+// DefaultPrefix is where the standalone daemon answers. A host whose own router
+// already spends that address folds this surface somewhere else with MountAt;
+// nothing in the round depends on which address it was given.
+const DefaultPrefix = "/v1/agent"
+
+// Mount registers the routes at DefaultPrefix. See MountAt.
+func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
+	return MountAt(app, DefaultPrefix, deps, completer, plane)
+}
+
+// MountAt registers the routes under prefix using the injected Completer and
 // ToolPlane, and returns the Service so the host can Close it on shutdown. The
 // per-org SQLite models are auto-migrated (schema created) on first per-org open.
+// prefix is an absolute path chosen by whoever composes the router:
 //
-//	POST /v1/agent                     — run one tool-calling round
-//	GET  /v1/agent/presets             — list the preset library
-//	GET  /v1/agent/conversations       — list the caller-org's conversations
-//	GET  /v1/agent/conversations/:id   — one conversation's messages
-func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
+//	POST {prefix}                     — run one tool-calling round
+//	GET  {prefix}/presets             — list the preset library
+//	GET  {prefix}/conversations       — list the caller-org's conversations
+//	GET  {prefix}/conversations/:id   — one conversation's messages
+func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
 	if app == nil {
 		return nil, fmt.Errorf("agent.Mount: nil zip.App")
 	}
@@ -151,6 +162,10 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 	if strings.TrimSpace(deps.DataDir) == "" {
 		return nil, fmt.Errorf("agent.Mount: empty DataDir")
 	}
+	prefix = strings.TrimRight(strings.TrimSpace(prefix), "/")
+	if !strings.HasPrefix(prefix, "/") {
+		return nil, fmt.Errorf("agent.Mount: prefix %q is not an absolute path", prefix)
+	}
 	resolve := deps.Principal
 	if resolve == nil {
 		resolve = headerPrincipal
@@ -163,11 +178,11 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 		plane:     plane,
 		principal: resolve,
 	}
-	app.Post("/v1/agent", s.handleRun)
-	app.Get("/v1/agent/presets", s.handlePresets)
-	app.Get("/v1/agent/conversations", s.handleListConversations)
-	app.Get("/v1/agent/conversations/:id", s.handleConversation)
-	s.log.Info("agent mounted", "route", "/v1/agent", "presets", len(presets), "brand", deps.Brand)
+	app.Post(prefix, s.handleRun)
+	app.Get(prefix+"/presets", s.handlePresets)
+	app.Get(prefix+"/conversations", s.handleListConversations)
+	app.Get(prefix+"/conversations/:id", s.handleConversation)
+	s.log.Info("agent mounted", "route", prefix, "presets", len(presets), "brand", deps.Brand)
 	return s, nil
 }
 
