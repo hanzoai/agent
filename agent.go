@@ -144,6 +144,7 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 //
 //	POST {prefix}                     — run one tool-calling round
 //	GET  {prefix}/presets             — list the preset library
+//	POST {prefix}/conversations       — record turns in a conversation
 //	GET  {prefix}/conversations       — list the caller-org's conversations
 //	GET  {prefix}/conversations/:id   — one conversation's messages
 func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
@@ -180,6 +181,7 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 	}
 	app.Post(prefix, s.handleRun)
 	app.Get(prefix+"/presets", s.handlePresets)
+	app.Post(prefix+"/conversations", s.handleRecord)
 	app.Get(prefix+"/conversations", s.handleListConversations)
 	app.Get(prefix+"/conversations/:id", s.handleConversation)
 	s.log.Info("agent mounted", "route", prefix, "presets", len(presets), "brand", deps.Brand)

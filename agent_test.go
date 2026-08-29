@@ -515,3 +515,78 @@ func TestTrailingSlashIsTheSameAddress(t *testing.T) {
 		t.Fatalf("presets: %d %s", status, raw)
 	}
 }
+
+// TestRecordedThreadReadsBack proves the store's own door: turns written with no
+// completion appear in the list and read back in order, and a second write
+// continues the same thread rather than opening another.
+func TestRecordedThreadReadsBack(t *testing.T) {
+	app := newApp(t, &stubCompleter{resp: completion("unused")}, &stubPlane{known: map[string]bool{}})
+
+	status, raw := do(t, app, http.MethodPost, "/v1/agent/conversations", "acme", map[string]any{
+		"messages": []inMessage{
+			{Role: "user", Content: "what does enso route"},
+			{Role: "assistant", Content: "every turn"},
+		},
+	})
+	if status != http.StatusOK {
+		t.Fatalf("record: %d %s", status, raw)
+	}
+	var first struct {
+		ConversationID string `json:"conversationId"`
+	}
+	if err := json.Unmarshal(raw, &first); err != nil || first.ConversationID == "" {
+		t.Fatalf("no conversation id: %s (%v)", raw, err)
+	}
+
+	convs := getConversations(t, app, "acme")
+	if len(convs) != 1 {
+		t.Fatalf("want 1 conversation, got %d", len(convs))
+	}
+	if convs[0].Title != "what does enso route" {
+		t.Fatalf("title is not the opening turn: %q", convs[0].Title)
+	}
+
+	status, raw = do(t, app, http.MethodPost, "/v1/agent/conversations", "acme", map[string]any{
+		"conversationId": first.ConversationID,
+		"messages":       []inMessage{{Role: "user", Content: "and what does it cost"}},
+	})
+	if status != http.StatusOK {
+		t.Fatalf("record 2: %d %s", status, raw)
+	}
+
+	msgs := getMessages(t, app, "acme", first.ConversationID)
+	if len(msgs) != 3 {
+		t.Fatalf("want 3 turns, got %d: %+v", len(msgs), msgs)
+	}
+	if msgs[0].Content != "what does enso route" || msgs[2].Content != "and what does it cost" {
+		t.Fatalf("turns are out of order: %+v", msgs)
+	}
+	if convs := getConversations(t, app, "acme"); len(convs) != 1 {
+		t.Fatalf("the second write opened a new thread: %d", len(convs))
+	}
+}
+
+// TestRecordIsOrgScoped proves a recorded thread is invisible to another org, and
+// that recording is refused without a principal at all.
+func TestRecordIsOrgScoped(t *testing.T) {
+	app := newApp(t, &stubCompleter{resp: completion("unused")}, &stubPlane{known: map[string]bool{}})
+
+	if status, raw := do(t, app, http.MethodPost, "/v1/agent/conversations", "acme", map[string]any{
+		"messages": []inMessage{{Role: "user", Content: "acme's own"}},
+	}); status != http.StatusOK {
+		t.Fatalf("record: %d %s", status, raw)
+	}
+	if convs := getConversations(t, app, "other"); len(convs) != 0 {
+		t.Fatalf("another org sees acme's thread: %+v", convs)
+	}
+	if status, _ := do(t, app, http.MethodPost, "/v1/agent/conversations", "", map[string]any{
+		"messages": []inMessage{{Role: "user", Content: "anonymous"}},
+	}); status != http.StatusForbidden {
+		t.Fatalf("anonymous record was not refused: %d", status)
+	}
+	if status, _ := do(t, app, http.MethodPost, "/v1/agent/conversations", "acme", map[string]any{
+		"messages": []inMessage{},
+	}); status != http.StatusBadRequest {
+		t.Fatalf("empty record was not refused: %d", status)
+	}
+}

@@ -186,6 +186,57 @@ func (s *Service) handleListConversations(c *zip.Ctx) error {
 	return c.JSON(http.StatusOK, map[string]any{"conversations": out})
 }
 
+// recordRequest is the POST {prefix}/conversations body: the turns to keep, and
+// the thread to keep them in. An absent ConversationID opens a new one, exactly
+// as the round's does.
+type recordRequest struct {
+	ConversationID string      `json:"conversationId"`
+	Messages       []inMessage `json:"messages"`
+}
+
+// handleRecord writes turns to the store without running a completion.
+//
+// The round already persists what it answers, but it is the only writer, so a
+// surface that streams its own turn through /v1/chat/completions has nowhere to
+// put the transcript — it gets an answer and no history, and the reader's thread
+// list stays empty however much they talk. Streaming is transport and the
+// transcript is a store; they are separate concerns and this is the store's own
+// door.
+//
+// It takes the SAME two store calls the round takes, in the same order, under
+// the same per-org isolation. There is no second store and no second notion of a
+// thread: a conversation recorded here reads back through the two GETs beside
+// it, and the round can continue it by id.
+func (s *Service) handleRecord(c *zip.Ctx) error {
+	p, err := s.caller(c)
+	if err != nil {
+		return err
+	}
+	var body recordRequest
+	if err := c.Bind(&body); err != nil {
+		return err
+	}
+	if len(body.Messages) == 0 {
+		return zip.ErrBadRequest("messages required")
+	}
+
+	ctx := c.Context()
+	conv, err := s.store.loadOrCreateConversation(ctx, p.Org, body.ConversationID, firstUserContent(body.Messages))
+	if err != nil {
+		return zip.Errorf(http.StatusInternalServerError, "agent: conversation: %v", err)
+	}
+	for _, m := range body.Messages {
+		role := strings.TrimSpace(m.Role)
+		if role == "" || strings.TrimSpace(m.Content) == "" {
+			continue
+		}
+		if _, err := s.store.appendMessage(ctx, p.Org, conv.Id(), role, m.Content, nil); err != nil {
+			return zip.Errorf(http.StatusInternalServerError, "agent: persist: %v", err)
+		}
+	}
+	return c.JSON(http.StatusOK, map[string]any{"conversationId": conv.Id()})
+}
+
 type msgOut struct {
 	ID        string          `json:"id"`
 	Role      string          `json:"role"`
