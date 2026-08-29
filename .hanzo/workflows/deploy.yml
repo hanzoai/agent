@@ -41,7 +41,7 @@ jobs:
     # The forge's git-runner advertises this label (GIT_RUNNER_LABELS in
     # universe infra/k8s/git-runner/statefulset.yaml). A label nothing
     # advertises does not fail — it queues to the timeout, which is silence.
-    runs-on: hanzo-build-linux-amd64
+    runs-on: [hanzo-build-linux-amd64]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
