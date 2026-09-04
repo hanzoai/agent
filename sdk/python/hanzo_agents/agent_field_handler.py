@@ -78,13 +78,13 @@ class HanzoAgentsHandler:
                     f"Resolved callback URL during registration: {self.agent.base_url}"
                 )
         else:
-            # Update port in existing base_url if needed, but preserve Railway internal URLs
+            # Update port in existing base_url if needed, but preserve internal container URLs
             import urllib.parse
 
             parsed = urllib.parse.urlparse(self.agent.base_url)
 
-            # Don't modify Railway internal URLs or other container-specific URLs
-            if "railway.internal" in parsed.netloc or "internal" in parsed.netloc:
+            # Don't modify internal or other container-specific URLs
+            if "internal" in parsed.netloc:
                 log_debug(
                     f"Preserving container-specific callback URL: {self.agent.base_url}"
                 )
