@@ -41,7 +41,7 @@ jobs:
     # The forge's git-runner advertises this label (GIT_RUNNER_LABELS in
     # universe infra/k8s/git-runner/statefulset.yaml). A label nothing
     # advertises does not fail — it queues to the timeout, which is silence.
-    runs-on: hanzo-build-linux-amd64
+    runs-on: [hanzo-build-linux-amd64]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +68,11 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
           echo "publishing ${primary} and ${image}:sdk-latest"
 
+      # binfmt, so this amd64 runner can emit the arm64 half of the image.
+      # Without the registration the arm64 leg dies on `exec format error`
+      # inside the first RUN.
+      - uses: docker/setup-qemu-action@v3
+
       - uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
@@ -84,7 +89,10 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.sdk
-          platforms: linux/amd64
+          # The lab runs both architectures, and a single-platform image does
+          # not start on half of it. A manifest list cannot be `load`ed into a
+          # local daemon, so this only works because the build pushes.
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.tags.outputs.list }}
           provenance: false
           push: true
@@ -105,8 +113,19 @@ jobs:
           while IFS= read -r img; do
             [ -n "${img}" ] || continue
             for i in 1 2 3 4 5 6; do
-              if docker buildx imagetools inspect "${img}" >/dev/null 2>&1; then
-                echo "resolved ${img}"
+              # The platforms are read here, not just the existence of the tag:
+              # a manifest list carrying one architecture pulls fine on the
+              # machine that built it and fails everywhere else, which is the
+              # state this build is leaving.
+              if got=$(docker buildx imagetools inspect "${img}" \
+                         --format '{{range .Manifest.Manifests}}{{.Platform.OS}}/{{.Platform.Architecture}} {{end}}' 2>/dev/null); then
+                echo "resolved ${img} -> ${got}"
+                for want in linux/amd64 linux/arm64; do
+                  case " ${got} " in
+                    *" ${want} "*) ;;
+                    *) echo "::error::${img} does not carry ${want}"; exit 1 ;;
+                  esac
+                done
                 break
               fi
               if [ "${i}" = 6 ]; then
