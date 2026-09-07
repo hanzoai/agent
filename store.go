@@ -17,10 +17,13 @@ import (
 
 // Conversation is one persisted chat thread. Org is the owning org — physical
 // isolation (one SQLite file per org) already scopes it; Org is stored for clarity
-// and defense-in-depth.
+// and defense-in-depth. User is the member who opened it: a thread is one
+// person's inside a shared org, so it lists and opens for them alone. A thread
+// recorded before users were kept has none, and stays the org's.
 type Conversation struct {
 	orm.Model[Conversation]
 	Org   string `json:"org"`
+	User  string `json:"user"`
 	Title string `json:"title"`
 }
 
@@ -130,7 +133,7 @@ func orgSlug(org string) (string, error) {
 // loadOrCreateConversation returns the conversation for id (in the org's DB),
 // creating a fresh one when id is empty or not found. Physical per-org isolation
 // means a found row always belongs to org; the Org check is belt-and-suspenders.
-func (s *store) loadOrCreateConversation(ctx context.Context, org, id, title string) (*Conversation, error) {
+func (s *store) loadOrCreateConversation(ctx context.Context, org, user, id, title string) (*Conversation, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
@@ -138,6 +141,9 @@ func (s *store) loadOrCreateConversation(ctx context.Context, org, id, title str
 	if id = strings.TrimSpace(id); id != "" {
 		conv, gerr := orm.Get[Conversation](db, id)
 		if gerr == nil && conv.Org == org {
+			if !owns(conv, user) {
+				return nil, orm.ErrNotFound
+			}
 			return conv, nil
 		}
 		if gerr != nil && gerr != orm.ErrNotFound {
@@ -149,6 +155,7 @@ func (s *store) loadOrCreateConversation(ctx context.Context, org, id, title str
 	conv := orm.New[Conversation](db)
 	conv.SetId(newID())
 	conv.Org = org
+	conv.User = strings.TrimSpace(user)
 	conv.Title = clampTitle(title)
 	if err := conv.CreateCtx(ctx); err != nil {
 		return nil, err
@@ -176,24 +183,37 @@ func (s *store) appendMessage(ctx context.Context, org, convID, role, content st
 }
 
 // listConversations returns the org's conversations, most-recently-updated first.
-func (s *store) listConversations(ctx context.Context, org string) ([]*Conversation, error) {
+func (s *store) listConversations(ctx context.Context, org, user string) ([]*Conversation, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
 	}
-	items, err := orm.TypedQuery[Conversation](db).GetAll(ctx)
+	all, err := orm.TypedQuery[Conversation](db).GetAll(ctx)
 	if err != nil {
 		return nil, err
+	}
+	items := all[:0]
+	for _, cv := range all {
+		if owns(cv, user) {
+			items = append(items, cv)
+		}
 	}
 	sort.SliceStable(items, func(i, j int) bool { return items[i].UpdatedAt.After(items[j].UpdatedAt) })
 	return items, nil
 }
 
 // conversationMessages returns a conversation's messages in chronological order.
-func (s *store) conversationMessages(ctx context.Context, org, convID string) ([]*Message, error) {
+func (s *store) conversationMessages(ctx context.Context, org, user, convID string) ([]*Message, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
+	}
+	conv, err := orm.Get[Conversation](db, convID)
+	if err != nil {
+		return nil, err
+	}
+	if conv.Org != org || !owns(conv, user) {
+		return nil, orm.ErrNotFound
 	}
 	items, err := orm.TypedQuery[Message](db).Filter("ConversationId=", convID).GetAll(ctx)
 	if err != nil {
@@ -201,6 +221,12 @@ func (s *store) conversationMessages(ctx context.Context, org, convID string) ([
 	}
 	sort.SliceStable(items, func(i, j int) bool { return items[i].Id() < items[j].Id() })
 	return items, nil
+}
+
+// owns reports whether a conversation is this member's to list and read: theirs,
+// or one recorded before users were kept.
+func owns(cv *Conversation, user string) bool {
+	return cv.User == "" || cv.User == strings.TrimSpace(user)
 }
 
 // clampTitle derives a short, single-line conversation title.

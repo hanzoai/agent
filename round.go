@@ -9,6 +9,7 @@ import (
 	"time"
 
 	openai "github.com/hanzoai/go-openai"
+	"github.com/hanzoai/orm"
 	"github.com/zap-proto/zip"
 )
 
@@ -82,9 +83,9 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 
 	ctx := c.Context()
 
-	conv, err := s.store.loadOrCreateConversation(ctx, p.Org, body.ConversationID, firstUserContent(body.Messages))
+	conv, err := s.store.loadOrCreateConversation(ctx, p.Org, p.User, body.ConversationID, firstUserContent(body.Messages))
 	if err != nil {
-		return zip.Errorf(http.StatusInternalServerError, "agent: conversation: %v", err)
+		return conversationRefusal(err)
 	}
 
 	if last := lastUserMessage(body.Messages); last != "" {
@@ -175,7 +176,7 @@ func (s *Service) handleListConversations(c *zip.Ctx) error {
 	if err != nil {
 		return err
 	}
-	items, err := s.store.listConversations(c.Context(), p.Org)
+	items, err := s.store.listConversations(c.Context(), p.Org, p.User)
 	if err != nil {
 		return zip.Errorf(http.StatusInternalServerError, "agent: list: %v", err)
 	}
@@ -221,9 +222,9 @@ func (s *Service) handleRecord(c *zip.Ctx) error {
 	}
 
 	ctx := c.Context()
-	conv, err := s.store.loadOrCreateConversation(ctx, p.Org, body.ConversationID, firstUserContent(body.Messages))
+	conv, err := s.store.loadOrCreateConversation(ctx, p.Org, p.User, body.ConversationID, firstUserContent(body.Messages))
 	if err != nil {
-		return zip.Errorf(http.StatusInternalServerError, "agent: conversation: %v", err)
+		return conversationRefusal(err)
 	}
 	for _, m := range body.Messages {
 		role := strings.TrimSpace(m.Role)
@@ -235,6 +236,15 @@ func (s *Service) handleRecord(c *zip.Ctx) error {
 		}
 	}
 	return c.JSON(http.StatusOK, map[string]any{"conversationId": conv.Id()})
+}
+
+// conversationRefusal turns a store error into the answer a caller gets: another
+// member's thread reads as absent, anything else as the failure it is.
+func conversationRefusal(err error) error {
+	if errors.Is(err, orm.ErrNotFound) {
+		return zip.ErrNotFound("conversation not found")
+	}
+	return zip.Errorf(http.StatusInternalServerError, "agent: conversation: %v", err)
 }
 
 type msgOut struct {
@@ -254,9 +264,9 @@ func (s *Service) handleConversation(c *zip.Ctx) error {
 	if id == "" {
 		return zip.ErrBadRequest("conversation id required")
 	}
-	msgs, err := s.store.conversationMessages(c.Context(), p.Org, id)
+	msgs, err := s.store.conversationMessages(c.Context(), p.Org, p.User, id)
 	if err != nil {
-		return zip.Errorf(http.StatusInternalServerError, "agent: messages: %v", err)
+		return conversationRefusal(err)
 	}
 	out := make([]msgOut, 0, len(msgs))
 	for _, m := range msgs {
