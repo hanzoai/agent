@@ -1,6 +1,6 @@
 module github.com/hanzoai/agent
 
-go 1.26.5
+go 1.26.8
 
 require (
 	github.com/hanzoai/go-openai v1.41.0
