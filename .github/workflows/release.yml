@@ -1,0 +1,37 @@
+# A hanzo_agents-v* tag publishes @hanzo/agents from sdk/typescript, with the
+# credential read from KMS. The wheel rides the same tag through hanzo.yml.
+name: release
+on:
+  push:
+    tags: ['hanzo_agents-v*']
+jobs:
+  npm:
+    runs-on: [linux-amd64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Publish
+        working-directory: sdk/typescript
+        env:
+          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
+          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}
+          KMS: ${{ vars.KMS_ENDPOINT || 'https://kms.hanzo.ai' }}
+        run: |
+          set -euo pipefail
+          v="${GITHUB_REF_NAME#hanzo_agents-v}"
+          have=$(node -p "require('./package.json').version")
+          [ "$have" = "$v" ] || { echo "::error::package.json is $have and the tag is $v"; exit 1; }
+          val() { python3 -c 'import json,sys;print(json.load(sys.stdin).get(sys.argv[1],""))' "$1"; }
+          kt=$(curl -fsS "$KMS/v1/kms/auth/login" -H 'Content-Type: application/json' \
+                 -d "{\"clientId\":\"$KMS_CLIENT_ID\",\"clientSecret\":\"$KMS_CLIENT_SECRET\"}" | val accessToken)
+          [ -n "$kt" ] || { echo "::error::KMS login failed at $KMS/v1/kms/auth/login"; exit 1; }
+          NODE_AUTH_TOKEN=$(curl -sS "$KMS/v1/kms/secrets/NPM_TOKEN?env=prod" -H "Authorization: Bearer $kt" | val value)
+          [ -n "$NODE_AUTH_TOKEN" ] || { echo "::error::no NPM_TOKEN at $KMS/v1/kms/secrets/NPM_TOKEN?env=prod"; exit 1; }
+          echo "::add-mask::$NODE_AUTH_TOKEN"
+          export NODE_AUTH_TOKEN
+          npm ci --ignore-scripts
+          npm run build
+          npm publish --access public --ignore-scripts

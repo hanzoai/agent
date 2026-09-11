@@ -23,7 +23,7 @@
 # no publish lane at all — ci.yml builds a wheel, installs it on 3.9 and 3.12,
 # imports it and throws it away — so 0.1.0 sat on PyPI unimportable while the fix
 # for it sat on main, released to nobody. One line is the whole of the lane.
-pypi: [.]
+pypi: [., sdk/python]
 
 test:
   - name: gofmt
