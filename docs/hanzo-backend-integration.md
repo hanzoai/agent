@@ -14,7 +14,7 @@ The Hanzo Agent SDK can be configured to route all LLM requests through the Hanz
 
 ## Quick Start
 
-### 1. Install the SDK
+### Install the SDK
 
 ```bash
 pip install hanzo-agent
@@ -22,19 +22,7 @@ pip install hanzo-agent
 uv pip install hanzo-agent
 ```
 
-### 2. Configure Environment
-
-```bash
-# Local development
-export HANZO_ROUTER_URL="http://localhost:4000/v1"
-export HANZO_API_KEY="sk-1234"  # Get from Router dashboard
-
-# Production
-export HANZO_ROUTER_URL="https://router.your-domain.com/v1"
-export HANZO_API_KEY="sk-production-key"
-```
-
-### 3. Basic Usage
+### Basic Usage
 
 ```python
 from openai import AsyncOpenAI
@@ -207,7 +195,7 @@ def get_hanzo_provider():
     global _hanzo_provider
     if _hanzo_provider is None:
         _hanzo_provider = HanzoModelProvider(
-            base_url=os.getenv("HANZO_ROUTER_URL"),
+            base_url="https://api.hanzo.ai/v1",
             api_key=os.getenv("HANZO_API_KEY")
         )
     return _hanzo_provider
