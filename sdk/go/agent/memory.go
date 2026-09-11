@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 )
 
@@ -463,10 +464,34 @@ func (b *InMemoryBackend) GetVector(scope MemoryScope, scopeID, key string) ([]f
 	return rec.embedding, rec.metadata, true, nil
 }
 
-// SearchVector performs similarity search (stubbed - returns empty list for in-memory).
+// SearchVector ranks this scope's vectors by cosine similarity.
+//
+// A vector of a different width is skipped rather than scored: a different
+// width means a different embedding model, and cosine across two of those
+// returns a number that means nothing.
 func (b *InMemoryBackend) SearchVector(scope MemoryScope, scopeID string, embedding []float64, opts SearchOptions) ([]VectorSearchResult, error) {
-	// In-memory similarity search is not implemented in this mock; it requires vector math.
-	return []VectorSearchResult{}, nil
+	if len(embedding) == 0 {
+		return nil, errors.New("search needs a query vector")
+	}
+
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	found := []VectorSearchResult{}
+	for key, rec := range b.vectorData[b.compositeKey(scope, scopeID)] {
+		if len(rec.embedding) != len(embedding) || !matches(rec.metadata, opts.Filters) {
+			continue
+		}
+		score := cosine(embedding, rec.embedding)
+		if score < opts.Threshold {
+			continue
+		}
+		found = append(found, VectorSearchResult{
+			Key: key, Score: score, Metadata: rec.metadata,
+			Scope: scope, ScopeID: scopeID,
+		})
+	}
+	return rank(found, opts.Limit), nil
 }
 
 // DeleteVector removes a vector.

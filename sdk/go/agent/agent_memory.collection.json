@@ -1,0 +1,27 @@
+{
+  "collections": [
+    {
+      "name": "agent_memory",
+      "type": "base",
+      "listRule": null,
+      "viewRule": null,
+      "createRule": null,
+      "updateRule": null,
+      "deleteRule": null,
+      "fields": [
+        { "name": "scope", "type": "text", "required": true, "max": 32 },
+        { "name": "scope_id", "type": "text", "max": 255 },
+        { "name": "mkey", "type": "text", "required": true, "max": 255 },
+        { "name": "value", "type": "text", "max": 1048576 },
+        { "name": "embedding", "type": "json", "maxSize": 1048576 },
+        { "name": "metadata", "type": "json", "maxSize": 65536 },
+        { "name": "created", "type": "autodate", "onCreate": true },
+        { "name": "updated", "type": "autodate", "onCreate": true, "onUpdate": true }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_agent_memory_key ON agent_memory (scope, scope_id, mkey)",
+        "CREATE INDEX idx_agent_memory_scope ON agent_memory (scope, scope_id)"
+      ]
+    }
+  ]
+}
