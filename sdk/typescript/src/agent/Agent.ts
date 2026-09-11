@@ -21,6 +21,7 @@ import { SkillContext } from '../context/SkillContext.js';
 import { AIClient } from '../ai/AIClient.js';
 import { HanzoAgentsClient } from '../client/HanzoAgentsClient.js';
 import { MemoryClient } from '../memory/MemoryClient.js';
+import type { MemoryBackend } from '../memory/MemoryBackend.js';
 import { MemoryEventClient } from '../memory/MemoryEventClient.js';
 import {
   MemoryInterface,
@@ -49,7 +50,7 @@ export class Agent {
   private heartbeatTimer?: NodeJS.Timeout;
   private readonly aiClient: AIClient;
   private readonly controlPlaneClient: HanzoAgentsClient;
-  private readonly memoryClient: MemoryClient;
+  private readonly memoryClient: MemoryBackend;
   private readonly memoryEventClient: MemoryEventClient;
   private readonly didClient: DidClient;
   private readonly didManager: DidManager;
@@ -80,7 +81,8 @@ export class Agent {
 
     this.aiClient = new AIClient(this.config.aiConfig);
     this.controlPlaneClient = new HanzoAgentsClient(this.config);
-    this.memoryClient = new MemoryClient(this.config.controlPlaneUrl!, this.config.defaultHeaders);
+    this.memoryClient =
+      this.config.memory ?? new MemoryClient(this.config.controlPlaneUrl!, this.config.defaultHeaders);
     this.memoryEventClient = new MemoryEventClient(this.config.controlPlaneUrl!, this.config.defaultHeaders);
     this.didClient = new DidClient(this.config.controlPlaneUrl!, this.config.defaultHeaders);
     this.didManager = new DidManager(this.didClient, this.config.nodeId);
@@ -411,10 +413,13 @@ export class Agent {
       res.json(this.skills.all().map((s) => s.name));
     });
 
-    this.app.post('/api/v1/reasoners/*', (req, res) => this.executeReasoner(req, res, (req.params as any)[0]));
+    // One address per operation, the one the Python SDK also serves. There
+    // used to be a second spelling of each under an /api/v1/ prefix, reading
+    // the name out of a bare `*`. Express 5 refuses that pattern outright, so
+    // the agent's own server could not start — and `/api/` is not a shape this
+    // estate serves. A name may carry dots (`node-id.double`), which a single
+    // segment parameter matches.
     this.app.post('/reasoners/:name', (req, res) => this.executeReasoner(req, res, req.params.name));
-
-    this.app.post('/api/v1/skills/*', (req, res) => this.executeSkill(req, res, (req.params as any)[0]));
     this.app.post('/skills/:name', (req, res) => this.executeSkill(req, res, req.params.name));
 
     // Serverless-friendly execute endpoint that accepts { target, input } or { reasoner, input }

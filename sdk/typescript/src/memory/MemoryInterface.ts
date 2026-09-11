@@ -1,5 +1,6 @@
 import type { MemoryScope } from '../types/agent.js';
-import type { MemoryClient, MemoryRequestMetadata, VectorSearchOptions } from './MemoryClient.js';
+import type { MemoryRequestMetadata, VectorSearchOptions } from './MemoryClient.js';
+import type { MemoryBackend } from './MemoryBackend.js';
 import type { MemoryEventClient } from './MemoryEventClient.js';
 import type { AIClient, AIEmbeddingOptions } from '../ai/AIClient.js';
 
@@ -15,7 +16,7 @@ export interface MemoryChangeEvent {
 export type MemoryWatchHandler = (event: MemoryChangeEvent) => Promise<void> | void;
 
 export class MemoryInterface {
-  private readonly client: MemoryClient;
+  private readonly client: MemoryBackend;
   private readonly eventClient?: MemoryEventClient;
   private readonly aiClient?: AIClient;
   private readonly defaultScope: MemoryScope;
@@ -23,7 +24,7 @@ export class MemoryInterface {
   private readonly metadata?: MemoryRequestMetadata;
 
   constructor(params: {
-    client: MemoryClient;
+    client: MemoryBackend;
     eventClient?: MemoryEventClient;
     aiClient?: AIClient;
     defaultScope?: MemoryScope;

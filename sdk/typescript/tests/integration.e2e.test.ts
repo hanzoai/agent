@@ -170,7 +170,7 @@ async function createControlPlaneStub() {
     }
 
     const targetType = agentInfo.skills.some((s) => s.id === name) ? 'skill' : 'reasoner';
-    const path = targetType === 'skill' ? `/api/v1/skills/${name}` : `/api/v1/reasoners/${name}`;
+    const path = targetType === 'skill' ? `/skills/${name}` : `/reasoners/${name}`;
 
     try {
       const response = await axios.post(`${agentInfo.baseUrl}${path}`, req.body?.input ?? {}, {

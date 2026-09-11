@@ -2,6 +2,7 @@ import type http from 'node:http';
 import type { ReasonerDefinition } from './reasoner.js';
 import type { SkillDefinition } from './skill.js';
 import type { MemoryChangeEvent, MemoryWatchHandler } from '../memory/MemoryInterface.js';
+import type { MemoryBackend } from '../memory/MemoryBackend.js';
 import type { ExecutionMetadata } from '../context/ExecutionContext.js';
 
 export type DeploymentType = 'long_running' | 'serverless';
@@ -16,6 +17,11 @@ export interface AgentConfig {
   publicUrl?: string;
   aiConfig?: AIConfig;
   memoryConfig?: MemoryConfig;
+  /**
+   * Where this agent's memory is kept. Defaults to the control plane named by
+   * `controlPlaneUrl`; pass a `BaseMemory` to keep it in Hanzo Base instead.
+   */
+  memory?: MemoryBackend;
   didEnabled?: boolean;
   devMode?: boolean;
   heartbeatIntervalMs?: number;

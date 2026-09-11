@@ -99,13 +99,23 @@ describe('AIClient', () => {
   });
 
   describe('provider selection for text generation', () => {
-    it('creates OpenAI provider by default', async () => {
+    // Our own stack, and our own model. It speaks the OpenAI dialect, so the
+    // client it builds is the same one — what makes it ours is the address and
+    // the model, which is exactly what this asserts.
+    it('answers from Hanzo by default', async () => {
       const client = new AIClient({ apiKey: 'test-key' });
       await client.generate('test prompt');
 
       expect(createOpenAIMock.factory).toHaveBeenCalledWith(
-        expect.objectContaining({ apiKey: 'test-key' })
+        expect.objectContaining({ apiKey: 'test-key', baseURL: 'https://api.hanzo.ai/v1' })
       );
+      expect(createOpenAIMock.modelFn).toHaveBeenCalledWith('zen3-vl');
+    });
+
+    it('names another provider only when asked', async () => {
+      const client = new AIClient({ provider: 'openai', apiKey: 'test-key', model: 'gpt-4o' });
+      await client.generate('test prompt');
+
       expect(createOpenAIMock.modelFn).toHaveBeenCalledWith('gpt-4o');
     });
 

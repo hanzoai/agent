@@ -7,6 +7,8 @@ export * from './context/SkillContext.js';
 export * from './ai/AIClient.js';
 export * from './memory/MemoryInterface.js';
 export * from './memory/MemoryClient.js';
+export * from './memory/MemoryBackend.js';
+export * from './memory/BaseMemory.js';
 export * from './memory/MemoryEventClient.js';
 export * from './workflow/WorkflowReporter.js';
 export * from './did/DidClient.js';

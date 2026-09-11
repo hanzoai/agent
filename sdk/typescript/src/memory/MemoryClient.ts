@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, isAxiosError } from 'axios';
 import type { MemoryScope } from '../types/agent.js';
 import { httpAgent, httpsAgent } from '../utils/httpAgents.js';
+import type { MemoryBackend } from './MemoryBackend.js';
 
 export interface MemoryRequestMetadata {
   workflowId?: string;
@@ -35,7 +36,7 @@ export interface VectorSearchResult {
   metadata?: Record<string, any>;
 }
 
-export class MemoryClient {
+export class MemoryClient implements MemoryBackend {
   private readonly http: AxiosInstance;
   private readonly defaultHeaders: Record<string, string>;
 
