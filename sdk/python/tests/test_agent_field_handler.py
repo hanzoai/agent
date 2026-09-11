@@ -4,13 +4,13 @@ import pytest
 import requests
 
 from hanzo_agents.agent_field_handler import HanzoAgentsHandler
-from tests.helpers import StubAgent, DummyHanzo AgentsClient
+from tests.helpers import StubAgent, DummyHanzoAgentsClient
 
 
 @pytest.mark.asyncio
 async def test_register_with_hanzo_agents_server_sets_base_url(monkeypatch):
     agent = StubAgent(callback_url="agent.local", base_url=None)
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     agent.hanzo_agents_connected = False
 
     monkeypatch.setattr(
@@ -37,7 +37,7 @@ async def test_register_with_hanzo_agents_server_handles_failure(monkeypatch):
         raise RuntimeError("boom")
 
     agent = StubAgent(callback_url=None, base_url="http://already", dev_mode=True)
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     monkeypatch.setattr(agent.client, "register_agent", failing_register)
     monkeypatch.setattr(
         "hanzo_agents.agent._build_callback_candidates",
@@ -55,7 +55,7 @@ async def test_register_with_hanzo_agents_server_handles_failure(monkeypatch):
 @pytest.mark.asyncio
 async def test_register_with_hanzo_agents_updates_existing_port(monkeypatch):
     agent = StubAgent(callback_url=None, base_url="http://host:5000")
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
 
     monkeypatch.setattr(
         "hanzo_agents.agent._build_callback_candidates",
@@ -77,7 +77,7 @@ async def test_register_with_hanzo_agents_preserves_container_urls(monkeypatch):
         base_url="http://service.railway.internal:5000",
         dev_mode=True,
     )
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
 
     monkeypatch.setattr(
         "hanzo_agents.agent._build_callback_candidates",
@@ -94,7 +94,7 @@ async def test_register_with_hanzo_agents_preserves_container_urls(monkeypatch):
 @pytest.mark.asyncio
 async def test_register_with_hanzo_agents_server_resolves_when_no_candidates(monkeypatch):
     agent = StubAgent(callback_url=None, base_url=None)
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
 
     monkeypatch.setattr(
         "hanzo_agents.agent._build_callback_candidates", lambda *a, **k: []
@@ -115,7 +115,7 @@ async def test_register_with_hanzo_agents_server_resolves_when_no_candidates(mon
 @pytest.mark.asyncio
 async def test_register_with_hanzo_agents_server_reorders_candidates(monkeypatch):
     agent = StubAgent(callback_url=None, base_url="http://preferred:8000")
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     agent.callback_candidates = ["http://other:8000", "http://preferred:8000"]
 
     monkeypatch.setattr(
@@ -146,7 +146,7 @@ async def test_register_with_hanzo_agents_server_propagates_request_exception(
         raise exception
 
     agent = StubAgent(callback_url=None, base_url="http://already", dev_mode=False)
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     monkeypatch.setattr(agent.client, "register_agent", failing_register)
     monkeypatch.setattr(
         "hanzo_agents.agent._build_callback_candidates", lambda *a, **k: []
@@ -165,7 +165,7 @@ async def test_register_with_hanzo_agents_server_propagates_request_exception(
 @pytest.mark.asyncio
 async def test_register_with_hanzo_agents_server_unsuccessful_response(monkeypatch):
     agent = StubAgent(callback_url=None, base_url="http://host:5000")
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
 
     async def register_returns_false(*args, **kwargs):
         return False, None
@@ -281,7 +281,7 @@ def test_start_and_stop_heartbeat(monkeypatch):
 @pytest.mark.asyncio
 async def test_enhanced_heartbeat_and_shutdown(monkeypatch):
     agent = StubAgent()
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     agent.mcp_handler = type(
         "MCP", (), {"_get_mcp_server_health": lambda self: ["mcp"]}
     )()
@@ -300,7 +300,7 @@ async def test_enhanced_heartbeat_and_shutdown(monkeypatch):
 @pytest.mark.asyncio
 async def test_enhanced_heartbeat_failure_returns_false(monkeypatch):
     agent = StubAgent()
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     hanzo_agents = HanzoAgentsHandler(agent)
 
     async def boom(*args, **kwargs):
@@ -315,7 +315,7 @@ async def test_enhanced_heartbeat_failure_returns_false(monkeypatch):
 @pytest.mark.asyncio
 async def test_notify_shutdown_failure_returns_false(monkeypatch):
     agent = StubAgent()
-    agent.client = DummyHanzo AgentsClient()
+    agent.client = DummyHanzoAgentsClient()
     hanzo_agents = HanzoAgentsHandler(agent)
 
     async def boom(*args, **kwargs):

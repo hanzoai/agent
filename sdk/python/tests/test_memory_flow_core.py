@@ -123,7 +123,7 @@ async def test_memory_round_trip(monkeypatch, dummy_headers):
 async def test_memory_client_uses_hanzo_agents_async_request(dummy_headers):
     calls: list[tuple[str, str, dict]] = []
 
-    class DummyHanzo AgentsClient:
+    class DummyHanzoAgentsClient:
         api_base = "http://hanzo_agents.local/api/v1"
 
         async def _async_request(self, method, url, **kwargs):
@@ -133,7 +133,7 @@ async def test_memory_client_uses_hanzo_agents_async_request(dummy_headers):
             return DummyAsyncResponse(200, {"ok": True})
 
     context = SimpleNamespace(to_headers=lambda: dict(dummy_headers))
-    memory_client = MemoryClient(DummyHanzo AgentsClient(), context)
+    memory_client = MemoryClient(DummyHanzoAgentsClient(), context)
 
     await memory_client.set("answer", 42)
     value = await memory_client.get("answer")

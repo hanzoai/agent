@@ -62,7 +62,7 @@ def test_notify_graceful_shutdown_sync(monkeypatch):
 
 
 def test_register_agent_with_status_async(monkeypatch):
-    # Provide a dummy httpx module that Hanzo AgentsClient will use
+    # Provide a dummy httpx module that HanzoAgentsClient will use
     from hanzo_agents import client as client_mod
 
     captured: Dict[str, Any] = {}

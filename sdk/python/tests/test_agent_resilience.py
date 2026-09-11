@@ -27,8 +27,8 @@ def mock_client(monkeypatch):
         async def aclose(self):
             pass
 
-    monkeypatch.setattr("hanzo_agents.agent.Hanzo AgentsClient", MockClient)
-    monkeypatch.setattr("hanzo_agents.client.Hanzo AgentsClient", MockClient)
+    monkeypatch.setattr("hanzo_agents.agent.HanzoAgentsClient", MockClient)
+    monkeypatch.setattr("hanzo_agents.client.HanzoAgentsClient", MockClient)
 
     # Also mock AgentUtils.is_port_available to avoid binding issues
     monkeypatch.setattr(

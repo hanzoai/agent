@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from hanzo_agents.types import AgentStatus, HeartbeatData
 
 
-class DummyHanzo AgentsClient:
+class DummyHanzoAgentsClient:
     """Simple in-memory hanzo_agents client used to capture registration calls."""
 
     def __init__(self):
@@ -97,7 +97,7 @@ class StubAgent:
     api_key: Optional[str] = None
     ai_config: Any = None
     async_config: Any = None
-    client: DummyHanzo AgentsClient = field(default_factory=DummyHanzo AgentsClient)
+    client: DummyHanzoAgentsClient = field(default_factory=DummyHanzoAgentsClient)
     did_manager: Any = None
     mcp_handler: Any = field(
         default_factory=lambda: type(
@@ -177,7 +177,7 @@ class StubAgent:
 
 
 class DummyAsyncExecutionManager:
-    """Simple async execution manager used in tests for Hanzo AgentsClient async flows."""
+    """Simple async execution manager used in tests for HanzoAgentsClient async flows."""
 
     def __init__(self):
         self.submissions: List[Dict[str, Any]] = []
@@ -230,7 +230,7 @@ class DummyAsyncExecutionManager:
 
 
 __all__ = [
-    "DummyHanzo AgentsClient",
+    "DummyHanzoAgentsClient",
     "DummyAsyncExecutionManager",
     "StubAgent",
     "create_test_agent",
@@ -244,7 +244,7 @@ def create_test_agent(
     callback_url: Optional[str] = None,
     dev_mode: bool = False,
     vc_enabled: Optional[bool] = True,
-) -> Tuple[Any, DummyHanzo AgentsClient]:
+) -> Tuple[Any, DummyHanzoAgentsClient]:
     """Construct a fully initialized Agent with key dependencies stubbed out.
 
     This helper isolates network-bound components so functional tests can exercise
@@ -257,18 +257,18 @@ def create_test_agent(
 
     memory_store: Dict[str, Any] = {}
 
-    class _FakeHanzo AgentsClient(DummyHanzo AgentsClient):
+    class _FakeHanzoAgentsClient(DummyHanzoAgentsClient):
         def __init__(self, base_url: str, async_config: Any = None, api_key: Optional[str] = None):
             super().__init__()
             self.base_url = base_url
-            self.api_base = f"{base_url}/api/v1"
+            self.api_base = f"{base_url}/v1"
             self.async_config = async_config
             self.api_key = api_key
 
     def _hanzo_agents_client_factory(
         base_url: str, async_config: Any = None, api_key: Optional[str] = None
-    ) -> _FakeHanzo AgentsClient:
-        return _FakeHanzo AgentsClient(base_url, async_config, api_key)
+    ) -> _FakeHanzoAgentsClient:
+        return _FakeHanzoAgentsClient(base_url, async_config, api_key)
 
     class _FakeMemoryClient:
         def __init__(
@@ -503,7 +503,7 @@ def create_test_agent(
         events.append(("update", payload))
         self.agent._captured_workflow_events = events
 
-    monkeypatch.setattr("hanzo_agents.agent.Hanzo AgentsClient", _hanzo_agents_client_factory)
+    monkeypatch.setattr("hanzo_agents.agent.HanzoAgentsClient", _hanzo_agents_client_factory)
     monkeypatch.setattr("hanzo_agents.agent.MemoryClient", _FakeMemoryClient)
     monkeypatch.setattr("hanzo_agents.agent.MemoryEventClient", _FakeMemoryEventClient)
     monkeypatch.setattr("hanzo_agents.agent.AgentMCP", _FakeAgentMCP)

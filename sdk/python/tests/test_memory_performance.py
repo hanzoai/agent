@@ -220,7 +220,7 @@ class TestClientSessionReuse:
         # Reset shared session
         HanzoAgentsClient._shared_sync_session = None
 
-        Hanzo AgentsClient(base_url="http://localhost:8080")  # Creates shared session
+        HanzoAgentsClient(base_url="http://localhost:8080")  # Creates shared session
 
         assert HanzoAgentsClient._shared_sync_session is not None, \
             "Shared session should be created"
@@ -230,10 +230,10 @@ class TestClientSessionReuse:
         # Reset shared session
         HanzoAgentsClient._shared_sync_session = None
 
-        Hanzo AgentsClient(base_url="http://localhost:8080")  # First client
+        HanzoAgentsClient(base_url="http://localhost:8080")  # First client
         session1 = HanzoAgentsClient._shared_sync_session
 
-        Hanzo AgentsClient(base_url="http://localhost:8081")  # Second client
+        HanzoAgentsClient(base_url="http://localhost:8081")  # Second client
         session2 = HanzoAgentsClient._shared_sync_session
 
         assert session1 is session2, "Clients should share session"
@@ -412,11 +412,11 @@ class TestMemoryPerformanceReport:
         def client_benchmark(n):
             clients = []
             for i in range(n):
-                clients.append(Hanzo AgentsClient(base_url=f"http://localhost:808{i%10}"))
+                clients.append(HanzoAgentsClient(base_url=f"http://localhost:808{i%10}"))
             return clients
 
         m3 = measure_memory(client_benchmark, 100)
-        m3.name = "Hanzo AgentsClient (shared session)"
+        m3.name = "HanzoAgentsClient (shared session)"
         memory_report.append(m3)
 
         # Assertions

@@ -340,7 +340,7 @@ def llm_mock(monkeypatch) -> LLMMockController:
     return LLMMockController(module=fake)
 
 
-class Hanzo AgentsHTTPMocks:
+class HanzoAgentsHTTPMocks:
     """
     Helper wrapper that registers common Hanzo Agents server endpoints on both:
     - httpx (via respx)
@@ -443,7 +443,7 @@ class Hanzo AgentsHTTPMocks:
 
 
 @pytest.fixture
-def http_mocks() -> Hanzo AgentsHTTPMocks:
+def http_mocks() -> HanzoAgentsHTTPMocks:
     """
     Returns a helper for mocking Hanzo Agents server endpoints on both httpx and requests.
 
@@ -457,7 +457,7 @@ def http_mocks() -> Hanzo AgentsHTTPMocks:
             http_mocks.mock_execute("n.reasoner", json={"result": {"ok": True}})
             # ... call HanzoAgentsClient.execute(...), ensure headers were passed ...
     """
-    return Hanzo AgentsHTTPMocks()
+    return HanzoAgentsHTTPMocks()
 
 
 # ---------------------------- 4) Sample Agent Fixture ----------------------------
@@ -567,7 +567,7 @@ def sample_agent(
 @pytest.fixture
 def fake_server(monkeypatch, request):
     """
-    Spins up an in-process FastAPI mock server and routes Hanzo AgentsClient calls to it WITHOUT real sockets.
+    Spins up an in-process FastAPI mock server and routes HanzoAgentsClient calls to it WITHOUT real sockets.
     This is suitable for contract tests while keeping network isolation.
 
     Endpoints:
@@ -579,7 +579,7 @@ def fake_server(monkeypatch, request):
 
     How it works:
       - Patches httpx.AsyncClient to use httpx.ASGITransport against the in-process FastAPI app.
-      - Hanzo AgentsClient(async) calls are transparently routed; no sockets required.
+      - HanzoAgentsClient(async) calls are transparently routed; no sockets required.
       - requests.* fallbacks are NOT routed here; rely on responses/respx for those.
 
     Returns:
@@ -673,7 +673,7 @@ def fake_server(monkeypatch, request):
 
 # ---------------------------- Notes and Cross-Cutting Concerns ----------------------------
 # - Agent.__init__ callback URL resolution is exercised via env_patch + mock_container_detection + mock_ip_detection
-# - Hanzo AgentsClient request/header propagation is covered by http_mocks and fake_server
+# - HanzoAgentsClient request/header propagation is covered by http_mocks and fake_server
 # - MemoryClient serialization and HTTP fallback paths are supported by http_mocks and fake_server
 # - AgentAI model limits caching and message trimming rely on llm_mock + sample_ai_config
 # - AIConfig parameter merging and fallback logic can be tested via sample_ai_config overrides
