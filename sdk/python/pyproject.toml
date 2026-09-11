@@ -51,7 +51,16 @@ include = ["hanzo_agents*"]
 exclude = ["tests*", "examples*"]
 
 [project.optional-dependencies]
+# The web3 extension imports eth_account at module scope, so importing
+# hanzo_agents.extensions.web3 from a clean install failed until this existed —
+# and its tests took the whole suite's collection down with them.
+web3 = [
+    "eth-account>=0.11,<1",
+]
 dev = [
+    # Named once, here, so the dev environment can run every test this project
+    # ships rather than most of them.
+    "hanzo-agents[web3]",
     "pytest>=7.4,<9",
     "pytest-asyncio>=0.21,<0.24",
     "pytest-cov>=4.1,<5",
