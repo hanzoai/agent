@@ -17,7 +17,7 @@ import type { z } from 'zod';
 import type { AIConfig } from '../types/agent.js';
 import { StatelessRateLimiter } from './RateLimiter.js';
 
-export type ZodSchema<T> = z.Schema<T, z.ZodTypeDef, any>;
+export type ZodSchema<T> = z.ZodType<T>;
 
 /**
  * Attempts to repair malformed JSON text from model responses.
@@ -97,15 +97,15 @@ export class AIClient {
 
     if (options.schema) {
       const schema = options.schema;
-      // Default to 'json' mode for better compatibility across providers
-      // 'auto' mode uses tool calling which some models/providers don't support well
-      const mode = options.mode ?? 'json';
+      // `mode` is still accepted on this SDK's own options, and is no longer
+      // forwarded: the ai package removed it from generateObject, which now
+      // chooses between structured output and tool calling itself. Passing it
+      // was a type error, so nothing downstream ever saw it.
       const call = async () =>
         generateObject({
           model: model,
           prompt,
           output: 'object',
-          mode,
           system: options.system,
           temperature: options.temperature ?? this.config.temperature,
           maxOutputTokens: options.maxTokens ?? this.config.maxTokens,
