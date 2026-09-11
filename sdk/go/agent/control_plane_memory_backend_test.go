@@ -32,7 +32,7 @@ func TestControlPlaneMemoryBackend_SetSendsScopeHeaders(t *testing.T) {
 	if err := b.Set(ScopeWorkflow, "wf-1", "k", map[string]any{"v": 1}); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
-	if gotPath != "/api/v1/memory/set" {
+	if gotPath != "/v1/memory/set" {
 		t.Fatalf("path = %q", gotPath)
 	}
 	if gotWorkflow != "wf-1" {

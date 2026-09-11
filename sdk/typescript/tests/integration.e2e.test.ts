@@ -84,7 +84,7 @@ async function createControlPlaneStub() {
   const agents = new Map<string, { baseUrl: string; reasoners: any[]; skills: any[] }>();
 
   const server = http.createServer(app);
-  const wss = new WebSocketServer({ server, path: '/api/v1/memory/events/ws' });
+  const wss = new WebSocketServer({ server, path: '/v1/memory/events/ws' });
   const sockets = new Set<any>();
 
   wss.on('connection', (socket) => {
@@ -95,7 +95,7 @@ async function createControlPlaneStub() {
   const findMemory = (scope: string, scopeId: string | undefined, key: string) =>
     memory.find((entry) => entry.scope === scope && entry.scopeId === scopeId && entry.key === key);
 
-  app.post('/api/v1/nodes/register', (req, res) => {
+  app.post('/v1/nodes/register', (req, res) => {
     const payload = req.body ?? {};
     registrations.push(payload);
     agents.set(payload.id, {
@@ -106,22 +106,22 @@ async function createControlPlaneStub() {
     res.json({ ok: true });
   });
 
-  app.post('/api/v1/nodes/:id/heartbeat', (req, res) => {
+  app.post('/v1/nodes/:id/heartbeat', (req, res) => {
     heartbeats.push({ nodeId: req.params.id, status: req.body?.status });
     res.json({ status: req.body?.status ?? 'ready', nodeId: req.params.id });
   });
 
-  app.post('/api/v1/workflow/executions/events', (req, res) => {
+  app.post('/v1/workflow/executions/events', (req, res) => {
     workflowEvents.push(req.body);
     res.json({ ok: true });
   });
 
-  app.post('/api/v1/executions/:id/status', (req, res) => {
+  app.post('/v1/executions/:id/status', (req, res) => {
     executionStatuses.push({ id: req.params.id, body: req.body });
     res.json({ ok: true });
   });
 
-  app.get('/api/v1/discovery/capabilities', (_req, res) => {
+  app.get('/v1/discovery/capabilities', (_req, res) => {
     const capabilities = Array.from(agents.entries()).map(([agentId, info]) => ({
       agent_id: agentId,
       base_url: info.baseUrl,
@@ -157,7 +157,7 @@ async function createControlPlaneStub() {
     });
   });
 
-  app.post('/api/v1/execute/:target', async (req, res) => {
+  app.post('/v1/execute/:target', async (req, res) => {
     const rawTarget = req.params.target;
     const [agentIdMaybe, nameMaybe] = rawTarget.includes('.') ? rawTarget.split('.', 2) : [undefined, rawTarget];
     const agentId = agentIdMaybe ?? registrations.at(-1)?.id;
@@ -182,7 +182,7 @@ async function createControlPlaneStub() {
     }
   });
 
-  app.post('/api/v1/memory/set', (req, res) => {
+  app.post('/v1/memory/set', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const existing = findMemory(scope, scopeId, req.body?.key);
@@ -194,7 +194,7 @@ async function createControlPlaneStub() {
     res.json({ ok: true });
   });
 
-  app.post('/api/v1/memory/get', (req, res) => {
+  app.post('/v1/memory/get', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const entry = findMemory(scope, scopeId, req.body?.key);
@@ -205,7 +205,7 @@ async function createControlPlaneStub() {
     res.json({ data: entry.value });
   });
 
-  app.post('/api/v1/memory/delete', (req, res) => {
+  app.post('/v1/memory/delete', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const idx = memory.findIndex(
@@ -215,12 +215,12 @@ async function createControlPlaneStub() {
     res.json({ ok: true });
   });
 
-  app.get('/api/v1/memory/list', (req, res) => {
+  app.get('/v1/memory/list', (req, res) => {
     const scope = String(req.query.scope ?? 'workflow');
     res.json(memory.filter((entry) => entry.scope === scope).map((entry) => ({ key: entry.key })));
   });
 
-  app.post('/api/v1/memory/vector/set', (req, res) => {
+  app.post('/v1/memory/vector/set', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const existing = vectors.find(
@@ -239,7 +239,7 @@ async function createControlPlaneStub() {
     res.json({ ok: true });
   });
 
-  app.post('/api/v1/memory/vector/search', (req, res) => {
+  app.post('/v1/memory/vector/search', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const matches = vectors
@@ -254,7 +254,7 @@ async function createControlPlaneStub() {
     res.json(matches);
   });
 
-  app.post('/api/v1/memory/vector/delete', (req, res) => {
+  app.post('/v1/memory/vector/delete', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const idx = vectors.findIndex(

@@ -360,7 +360,7 @@ class HanzoAgentsHTTPMocks:
 
     def __init__(self, base_url: str = "http://localhost:8080"):
         self.base_url = base_url.rstrip("/")
-        self.api_base = f"{self.base_url}/api/v1"
+        self.api_base = f"{self.base_url}/v1"
 
     # ----- Nodes -----
     def mock_register_node(

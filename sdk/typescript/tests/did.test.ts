@@ -64,7 +64,7 @@ describe('DidClient', () => {
     });
 
     expect(post).toHaveBeenCalledWith(
-      '/api/v1/execution/vc',
+      '/v1/execution/vc',
       expect.objectContaining({
         execution_context: expect.objectContaining({
           execution_id: 'exec-1',
@@ -132,7 +132,7 @@ describe('DidClient', () => {
     const result = await client.exportAuditTrail({ workflowId: 'wf-1', status: 'succeeded' });
 
     expect(http.get).toHaveBeenCalledWith(
-      '/api/v1/did/export/vcs',
+      '/v1/did/export/vcs',
       expect.objectContaining({
         params: expect.objectContaining({ workflow_id: 'wf-1', status: 'succeeded' })
       })

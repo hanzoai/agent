@@ -54,7 +54,7 @@ export class MemoryClient implements MemoryBackend {
     const payload: any = { key, data };
     if (options.scope) payload.scope = options.scope;
 
-    await this.http.post('/api/v1/memory/set', payload, {
+    await this.http.post('/v1/memory/set', payload, {
       headers: this.buildHeaders(options)
     });
   }
@@ -64,7 +64,7 @@ export class MemoryClient implements MemoryBackend {
       const payload: any = { key };
       if (options.scope) payload.scope = options.scope;
 
-      const res = await this.http.post('/api/v1/memory/get', payload, {
+      const res = await this.http.post('/v1/memory/get', payload, {
         headers: this.buildHeaders(options)
       });
       return res.data?.data as T;
@@ -80,13 +80,13 @@ export class MemoryClient implements MemoryBackend {
     const payload: any = { key };
     if (options.scope) payload.scope = options.scope;
 
-    await this.http.post('/api/v1/memory/delete', payload, {
+    await this.http.post('/v1/memory/delete', payload, {
       headers: this.buildHeaders(options)
     });
   }
 
   async listKeys(scope: MemoryScope, options: MemoryRequestOptions = {}) {
-    const res = await this.http.get('/api/v1/memory/list', {
+    const res = await this.http.get('/v1/memory/list', {
       params: { scope },
       headers: this.buildHeaders({ ...options, scope })
     });
@@ -106,7 +106,7 @@ export class MemoryClient implements MemoryBackend {
     if (metadata !== undefined) payload.metadata = metadata;
     if (options.scope) payload.scope = options.scope;
 
-    await this.http.post('/api/v1/memory/vector/set', payload, {
+    await this.http.post('/v1/memory/vector/set', payload, {
       headers: this.buildHeaders(options)
     });
   }
@@ -115,7 +115,7 @@ export class MemoryClient implements MemoryBackend {
     const payload: any = { key };
     if (options.scope) payload.scope = options.scope;
 
-    await this.http.post('/api/v1/memory/vector/delete', payload, {
+    await this.http.post('/v1/memory/vector/delete', payload, {
       headers: this.buildHeaders(options)
     });
   }
@@ -128,7 +128,7 @@ export class MemoryClient implements MemoryBackend {
     if (options.filters) payload.filters = options.filters;
     if (options.scope) payload.scope = options.scope;
 
-    const res = await this.http.post('/api/v1/memory/vector/search', payload, {
+    const res = await this.http.post('/v1/memory/vector/search', payload, {
       headers: this.buildHeaders(options)
     });
     return res.data ?? [];

@@ -39,7 +39,7 @@ func TestNote_Basic(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1", // Will be converted to /api/ui/v1
+		HanzoAgentsURL: server.URL + "/v1", // the note goes to /v1/ui below
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -97,7 +97,7 @@ func TestNotef_Formatted(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1",
+		HanzoAgentsURL: server.URL + "/v1",
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -134,7 +134,7 @@ func TestNote_NoTags(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1",
+		HanzoAgentsURL: server.URL + "/v1",
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -191,7 +191,7 @@ func TestNote_ServerError(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1",
+		HanzoAgentsURL: server.URL + "/v1",
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -226,14 +226,14 @@ func TestNote_URLConversion(t *testing.T) {
 		expectedPath    string
 	}{
 		{
-			name:            "Standard /api/v1 URL",
-			controlPlaneURL: server.URL + "/api/v1",
-			expectedPath:    "/api/ui/v1/executions/note",
+			name:            "a base carrying the version",
+			controlPlaneURL: server.URL + "/v1",
+			expectedPath:    "/v1/ui/executions/note",
 		},
 		{
-			name:            "URL without /api/v1",
+			name:            "the server root",
 			controlPlaneURL: server.URL,
-			expectedPath:    "/api/ui/v1/executions/note",
+			expectedPath:    "/v1/ui/executions/note",
 		},
 	}
 
@@ -282,7 +282,7 @@ func TestNote_WithToken(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1",
+		HanzoAgentsURL: server.URL + "/v1",
 		Token:          "test-token-123",
 		Logger:         log.New(io.Discard, "", 0),
 	}
@@ -316,7 +316,7 @@ func TestNote_FireAndForget(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: slowServer.URL + "/api/v1",
+		HanzoAgentsURL: slowServer.URL + "/v1",
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -350,7 +350,7 @@ func TestNote_MultipleNotes(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/api/v1",
+		HanzoAgentsURL: server.URL + "/v1",
 		Logger:         log.New(io.Discard, "", 0),
 	}
 

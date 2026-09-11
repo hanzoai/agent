@@ -52,6 +52,22 @@ def fast_config():
     )
 
 
+
+async def until(ready, timeout: float = 5.0, step: float = 0.005):
+    """
+    Wait for a background loop to reach a state, then return.
+
+    A fixed sleep asserts on whatever the scheduler happened to do in that
+    window; this asserts on the condition and gives up loudly.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if ready():
+            return
+        await asyncio.sleep(step)
+    raise AssertionError(f"condition not reached within {timeout}s")
+
+
 # ConnectionState Tests
 
 
@@ -760,7 +776,13 @@ class TestErrorHandling:
         manager = ConnectionManager(mock_agent, fast_config)
         await manager.start()
 
-        await asyncio.sleep(0.05)
+        # Wait for the state the failing heartbeat causes, rather than sleeping
+        # a fixed 50ms and hoping the health-check loop has run twice by then.
+        # That race failed about two runs in three on this machine.
+        await until(
+            lambda: manager.state
+            in (ConnectionState.DEGRADED, ConnectionState.RECONNECTING)
+        )
 
         assert manager.state in (ConnectionState.DEGRADED, ConnectionState.RECONNECTING)
 

@@ -112,7 +112,7 @@ func TestRegisterNode(t *testing.T) {
 			name: "successful registration",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, "/api/v1/nodes", r.URL.Path)
+				assert.Equal(t, "/v1/nodes", r.URL.Path)
 				assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 				assert.Equal(t, "application/json", r.Header.Get("Accept"))
 
@@ -147,12 +147,12 @@ func TestRegisterNode(t *testing.T) {
 		{
 			name: "fallback to legacy endpoint on 404",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path == "/api/v1/nodes" {
+				if r.URL.Path == "/v1/nodes" {
 					w.WriteHeader(http.StatusNotFound)
 					return
 				}
 				// Legacy endpoint
-				assert.Equal(t, "/api/v1/nodes/register", r.URL.Path)
+				assert.Equal(t, "/v1/nodes/register", r.URL.Path)
 				resp := types.NodeRegistrationResponse{Success: true}
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(resp)
@@ -230,7 +230,7 @@ func TestUpdateStatus(t *testing.T) {
 			name: "successful status update",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, http.MethodPatch, r.Method)
-				assert.Contains(t, r.URL.Path, "/api/v1/nodes/node-1/status")
+				assert.Contains(t, r.URL.Path, "/v1/nodes/node-1/status")
 
 				resp := types.LeaseResponse{
 					LeaseSeconds:     120,
@@ -303,7 +303,7 @@ func TestUpdateStatus(t *testing.T) {
 func TestAcknowledgeAction(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
-		assert.Contains(t, r.URL.Path, "/api/v1/nodes/node-1/actions/ack")
+		assert.Contains(t, r.URL.Path, "/v1/nodes/node-1/actions/ack")
 
 		var payload types.ActionAckRequest
 		err := json.NewDecoder(r.Body).Decode(&payload)
@@ -337,7 +337,7 @@ func TestAcknowledgeAction(t *testing.T) {
 func TestShutdown(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
-		assert.Contains(t, r.URL.Path, "/api/v1/nodes/node-1/shutdown")
+		assert.Contains(t, r.URL.Path, "/v1/nodes/node-1/shutdown")
 
 		var payload types.ShutdownRequest
 		err := json.NewDecoder(r.Body).Decode(&payload)
@@ -537,20 +537,20 @@ func TestDo_URLConstruction(t *testing.T) {
 		{
 			name:     "simple base URL",
 			baseURL:  "https://api.example.com",
-			endpoint: "/api/v1/test",
-			wantPath: "/api/v1/test",
+			endpoint: "/v1/test",
+			wantPath: "/v1/test",
 		},
 		{
 			name:     "base URL with path",
 			baseURL:  "https://api.example.com/v1",
-			endpoint: "/api/v1/test",
-			wantPath: "/v1/api/v1/test",
+			endpoint: "/v1/test",
+			wantPath: "/v1/v1/test",
 		},
 		{
 			name:     "endpoint without leading slash",
 			baseURL:  "https://api.example.com",
-			endpoint: "api/v1/test",
-			wantPath: "/api/v1/test",
+			endpoint: "v1/test",
+			wantPath: "/v1/test",
 		},
 	}
 

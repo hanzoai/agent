@@ -906,7 +906,7 @@ func (a *Agent) sendExecutionStatus(executionID string, payload map[string]any) 
 	if executionID == "" || base == "" {
 		return fmt.Errorf("missing execution id or HanzoAgents URL")
 	}
-	callbackURL := strings.TrimSuffix(base, "/") + "/api/v1/executions/" + url.PathEscape(executionID) + "/status"
+	callbackURL := strings.TrimSuffix(base, "/") + "/v1/executions/" + url.PathEscape(executionID) + "/status"
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode status payload: %w", err)
@@ -967,7 +967,7 @@ func (a *Agent) Call(ctx context.Context, target string, input map[string]any) (
 		return nil, fmt.Errorf("marshal call payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/execute/%s", strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/"), strings.TrimPrefix(target, "/"))
+	url := fmt.Sprintf("%s/v1/execute/%s", strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/"), strings.TrimPrefix(target, "/"))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("build request: %w", err)
@@ -1076,7 +1076,7 @@ func (a *Agent) emitWorkflowEvent(
 }
 
 func (a *Agent) sendWorkflowEvent(event types.WorkflowExecutionEvent) error {
-	url := strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/") + "/api/v1/workflow/executions/events"
+	url := strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/") + "/v1/workflow/executions/events"
 
 	body, err := json.Marshal(event)
 	if err != nil {

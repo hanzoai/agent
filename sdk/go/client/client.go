@@ -80,10 +80,10 @@ func (c *Client) RegisterNode(ctx context.Context, payload types.NodeRegistratio
 	payload.RegisteredAt = payload.RegisteredAt.UTC()
 
 	var resp types.NodeRegistrationResponse
-	if err := c.do(ctx, http.MethodPost, "/api/v1/nodes", payload, &resp); err != nil {
+	if err := c.do(ctx, http.MethodPost, "/v1/nodes", payload, &resp); err != nil {
 		if apiErr, ok := err.(*APIError); ok && apiErr.StatusCode == http.StatusNotFound {
 			// Fallback to legacy registration endpoint for older servers.
-			if fallbackErr := c.do(ctx, http.MethodPost, "/api/v1/nodes/register", payload, &resp); fallbackErr != nil {
+			if fallbackErr := c.do(ctx, http.MethodPost, "/v1/nodes/register", payload, &resp); fallbackErr != nil {
 				return nil, fallbackErr
 			}
 			return &resp, nil
@@ -96,7 +96,7 @@ func (c *Client) RegisterNode(ctx context.Context, payload types.NodeRegistratio
 // UpdateStatus renews the node lease and optionally reports lifecycle changes.
 func (c *Client) UpdateStatus(ctx context.Context, nodeID string, payload types.NodeStatusUpdate) (*types.LeaseResponse, error) {
 	var resp types.LeaseResponse
-	route := fmt.Sprintf("/api/v1/nodes/%s/status", url.PathEscape(nodeID))
+	route := fmt.Sprintf("/v1/nodes/%s/status", url.PathEscape(nodeID))
 	if err := c.do(ctx, http.MethodPatch, route, payload, &resp); err != nil {
 		if apiErr, ok := err.(*APIError); ok && apiErr.StatusCode == http.StatusNotFound {
 			return c.legacyHeartbeat(ctx, nodeID, payload)
@@ -109,7 +109,7 @@ func (c *Client) UpdateStatus(ctx context.Context, nodeID string, payload types.
 // AcknowledgeAction notifies the control plane that a pushed action completed.
 func (c *Client) AcknowledgeAction(ctx context.Context, nodeID string, payload types.ActionAckRequest) (*types.LeaseResponse, error) {
 	var resp types.LeaseResponse
-	route := fmt.Sprintf("/api/v1/nodes/%s/actions/ack", url.PathEscape(nodeID))
+	route := fmt.Sprintf("/v1/nodes/%s/actions/ack", url.PathEscape(nodeID))
 	if err := c.do(ctx, http.MethodPost, route, payload, &resp); err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (c *Client) AcknowledgeAction(ctx context.Context, nodeID string, payload t
 // Shutdown informs the control plane that the node is shutting down gracefully.
 func (c *Client) Shutdown(ctx context.Context, nodeID string, payload types.ShutdownRequest) (*types.LeaseResponse, error) {
 	var resp types.LeaseResponse
-	route := fmt.Sprintf("/api/v1/nodes/%s/shutdown", url.PathEscape(nodeID))
+	route := fmt.Sprintf("/v1/nodes/%s/shutdown", url.PathEscape(nodeID))
 	if err := c.do(ctx, http.MethodPost, route, payload, &resp); err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (c *Client) do(ctx context.Context, method string, endpoint string, body an
 }
 
 func (c *Client) legacyHeartbeat(ctx context.Context, nodeID string, payload types.NodeStatusUpdate) (*types.LeaseResponse, error) {
-	route := fmt.Sprintf("/api/v1/nodes/%s/heartbeat", url.PathEscape(nodeID))
+	route := fmt.Sprintf("/v1/nodes/%s/heartbeat", url.PathEscape(nodeID))
 	if err := c.do(ctx, http.MethodPost, route, payload, nil); err != nil {
 		return nil, err
 	}

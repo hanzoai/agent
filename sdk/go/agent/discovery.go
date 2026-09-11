@@ -197,7 +197,7 @@ func (a *Agent) Discover(ctx context.Context, opts ...DiscoveryOption) (*types.D
 	}
 	params.Set("format", options.format)
 
-	endpoint := strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/") + "/api/v1/discovery/capabilities"
+	endpoint := strings.TrimSuffix(a.cfg.HanzoAgentsURL, "/") + "/v1/discovery/capabilities"
 	requestURL := endpoint
 	if encoded := params.Encode(); encoded != "" {
 		requestURL += "?" + encoded

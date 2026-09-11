@@ -136,7 +136,7 @@ export class DidClient {
       skills: request.skills
     };
 
-    const res = await this.http.post('/api/v1/did/register', payload, {
+    const res = await this.http.post('/v1/did/register', payload, {
       headers: this.mergeHeaders()
     });
 
@@ -211,7 +211,7 @@ export class DidClient {
       duration_ms: params.durationMs ?? 0
     };
 
-    const res = await this.http.post('/api/v1/execution/vc', payload, {
+    const res = await this.http.post('/v1/execution/vc', payload, {
       headers: this.mergeHeaders(params.headers)
     });
 
@@ -219,7 +219,7 @@ export class DidClient {
   }
 
   async exportAuditTrail(filters: AuditTrailFilters = {}): Promise<AuditTrailExport> {
-    const res = await this.http.get('/api/v1/did/export/vcs', {
+    const res = await this.http.get('/v1/did/export/vcs', {
       params: this.cleanFilters(filters),
       headers: this.mergeHeaders()
     });

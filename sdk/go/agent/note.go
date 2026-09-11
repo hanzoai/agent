@@ -61,13 +61,12 @@ func (a *Agent) sendNote(ctx context.Context, message string, tags []string) {
 	// Get execution context from the provided context
 	execCtx := ExecutionContextFrom(ctx)
 
-	// Build UI API URL (notes go to /api/ui/v1, not /api/v1)
-	uiAPIURL := strings.Replace(baseURL, "/api/v1", "/api/ui/v1", 1)
-	if !strings.Contains(uiAPIURL, "/api/ui/v1") {
-		// If no /api/v1 was found, append /api/ui/v1
-		uiAPIURL = strings.TrimSuffix(baseURL, "/") + "/api/ui/v1"
-	}
-	noteURL := uiAPIURL + "/executions/note"
+	// Notes go to a /ui subtree of the version prefix, which is the address
+	// the Python and TypeScript SDKs also send them to. A caller may hand over
+	// the server root or a base that already carries a version, so one
+	// trailing version segment comes off before this appends its own.
+	root := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(baseURL, "/"), "/v1"), "/api")
+	noteURL := root + "/v1/ui/executions/note"
 
 	// Build payload
 	payload := notePayload{

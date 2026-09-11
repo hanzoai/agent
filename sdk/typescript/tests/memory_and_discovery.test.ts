@@ -45,7 +45,7 @@ describe('MemoryClient vector operations', () => {
     );
 
     expect(post).toHaveBeenCalledWith(
-      '/api/v1/memory/vector/set',
+      '/v1/memory/vector/set',
       {
         key: 'chunk_1',
         embedding: [0.1, 0.2],
@@ -75,7 +75,7 @@ describe('MemoryClient vector operations', () => {
     });
 
     expect(http.post).toHaveBeenCalledWith(
-      '/api/v1/memory/vector/search',
+      '/v1/memory/vector/search',
       {
         query_embedding: [0.5, 0.2],
         top_k: 5,
@@ -104,7 +104,7 @@ describe('MemoryClient vector operations', () => {
     });
 
     expect(post).toHaveBeenCalledWith(
-      '/api/v1/memory/vector/delete',
+      '/v1/memory/vector/delete',
       {
         key: 'chunk_2',
         scope: 'session'
@@ -126,7 +126,7 @@ describe('MemoryClient vector operations', () => {
     await client.delete('foo', { scope: 'session', scopeId: 's1', metadata: { sessionId: 's1' } });
 
     expect(post).toHaveBeenCalledWith(
-      '/api/v1/memory/delete',
+      '/v1/memory/delete',
       { key: 'foo', scope: 'session' },
       expect.objectContaining({
         headers: expect.objectContaining({
@@ -147,7 +147,7 @@ describe('MemoryClient vector operations', () => {
     });
 
     expect(http.get).toHaveBeenCalledWith(
-      '/api/v1/memory/list',
+      '/v1/memory/list',
       expect.objectContaining({
         params: { scope: 'workflow' },
         headers: expect.objectContaining({
@@ -214,7 +214,7 @@ describe('HanzoAgentsClient discovery', () => {
     });
 
     expect(http.get).toHaveBeenCalledWith(
-      '/api/v1/discovery/capabilities',
+      '/v1/discovery/capabilities',
       expect.objectContaining({
         params: expect.objectContaining({
           agent: 'agent-1',

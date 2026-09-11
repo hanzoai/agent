@@ -199,7 +199,7 @@ func TestRegisterReasoner_NilHandler(t *testing.T) {
 
 func TestInitialize(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v1/nodes" {
+		if r.URL.Path == "/v1/nodes" {
 			var req types.NodeRegistrationRequest
 			json.NewDecoder(r.Body).Decode(&req)
 			assert.Equal(t, "node-1", req.ID)

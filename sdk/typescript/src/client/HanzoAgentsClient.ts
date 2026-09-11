@@ -41,13 +41,13 @@ this.http = axios.create({
   }
 
   async register(payload: any) {
-    await this.http.post('/api/v1/nodes/register', payload, { headers: this.mergeHeaders() });
+    await this.http.post('/v1/nodes/register', payload, { headers: this.mergeHeaders() });
   }
 
   async heartbeat(status: 'starting' | 'ready' | 'degraded' | 'offline' = 'ready'): Promise<HealthStatus> {
     const nodeId = this.config.nodeId;
     const res = await this.http.post(
-      `/api/v1/nodes/${nodeId}/heartbeat`,
+      `/v1/nodes/${nodeId}/heartbeat`,
       {
         status,
         timestamp: new Date().toISOString()
@@ -84,7 +84,7 @@ this.http = axios.create({
     if (metadata?.agentNodeId) headers['X-Agent-Node-ID'] = metadata.agentNodeId;
 
     const res = await this.http.post(
-      `/api/v1/execute/${target}`,
+      `/v1/execute/${target}`,
       {
         input
       },
@@ -124,7 +124,7 @@ this.http = axios.create({
     };
 
     const request = this.http
-      .post('/api/v1/workflow/executions/events', payload, {
+      .post('/v1/workflow/executions/events', payload, {
         headers: this.mergeHeaders(),
         timeout: this.config.devMode ? 1000 : undefined
       })
@@ -149,7 +149,7 @@ this.http = axios.create({
       progress: update.progress !== undefined ? Math.round(update.progress) : undefined
     };
 
-    await this.http.post(`/api/v1/executions/${executionId}/status`, payload, { headers: this.mergeHeaders() });
+    await this.http.post(`/v1/executions/${executionId}/status`, payload, { headers: this.mergeHeaders() });
   }
 
   async discoverCapabilities(options: DiscoveryOptions = {}): Promise<DiscoveryResult> {
@@ -191,7 +191,7 @@ this.http = axios.create({
     if (options.limit !== undefined) params.limit = String(options.limit);
     if (options.offset !== undefined) params.offset = String(options.offset);
 
-    const res = await this.http.get('/api/v1/discovery/capabilities', {
+    const res = await this.http.get('/v1/discovery/capabilities', {
       params,
       headers: this.mergeHeaders({
         ...(options.headers ?? {}),

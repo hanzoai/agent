@@ -12,7 +12,7 @@ import (
 )
 
 // ControlPlaneMemoryBackend implements MemoryBackend by delegating to the HanzoAgents control plane
-// distributed memory endpoints under `/api/v1/memory/*`.
+// distributed memory endpoints under `/v1/memory/*`.
 //
 // It preserves the SDK Memory API surface while making storage distributed and scope-aware.
 type ControlPlaneMemoryBackend struct {
@@ -46,7 +46,7 @@ type memoryAPIResponse struct {
 }
 
 func (b *ControlPlaneMemoryBackend) Set(scope MemoryScope, scopeID, key string, value any) error {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/set")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/set")
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (b *ControlPlaneMemoryBackend) Set(scope MemoryScope, scopeID, key string, 
 }
 
 func (b *ControlPlaneMemoryBackend) Get(scope MemoryScope, scopeID, key string) (any, bool, error) {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/get")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/get")
 	if err != nil {
 		return nil, false, err
 	}
@@ -113,7 +113,7 @@ func (b *ControlPlaneMemoryBackend) Get(scope MemoryScope, scopeID, key string) 
 }
 
 func (b *ControlPlaneMemoryBackend) Delete(scope MemoryScope, scopeID, key string) error {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/delete")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/delete")
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (b *ControlPlaneMemoryBackend) Delete(scope MemoryScope, scopeID, key strin
 }
 
 func (b *ControlPlaneMemoryBackend) List(scope MemoryScope, scopeID string) ([]string, error) {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/list")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/list")
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (b *ControlPlaneMemoryBackend) List(scope MemoryScope, scopeID string) ([]s
 }
 
 func (b *ControlPlaneMemoryBackend) SetVector(scope MemoryScope, scopeID, key string, embedding []float64, metadata map[string]any) error {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/vector")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector/set")
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (b *ControlPlaneMemoryBackend) SetVector(scope MemoryScope, scopeID, key st
 }
 
 func (b *ControlPlaneMemoryBackend) GetVector(scope MemoryScope, scopeID, key string) ([]float64, map[string]any, bool, error) {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/vector", url.PathEscape(key))
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector", url.PathEscape(key))
 	if err != nil {
 		return nil, nil, false, err
 	}
@@ -263,7 +263,7 @@ func (b *ControlPlaneMemoryBackend) GetVector(scope MemoryScope, scopeID, key st
 }
 
 func (b *ControlPlaneMemoryBackend) SearchVector(scope MemoryScope, scopeID string, embedding []float64, opts SearchOptions) ([]VectorSearchResult, error) {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/vector/search")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector/search")
 	if err != nil {
 		return nil, err
 	}
@@ -327,12 +327,19 @@ func (b *ControlPlaneMemoryBackend) SearchVector(scope MemoryScope, scopeID stri
 }
 
 func (b *ControlPlaneMemoryBackend) DeleteVector(scope MemoryScope, scopeID, key string) error {
-	endpoint, err := url.JoinPath(b.baseURL, "/api/v1/memory/vector", url.PathEscape(key))
+	// The address and the shape the Python and TypeScript SDKs both send:
+	// POST, with the key in the body. This was alone in deleting a vector by a
+	// keyed DELETE, which no server serving the other two would answer.
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector/delete")
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, endpoint+"?scope="+url.QueryEscape(b.apiScope(scope)), nil)
+	body := map[string]any{
+		"key":   key,
+		"scope": b.apiScope(scope),
+	}
+	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
 	if err != nil {
 		return err
 	}

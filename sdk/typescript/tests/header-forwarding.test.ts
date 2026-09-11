@@ -41,7 +41,7 @@ describe('header forwarding', () => {
     await client.execute('test-target', { foo: 'bar' }, { runId: 'run-123' });
 
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      '/api/v1/execute/test-target',
+      '/v1/execute/test-target',
       { input: { foo: 'bar' } },
       {
         headers: {
@@ -72,7 +72,7 @@ describe('header forwarding', () => {
 
     await client.discoverCapabilities({ headers: { 'X-Tenant-ID': 'tenant-a' } });
 
-    expect(axiosInstance.get).toHaveBeenCalledWith('/api/v1/discovery/capabilities', {
+    expect(axiosInstance.get).toHaveBeenCalledWith('/v1/discovery/capabilities', {
       params: { format: 'json' },
       headers: {
         Authorization: 'Bearer tenant-token',
@@ -94,7 +94,7 @@ describe('header forwarding', () => {
     await memoryClient.set('key', { data: true }, { metadata: { workflowId: 'wf-1' } });
 
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      '/api/v1/memory/set',
+      '/v1/memory/set',
       { key: 'key', data: { data: true } },
       {
         headers: {

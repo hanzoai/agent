@@ -14,7 +14,7 @@ export class MemoryEventClient {
   private readonly headers: Record<string, string>;
 
   constructor(baseUrl: string, headers?: Record<string, string | number | boolean | undefined>) {
-    this.url = `${baseUrl.replace(/^http/, 'ws')}/api/v1/memory/events/ws`;
+    this.url = `${baseUrl.replace(/^http/, 'ws')}/v1/memory/events/ws`;
     this.headers = this.buildForwardHeaders(headers ?? {});
   }
 
