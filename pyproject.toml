@@ -10,14 +10,20 @@ authors = [
 ]
 dependencies = [
     "openai>=1.66.2",
+    # imported directly (tracing/processors.py, models/openai_provider.py); openai 3
+    # replaced its httpx dependency with httpx2, so it no longer arrives transitively
+    "httpx>=0.23.0, <1",
     # pydantic 2.10 first ships cp313t wheels via pydantic-core 2.27
     "pydantic>=2.10, <3",
     "griffe>=1.5.6, <2",
     "typing-extensions>=4.12.2, <5",
     "requests>=2.0, <3",
     "types-requests>=2.0, <3",
-    # numpy 2.1+ is first cp313t line — numpy 1.x has no free-threaded wheels
-    "numpy>=2.1.0",
+    # numpy 2.1+ is first cp313t line — numpy 1.x has no free-threaded wheels.
+    # 2.1 also dropped 3.9, whose newest numpy is 2.0.2, and requires-python
+    # still admits 3.9, so the floor is set per interpreter.
+    "numpy>=1.26; python_version < '3.10'",
+    "numpy>=2.1.0; python_version >= '3.10'",
 ]
 classifiers = [
     "Typing :: Typed",
@@ -40,9 +46,14 @@ Repository = "https://github.com/hanzoai/agent"
 [project.optional-dependencies]
 # Web3 integration - wallet, transactions, on-chain identity
 web3 = [
-    "web3>=6.0.0,<7",
+    # 6.20.2 is the first 6.x that caps eth-typing below 5. Below it, a resolver can
+    # pair web3 6.11 with eth-typing 5, which web3 6 cannot import (seen on 3.9)
+    "web3>=6.20.2,<7",
     "eth-account>=0.10.0,<1",
     "eth-utils>=2.0.0,<5",
+    # pydantic evaluates the `str | None` field in extensions/web3/mpc_client.py,
+    # and on 3.9 it can only do that with this backport installed
+    "eval-type-backport>=0.2.0; python_version < '3.10'",
 ]
 
 # TEE support - Intel SGX, AMD SEV, NVIDIA H100 attestation

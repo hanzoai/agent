@@ -6,8 +6,6 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-
 from .types import MemoryEntry, MemoryType
 from ..logger import logger
 
@@ -162,6 +160,9 @@ class InMemoryMemoryStore(MemoryStore):
         if not embedding:
             return []
             
+        # Imported here, as retriever.py does, so `import agents` does not need numpy.
+        import numpy as np
+
         results = []
         query_vec = np.array(embedding)
         
