@@ -12,6 +12,9 @@ from .testing_processor import SPAN_PROCESSOR_TESTING
 
 # Top-level compatibility shims applied before tests import modules
 try:
+    # The Responses resource subclasses the classes replaced below when it is first imported, so
+    # import it while they are still classes.
+    import openai.resources.responses  # noqa: F401
     import openai.types.responses as _resp_mod
 
     OrigWebSearch = getattr(_resp_mod, "ResponseFunctionWebSearch", None)

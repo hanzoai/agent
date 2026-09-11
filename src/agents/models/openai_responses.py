@@ -27,6 +27,7 @@ from ..tool import ComputerTool, FileSearchTool, FunctionTool, Tool, WebSearchTo
 from ..tracing import SpanError, response_span
 from ..usage import Usage
 from ..version import __version__
+from . import _openai_shared
 from .interface import Model, ModelTracing
 
 if TYPE_CHECKING:
@@ -236,7 +237,7 @@ class OpenAIResponsesModel(Model):
                 f"Response format: {response_format}\n"
             )
 
-        return await self._client.responses.create(
+        response = await self._client.responses.create(
             instructions=self._non_null_or_not_given(system_instructions),
             model=self.model,
             input=list_input,
@@ -252,6 +253,9 @@ class OpenAIResponsesModel(Model):
             extra_headers=_HEADERS,
             text=response_format,
         )
+        if not stream:
+            _openai_shared.raise_for_error(response, self._client, "responses")
+        return response
 
     def _get_client(self) -> AsyncOpenAI:
         if self._client is None:

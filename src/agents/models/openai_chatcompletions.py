@@ -68,6 +68,7 @@ from ..tracing.span_data import GenerationSpanData
 from ..tracing.spans import Span
 from ..usage import Usage
 from ..version import __version__
+from . import _openai_shared
 from .fake_id import FAKE_RESPONSES_ID
 from .interface import Model, ModelTracing
 
@@ -563,6 +564,7 @@ class OpenAIChatCompletionsModel(Model):
         )
 
         if isinstance(ret, ChatCompletion):
+            _openai_shared.raise_for_error(ret, self._get_client(), "chat/completions")
             return ret
 
         response = Response(
