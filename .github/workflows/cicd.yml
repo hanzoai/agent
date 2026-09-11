@@ -1,7 +1,8 @@
 # Canonical caller — every knob lives in /hanzo.yml, none here.
-# Runs on the git-runner fleet at git.hanzo.ai, the only pool serving these
-# labels. github.com resolves only .github/workflows and has no runner for
-# them, so a caller placed there is a gate that cannot be scheduled.
+#
+# arm64, because `hanzo-agent` is one `py3-none-any` wheel: nothing this repo
+# publishes is a function of the machine that built it, so it asks for the label
+# this org has capacity on rather than the pipeline's amd64 default.
 name: CI/CD
 on:
   push:
@@ -12,4 +13,6 @@ on:
 jobs:
   cicd:
     uses: hanzoai/ci/.github/workflows/build.yml@v2
+    with:
+      runner: '["linux-arm64"]'
     secrets: inherit
