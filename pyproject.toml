@@ -46,7 +46,9 @@ Repository = "https://github.com/hanzoai/agent"
 [project.optional-dependencies]
 # Web3 integration - wallet, transactions, on-chain identity
 web3 = [
-    "web3>=6.0.0,<7",
+    # 6.20.2 is the first 6.x that caps eth-typing below 5. Below it, a resolver can
+    # pair web3 6.11 with eth-typing 5, which web3 6 cannot import (seen on 3.9)
+    "web3>=6.20.2,<7",
     "eth-account>=0.10.0,<1",
     "eth-utils>=2.0.0,<5",
     # pydantic evaluates the `str | None` field in extensions/web3/mpc_client.py,

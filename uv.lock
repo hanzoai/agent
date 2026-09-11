@@ -1690,7 +1690,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'cli'", specifier = ">=13.0.0,<14" },
     { name = "types-requests", specifier = ">=2.0,<3" },
     { name = "typing-extensions", specifier = ">=4.12.2,<5" },
-    { name = "web3", marker = "extra == 'web3'", specifier = ">=6.0.0,<7" },
+    { name = "web3", marker = "extra == 'web3'", specifier = ">=6.20.2,<7" },
 ]
 provides-extras = ["web3", "tee", "marketplace", "cli", "zap", "full"]
 
