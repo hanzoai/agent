@@ -78,3 +78,29 @@ jobs:
       # unhealthy the moment it starts.
       - name: the package imports
         run: uv run --no-sync python -c "import agents; print(agents.__name__)"
+
+  # 0.1.0 reached PyPI with no numpy in its METADATA, and the pin that replaced
+  # it, numpy>=2.1.0, cannot install on 3.9, the floor requires-python declares.
+  # Both are facts about the built wheel, which neither job above installs, so
+  # build it and install it the way a user does, at both ends of the classifiers.
+  wheel:
+    runs-on: [linux-amd64]
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - run: uv build --wheel --out-dir dist
+
+      # numpy is imported by name because agents imports it lazily; the check is
+      # that the wheel's METADATA pulled it in.
+      - name: the wheel installs and imports on ${{ matrix.python }}
+        run: |
+          uv venv --python ${{ matrix.python }} /tmp/wheel
+          uv pip install --python /tmp/wheel dist/*.whl
+          /tmp/wheel/bin/python -c "import agents, numpy; print(agents.__name__, numpy.__version__)"
