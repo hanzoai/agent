@@ -2,7 +2,7 @@
 # (uv) beside it.
 #
 # No `images:`. ghcr.io/hanzoai/agent is built by
-# .hanzo/workflows/deploy.yml from Dockerfile.sdk — the sole producer of that
+# .github/workflows/deploy.yml from Dockerfile.sdk — the sole producer of that
 # image, restored there for exactly that reason. Declaring `images:` here would
 # make it the second.
 #
@@ -14,7 +14,7 @@
 # in LLM.md as work; a gate that is red on arrival for reasons no commit can fix
 # gets read as broken CI rather than as broken code. The Python lane that DOES
 # hold today — `uv sync --frozen` plus an import of the package — already runs
-# natively in .hanzo/workflows/ci.yml.
+# natively in .github/workflows/ci.yml.
 #
 # gofmt is checked by hand because gofmt reports on stdout and exits 0: the file
 # list is the verdict, so an unchecked `gofmt -l` is a gate that cannot fail.

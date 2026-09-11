@@ -9,10 +9,6 @@
 # The SDKs under sdk/ release as one version under `hanzo_agents-v*`: that tag
 # names the hanzo_agents wheel here, release.yml publishes @hanzo/agents from
 # it, and the Go module resolves from an `sdk/go/v*` tag cut beside it.
-#
-# arm64, because `hanzo-agent` is one py3-none-any wheel: nothing this repo
-# publishes is a function of the machine that built it, so it asks for the label
-# this org has capacity on rather than the pipeline's amd64 default.
 name: CI/CD
 on:
   push:
@@ -23,6 +19,4 @@ on:
 jobs:
   cicd:
     uses: hanzoai/ci/.github/workflows/build.yml@v2
-    with:
-      runner: '["linux-arm64"]'
     secrets: inherit
