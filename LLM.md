@@ -113,9 +113,10 @@ debt is written down here instead.
 - `docs.yml` — `make deploy-docs` is `mkdocs gh-deploy`, i.e. GitHub Pages. There
   is no `gh-pages` branch and `hanzoai.github.io/agent` 404s, so it never
   published anything. Pages is not how Hanzo serves sites.
-- `publish.yml` — published this repo's dist to PyPI. `pyproject.toml` is
-  `hanzo-agent 0.0.4`; when it was named `hanzoai` this workflow pointed at the
-  package `hanzoai/python-sdk` owns (now 3.1.1), so a release here could have
-  published a downgrade over it. Removed in "fix(pypi): stop publishing this
-  repo's dist as hanzoai" and deliberately not restored.
+- `publish.yml` — published this repo's dist to PyPI under the name
+  `hanzoai/python-sdk` owns, so a release here could have published a downgrade
+  over it. Removed in "fix(pypi): stop publishing this repo's dist as hanzoai",
+  and not restored: publishing is `pypi: [.]` in `hanzo.yml`, which hanzoai/ci
+  reads. The name comes from the pyproject, so the collision it was removed for
+  cannot come back.
 - `issues.yml` — upstream's stale-issue bot.

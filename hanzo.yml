@@ -1,7 +1,7 @@
 # hanzoai/agent — the agent runtime: a Go module at the root and a Python SDK
 # (uv) beside it.
 #
-# Gate only, no `images:`. ghcr.io/hanzoai/agent is built by
+# No `images:`. ghcr.io/hanzoai/agent is built by
 # .hanzo/workflows/deploy.yml from Dockerfile.sdk — the sole producer of that
 # image, restored there for exactly that reason. Declaring `images:` here would
 # make it the second.
@@ -18,6 +18,13 @@
 #
 # gofmt is checked by hand because gofmt reports on stdout and exits 0: the file
 # list is the verdict, so an unchecked `gofmt -l` is a gate that cannot fail.
+
+# `hanzo-agent` is the root pyproject, and a v* tag publishes it. This repo had
+# no publish lane at all — ci.yml builds a wheel, installs it on 3.9 and 3.12,
+# imports it and throws it away — so 0.1.0 sat on PyPI unimportable while the fix
+# for it sat on main, released to nobody. One line is the whole of the lane.
+pypi: [.]
+
 test:
   - name: gofmt
     run: |
