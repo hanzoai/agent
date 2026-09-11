@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Hanzo AgentsClient execution paths.
+Comprehensive tests for HanzoAgentsClient execution paths.
 """
 
 import asyncio
@@ -15,7 +15,7 @@ from hanzo_agents.execution_context import ExecutionContext
 @pytest.fixture
 def client():
     """Create a test client."""
-    return Hanzo AgentsClient(base_url="http://localhost:8080")
+    return HanzoAgentsClient(base_url="http://localhost:8080")
 
 
 def test_call_sync_execution(client):

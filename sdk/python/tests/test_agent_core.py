@@ -23,7 +23,7 @@ def make_agent_stub():
     )
     agent._async_execution_manager = None
     agent._current_execution_context = None
-    agent.client = SimpleNamespace(api_base="http://hanzo_agents/api/v1")
+    agent.client = SimpleNamespace(api_base="http://hanzo_agents/v1")
     return agent
 
 
@@ -142,6 +142,6 @@ async def test_note_sends_async_request(monkeypatch):
     agent.note("hello", tags=["debug"])
     await asyncio.gather(*tasks)
 
-    assert called["url"].startswith("http://hanzo_agents/api/ui/v1")
+    assert called["url"].startswith("http://hanzo_agents/v1/ui")
     assert called["json"]["message"] == "hello"
     assert called["json"]["tags"] == ["debug"]
