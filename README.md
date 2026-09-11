@@ -18,11 +18,10 @@ pip install hanzo-agent
 
 ```python
 from openai import AsyncOpenAI
-from agents import Agent, Runner, set_default_openai_api, set_default_openai_client, set_tracing_disabled
+from agents import Agent, Runner, set_default_openai_api, set_default_openai_client
 
 set_default_openai_client(AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama"))
 set_default_openai_api("chat_completions")
-set_tracing_disabled(True)
 
 agent = Agent(name="Assistant", instructions="You are a helpful assistant.", model="qwen3:0.6b")
 result = Runner.run_sync(agent, "Write a haiku about recursion in programming.")
@@ -37,7 +36,7 @@ A loop unrolled with grace,
 Ends with a loop.
 ```
 
-The three calls before the agent decide where it runs:
+The two calls before the agent decide where it runs:
 
 - `set_default_openai_client` names the endpoint and the key. Above it is a
   local server on port 11434, Ollama with `qwen3:0.6b` pulled. For the hosted
@@ -45,7 +44,6 @@ The three calls before the agent decide where it runs:
   and a model id from `https://api.hanzo.ai/v1/models`.
 - `set_default_openai_api("chat_completions")` sends `POST /v1/chat/completions`.
   Without it the SDK sends `POST /v1/responses` instead.
-- `set_tracing_disabled(True)` stops the trace export described under Tracing.
 
 ## Tools
 
@@ -80,11 +78,20 @@ object rather than `choices` ends the run with `TypeError`. A
 
 ## Tracing
 
-Tracing is on by default. After each run the SDK posts the trace and its spans
-to `https://api.openai.com/v1/traces/ingest`, authenticated with the default
-client's key. Any other key is refused there, and the run logs
-`Tracing client error 401: ...`. Turn it off with `set_tracing_disabled(True)`
-or `OPENAI_AGENTS_DISABLE_TRACING=1`.
+Runs create traces and spans and send them nowhere. To export them, add a
+processor:
+
+```python
+from agents import add_trace_processor
+from agents.tracing.processors import BackendSpanExporter, BatchTraceProcessor
+
+exporter = BackendSpanExporter(endpoint="https://collector.example/ingest", api_key="...")
+add_trace_processor(BatchTraceProcessor(exporter))
+```
+
+The exporter posts batches of JSON to that endpoint with the key as a bearer
+token. `set_tracing_disabled(True)` or `OPENAI_AGENTS_DISABLE_TRACING=1` stops
+creating them.
 
 ## Extras
 

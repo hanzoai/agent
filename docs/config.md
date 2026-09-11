@@ -2,7 +2,7 @@
 
 ## API keys and clients
 
-By default, the SDK looks for the `OPENAI_API_KEY` environment variable for LLM requests and tracing, as soon as it is imported. If you are unable to set that environment variable before your app starts, you can use the [set_default_openai_key()][agents.set_default_openai_key] function to set the key.
+By default, the SDK looks for the `OPENAI_API_KEY` environment variable for LLM requests, as soon as it is imported. If you are unable to set that environment variable before your app starts, you can use the [set_default_openai_key()][agents.set_default_openai_key] function to set the key.
 
 ```python
 from agents import set_default_openai_key
@@ -30,15 +30,9 @@ set_default_openai_api("chat_completions")
 
 ## Tracing
 
-Tracing is enabled by default. It uses the Hanzo AI API keys from the section above by default (i.e. the environment variable or the default key you set). You can specifically set the API key used for tracing by using the [`set_tracing_export_api_key`][agents.set_tracing_export_api_key] function.
+Tracing creates traces and spans and sends them nowhere until you add a processor that does; see [custom tracing processors](tracing.md#custom-tracing-processors).
 
-```python
-from agents import set_tracing_export_api_key
-
-set_tracing_export_api_key("sk-...")
-```
-
-You can also disable tracing entirely by using the [`set_tracing_disabled()`][agents.set_tracing_disabled] function.
+You can disable tracing entirely by using the [`set_tracing_disabled()`][agents.set_tracing_disabled] function.
 
 ```python
 from agents import set_tracing_disabled

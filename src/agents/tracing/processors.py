@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import queue
 import random
 import threading
@@ -29,31 +28,22 @@ class ConsoleSpanExporter(TracingExporter):
 class BackendSpanExporter(TracingExporter):
     def __init__(
         self,
+        endpoint: str,
         api_key: str | None = None,
-        organization: str | None = None,
-        project: str | None = None,
-        endpoint: str = "https://api.openai.com/v1/traces/ingest",
         max_retries: int = 3,
         base_delay: float = 1.0,
         max_delay: float = 30.0,
     ):
         """
         Args:
-            api_key: The API key for the "Authorization" header. Defaults to
-                `os.environ["OPENAI_API_KEY"]` if not provided.
-            organization: The OpenAI organization to use. Defaults to
-                `os.environ["OPENAI_ORG_ID"]` if not provided.
-            project: The OpenAI project to use. Defaults to
-                `os.environ["OPENAI_PROJECT_ID"]` if not provided.
             endpoint: The HTTP endpoint to which traces/spans are posted.
+            api_key: The API key for the "Authorization" header.
             max_retries: Maximum number of retries upon failures.
             base_delay: Base delay (in seconds) for the first backoff.
             max_delay: Maximum delay (in seconds) for backoff growth.
         """
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        self.organization = organization or os.environ.get("OPENAI_ORG_ID")
-        self.project = project or os.environ.get("OPENAI_PROJECT_ID")
         self.endpoint = endpoint
+        self.api_key = api_key
         self.max_retries = max_retries
         self.base_delay = base_delay
         self.max_delay = max_delay
@@ -61,21 +51,12 @@ class BackendSpanExporter(TracingExporter):
         # Keep a client open for connection pooling across multiple export calls
         self._client = httpx.Client(timeout=httpx.Timeout(timeout=60, connect=5.0))
 
-    def set_api_key(self, api_key: str):
-        """Set the OpenAI API key for the exporter.
-
-        Args:
-            api_key: The OpenAI API key to use. This is the same key used by the OpenAI Python
-                client.
-        """
-        self.api_key = api_key
-
     def export(self, items: list[Trace | Span[Any]]) -> None:
         if not items:
             return
 
         if not self.api_key:
-            logger.warning("OPENAI_API_KEY is not set, skipping trace export")
+            logger.warning("No API key set, skipping trace export")
             return
 
         data = [item.export() for item in items if item.export()]
@@ -84,7 +65,6 @@ class BackendSpanExporter(TracingExporter):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "OpenAI-Beta": "traces=v1",
         }
 
         # Exponential backoff loop
@@ -241,18 +221,3 @@ class BatchTraceProcessor(TracingProcessor):
 
             # Export the batch
             self._exporter.export(items_to_export)
-
-
-# Create a shared global instance:
-_global_exporter = BackendSpanExporter()
-_global_processor = BatchTraceProcessor(_global_exporter)
-
-
-def default_exporter() -> BackendSpanExporter:
-    """The default exporter, which exports traces and spans to the backend in batches."""
-    return _global_exporter
-
-
-def default_processor() -> BatchTraceProcessor:
-    """The default processor, which exports traces and spans to the backend in batches."""
-    return _global_processor

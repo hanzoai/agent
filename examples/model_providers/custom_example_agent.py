@@ -18,10 +18,6 @@ if not BASE_URL or not API_KEY or not MODEL_NAME:
 1. Create a custom Hanzo AI client.
 2. Create a `Model` that uses the custom client.
 3. Set the `model` on the Agent.
-
-Note that in this example, we disable tracing under the assumption that you don't have an API key
-from platform.openai.com. If you do have one, you can either set the `OPENAI_API_KEY` env var
-or call set_tracing_export_api_key() to set a tracing specific key.
 """
 client = AsyncHanzo AI(base_url=BASE_URL, api_key=API_KEY)
 set_tracing_disabled(disabled=True)

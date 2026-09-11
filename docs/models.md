@@ -59,21 +59,11 @@ You can use other LLM providers in 3 ways (examples [here](https://github.com/op
 2. [`ModelProvider`][agents.models.interface.ModelProvider] is at the `Runner.run` level. This lets you say "use a custom model provider for all agents in this run". See a configurable example in [examples/model_providers/custom_example_provider.py](https://github.com/openai/openai-agents-python/tree/main/examples/model_providers/custom_example_provider.py).
 3. [`Agent.model`][agents.agent.Agent.model] lets you specify the model on a specific Agent instance. This enables you to mix and match different providers for different agents. See a configurable example in [examples/model_providers/custom_example_agent.py](https://github.com/openai/openai-agents-python/tree/main/examples/model_providers/custom_example_agent.py).
 
-In cases where you do not have an API key from `platform.openai.com`, we recommend disabling tracing via `set_tracing_disabled()`, or setting up a [different tracing processor](tracing.md).
-
 !!! note
 
     In these examples, we use the Chat Completions API/model, because most LLM providers don't yet support the Responses API. If your LLM provider does support it, we recommend using Responses.
 
 ## Common issues with using other LLM providers
-
-### Tracing client error 401
-
-If you get errors related to tracing, this is because traces are uploaded to Hanzo AI servers, and you don't have an Hanzo AI API key. You have three options to resolve this:
-
-1. Disable tracing entirely: [`set_tracing_disabled(True)`][agents.set_tracing_disabled].
-2. Set an Hanzo AI key for tracing: [`set_tracing_export_api_key(...)`][agents.set_tracing_export_api_key]. This API key will only be used for uploading traces, and must be from [platform.openai.com](https://platform.openai.com/).
-3. Use a non-Hanzo AI trace processor. See the [tracing docs](tracing.md#custom-tracing-processors).
 
 ### Responses API support
 

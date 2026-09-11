@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 import time
 from unittest.mock import MagicMock, patch
 
@@ -10,6 +12,8 @@ from agents.tracing.processors import BackendSpanExporter, BatchTraceProcessor
 from agents.tracing.span_data import AgentSpanData
 from agents.tracing.spans import SpanImpl
 from agents.tracing.traces import TraceImpl
+
+from .server import Server
 
 
 def get_span(processor: TracingProcessor) -> SpanImpl[AgentSpanData]:
@@ -185,9 +189,12 @@ def mock_processor():
     return processor
 
 
+ENDPOINT = "https://collector.example/ingest"
+
+
 @patch("httpx.Client")
 def test_backend_span_exporter_no_items(mock_client):
-    exporter = BackendSpanExporter(api_key="test_key")
+    exporter = BackendSpanExporter(ENDPOINT, api_key="test_key")
     exporter.export([])
     # No calls should be made if there are no items
     mock_client.return_value.post.assert_not_called()
@@ -196,15 +203,12 @@ def test_backend_span_exporter_no_items(mock_client):
 
 @patch("httpx.Client")
 def test_backend_span_exporter_no_api_key(mock_client):
-    # Ensure that os.environ is empty (sometimes devs have the openai api key set in their env)
+    exporter = BackendSpanExporter(ENDPOINT)
+    exporter.export([get_span(mock_processor())])
 
-    with patch.dict(os.environ, {}, clear=True):
-        exporter = BackendSpanExporter(api_key=None)
-        exporter.export([get_span(mock_processor())])
-
-        # Should log an error and return without calling post
-        mock_client.return_value.post.assert_not_called()
-        exporter.close()
+    # Should log an error and return without calling post
+    mock_client.return_value.post.assert_not_called()
+    exporter.close()
 
 
 @patch("httpx.Client")
@@ -213,11 +217,12 @@ def test_backend_span_exporter_2xx_success(mock_client):
     mock_response.status_code = 200
     mock_client.return_value.post.return_value = mock_response
 
-    exporter = BackendSpanExporter(api_key="test_key")
+    exporter = BackendSpanExporter(ENDPOINT, api_key="test_key")
     exporter.export([get_span(mock_processor()), get_trace(mock_processor())])
 
-    # Should have called post exactly once
+    # Should have called post exactly once, to the endpoint it was given
     mock_client.return_value.post.assert_called_once()
+    assert mock_client.return_value.post.call_args.kwargs["url"] == ENDPOINT
     exporter.close()
 
 
@@ -228,7 +233,7 @@ def test_backend_span_exporter_4xx_client_error(mock_client):
     mock_response.text = "Bad Request"
     mock_client.return_value.post.return_value = mock_response
 
-    exporter = BackendSpanExporter(api_key="test_key")
+    exporter = BackendSpanExporter(ENDPOINT, api_key="test_key")
     exporter.export([get_span(mock_processor())])
 
     # 4xx should not be retried
@@ -244,7 +249,9 @@ def test_backend_span_exporter_5xx_retry(mock_client, patched_time_sleep):
     # Make post() return 500 every time
     mock_client.return_value.post.return_value = mock_response
 
-    exporter = BackendSpanExporter(api_key="test_key", max_retries=3, base_delay=0.1, max_delay=0.2)
+    exporter = BackendSpanExporter(
+        ENDPOINT, api_key="test_key", max_retries=3, base_delay=0.1, max_delay=0.2
+    )
     exporter.export([get_span(mock_processor())])
 
     # Should retry up to max_retries times
@@ -258,7 +265,9 @@ def test_backend_span_exporter_request_error(mock_client, patched_time_sleep):
     # Make post() raise a RequestError each time
     mock_client.return_value.post.side_effect = httpx.RequestError("Network error")
 
-    exporter = BackendSpanExporter(api_key="test_key", max_retries=2, base_delay=0.1, max_delay=0.2)
+    exporter = BackendSpanExporter(
+        ENDPOINT, api_key="test_key", max_retries=2, base_delay=0.1, max_delay=0.2
+    )
     exporter.export([get_span(mock_processor())])
 
     # Should retry up to max_retries times
@@ -269,8 +278,59 @@ def test_backend_span_exporter_request_error(mock_client, patched_time_sleep):
 
 @patch("httpx.Client")
 def test_backend_span_exporter_close(mock_client):
-    exporter = BackendSpanExporter(api_key="test_key")
+    exporter = BackendSpanExporter(ENDPOINT, api_key="test_key")
     exporter.close()
 
     # Ensure underlying http client is closed
     mock_client.return_value.close.assert_called_once()
+
+
+RESPONSE = {
+    "id": "resp_1",
+    "object": "response",
+    "created_at": 0,
+    "model": "m",
+    "status": "completed",
+    "output": [
+        {
+            "type": "message",
+            "id": "msg_1",
+            "role": "assistant",
+            "status": "completed",
+            "content": [{"type": "output_text", "text": "hi", "annotations": []}],
+        }
+    ],
+    "parallel_tool_calls": False,
+    "tool_choice": "auto",
+    "tools": [],
+}
+
+
+def test_agent_run_with_defaults_sends_no_traces():
+    # A fresh interpreter, so the test processor from conftest does not replace the defaults. The
+    # server is its model endpoint and its HTTP(S) proxy: a request to any other host arrives here
+    # as a CONNECT.
+    with Server({"/v1/responses": RESPONSE}) as server:
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if not k.startswith("OPENAI") and "proxy" not in k.lower()
+        }
+        env.update(
+            OPENAI_API_KEY="sk-test",
+            OPENAI_BASE_URL=f"{server.url}/v1",
+            HTTP_PROXY=server.url,
+            HTTPS_PROXY=server.url,
+            NO_PROXY="127.0.0.1",
+        )
+        code = (
+            "import asyncio\n"
+            "from agents import Agent, Runner\n"
+            "asyncio.run(Runner.run(Agent(name='a', model='m'), 'hi'))"
+        )
+        done = subprocess.run(
+            [sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=60
+        )
+
+    assert done.returncode == 0, done.stderr
+    assert server.requests == [("POST", "/v1/responses")]

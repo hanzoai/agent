@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
 ## View your traces
 
-To review what happened during your agent run, navigate to the [Trace viewer in the Hanzo AI Dashboard](https://platform.openai.com/traces) to view traces of your agent runs.
+Runs create traces and send them nowhere by default. To review what happened during a run, add a processor that exports them; see [custom tracing processors](tracing.md#custom-tracing-processors).
 
 ## Next steps
 
