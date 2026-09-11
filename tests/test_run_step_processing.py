@@ -15,6 +15,7 @@ from agents import (
     Computer,
     ComputerTool,
     Handoff,
+    ItemHelpers,
     ModelBehaviorError,
     ModelResponse,
     ReasoningItem,
@@ -420,3 +421,24 @@ def test_tool_and_handoff_parsed_correctly():
     assert handoff.handoff.tool_name == Handoff.default_tool_name(agent_1)
     assert handoff.handoff.tool_description == Handoff.default_tool_description(agent_1)
     assert handoff.handoff.agent_name == agent_1.name
+
+
+@pytest.mark.parametrize(
+    ("text", "answer"),
+    [
+        ("<think>\nplan the reply\n</think>\n\nHello.", "Hello."),
+        ("\n<think>plan</think>Hello.", "Hello."),
+        ("<think>plan</think>", ""),
+        ("I think so.", "I think so."),
+        ("Wrap it in <think></think> tags.", "Wrap it in <think></think> tags."),
+        ("<thinking>plan</thinking>Hello.", "<thinking>plan</thinking>Hello."),
+        ("<think>never closed", "<think>never closed"),
+    ],
+)
+def test_leading_think_block_is_not_part_of_the_message(text: str, answer: str):
+    response = ModelResponse(output=[get_text_message(text)], usage=Usage(), referenceable_id=None)
+    result = RunImpl.process_model_response(
+        agent=Agent(name="test"), response=response, output_schema=None, handoffs=[]
+    )
+    assert ItemHelpers.text_message_outputs(result.new_items) == answer
+    assert response.output == [get_text_message(text)], "the raw response keeps what was sent"

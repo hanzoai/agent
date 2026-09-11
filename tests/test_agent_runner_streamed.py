@@ -684,3 +684,16 @@ async def test_streaming_events():
     assert len(agent_data) == 2, "should have 2 agent updated events"
     assert agent_data[0].new_agent == agent_2, "should have started with agent_2"
     assert agent_data[1].new_agent == agent_1, "should have handed off to agent_1"
+
+
+@pytest.mark.asyncio
+async def test_leading_think_block_is_not_final_output():
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+    model.set_next_output([get_text_message("<think>\nplan the reply\n</think>\n\nHello.")])
+
+    result = Runner.run_streamed(agent, input="hi")
+    async for _ in result.stream_events():
+        pass
+
+    assert result.final_output == "Hello."

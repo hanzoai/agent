@@ -74,8 +74,9 @@ Model calls go through the `openai` client and follow its rules. A 401, 402 or
 `PermissionDeniedError`). A 429 or 5xx is retried twice and then raises;
 `AsyncOpenAI(..., max_retries=0)` sends it once. A 200 whose body is an error
 object raises `openai.APIError` carrying the server's message, as the client
-does for an error inside a stream. A `<think>…</think>` block left in the reply
-stays in `final_output`.
+does for an error inside a stream. A `<think>…</think>` block at the start of a
+reply is dropped from `final_output` and from the history the next turn sends;
+`result.raw_responses` keeps it.
 
 ## Tracing
 

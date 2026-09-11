@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +11,7 @@ from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseFunctionWebSearch,
     ResponseOutputMessage,
+    ResponseOutputText,
 )
 from openai.types.responses.response_computer_tool_call import (
     ActionClick,
@@ -159,6 +161,21 @@ def get_model_tracing_impl(
         return ModelTracing.ENABLED_WITHOUT_DATA
 
 
+_THINK = re.compile(r"\s*<think>.*?</think>\s*", re.DOTALL)
+
+
+def _without_think(message: ResponseOutputMessage) -> ResponseOutputMessage:
+    """Drops the <think>...</think> block a reasoning model can write before its answer."""
+    first = message.content[0] if message.content else None
+    if not isinstance(first, ResponseOutputText):
+        return message
+    match = _THINK.match(first.text)
+    if not match:
+        return message
+    text = first.model_copy(update={"text": first.text[match.end():]})
+    return message.model_copy(update={"content": [text, *message.content[1:]]})
+
+
 class RunImpl:
     @classmethod
     async def execute_tools_and_side_effects(
@@ -283,7 +300,7 @@ class RunImpl:
 
         for output in response.output:
             if isinstance(output, ResponseOutputMessage):
-                items.append(MessageOutputItem(raw_item=output, agent=agent))
+                items.append(MessageOutputItem(raw_item=_without_think(output), agent=agent))
             elif isinstance(output, ResponseFileSearchToolCall):
                 items.append(ToolCallItem(raw_item=output, agent=agent))
             elif isinstance(output, ResponseFunctionWebSearch):

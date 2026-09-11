@@ -19,6 +19,7 @@ from agents import (
     RunContextWrapper,
     Runner,
     UserError,
+    function_tool,
     handoff,
 )
 
@@ -552,3 +553,56 @@ async def test_output_guardrail_tripwire_triggered_causes_exception():
 
     with pytest.raises(OutputGuardrailTripwireTriggered):
         await Runner.run(agent, input="user_message")
+
+
+@pytest.mark.asyncio
+async def test_leading_think_block_is_not_final_output_or_history():
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+    reply = get_text_message("<think>\nplan the reply\n</think>\n\nHello.")
+    model.set_next_output([reply])
+
+    result = await Runner.run(agent, input="hi")
+
+    assert result.final_output == "Hello."
+    assert "plan the reply" not in json.dumps(result.to_input_list())
+    assert result.raw_responses[0].output == [reply]
+
+
+@pytest.mark.asyncio
+async def test_think_block_stays_out_of_tool_calls():
+    @function_tool
+    def echo(text: str) -> str:
+        return text
+
+    model = FakeModel()
+    agent = Agent(name="test", model=model, tools=[echo])
+    model.add_multiple_turn_outputs(
+        [
+            [
+                get_text_message("<think>call echo</think>"),
+                get_function_tool_call("echo", json.dumps({"text": "<think>as sent</think>"})),
+            ],
+            [get_text_message("done")],
+        ]
+    )
+
+    result = await Runner.run(agent, input="hi")
+
+    assert result.final_output == "done"
+    history = result.to_input_list()
+    assert "call echo" not in json.dumps(history)
+    outputs = [item["output"] for item in history if item.get("type") == "function_call_output"]
+    assert outputs == ["<think>as sent</think>"]
+
+
+@pytest.mark.asyncio
+async def test_think_block_before_structured_output():
+    model = FakeModel()
+    agent = Agent(name="test", model=model, output_type=Foo)
+    reply = "<think>fill in bar</think>" + json.dumps(Foo(bar="baz"))
+    model.set_next_output([get_final_output_message(reply)])
+
+    result = await Runner.run(agent, input="hi")
+
+    assert result.final_output == Foo(bar="baz")
