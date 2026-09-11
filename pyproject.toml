@@ -1,6 +1,6 @@
 [project]
 name = "hanzo-agent"
-version = "0.1.1"
+version = "0.1.2"
 description = "Hanzo Agent SDK"
 readme = "README.md"
 requires-python = ">=3.9"
