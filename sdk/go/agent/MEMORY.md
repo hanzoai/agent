@@ -17,9 +17,7 @@ curl -X PUT http://127.0.0.1:8090/v1/collections/import \
 
 Base's admin UI imports the same file from Settings.
 
-It is not created on first write. A client that builds its own schema can build
-the wrong one from a typo in a field name, and then read nothing from the
-collection everyone else is looking at.
+Nothing creates it on first write.
 
 Two things in that schema are load-bearing:
 
@@ -27,8 +25,7 @@ Two things in that schema are load-bearing:
   record. Without it a losing race writes a second record at the same key and
   reads start depending on which one Base returns first.
 - **The rules are null**, so out of the box the collection is reachable by a
-  superuser alone. Open them deliberately, per deployment. An agent's memory is
-  the agent's reasoning written down.
+  superuser alone. Open them deliberately, per deployment.
 
 ## Use it
 
@@ -45,11 +42,6 @@ and loses everything when the process ends.
 
 ## Similarity search
 
-The embedding is the caller's to compute, so which model produced it stays one
-decision made in one place. `SearchVector` reads the scope's vectors and ranks
-them by cosine in the client — right for an agent's own working set, wrong for a
-corpus. A scope large enough to need server-side scoring should use a Base hook.
-
-A vector of a different width came from a different model, so it is skipped
-rather than scored: cosine across two of those returns a number that means
-nothing.
+The caller computes embeddings. `SearchVector` ranks the scope's vectors by
+cosine in the client, which suits an agent's working set, not a corpus. Vectors
+of another width came from another model and are skipped.

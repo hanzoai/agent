@@ -18,8 +18,8 @@ This package provides AI/LLM capabilities for the Hanzo Agents Go SDK, supportin
 ```go
 import (
     "context"
-    "github.com/hanzoai/agents/sdk/go/agent"
-    "github.com/hanzoai/agents/sdk/go/ai"
+    "github.com/hanzoai/agent/sdk/go/agent"
+    "github.com/hanzoai/agent/sdk/go/ai"
 )
 
 // Create agent with AI configured

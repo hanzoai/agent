@@ -38,7 +38,7 @@ def mute_debug_logs(monkeypatch):
 @pytest.fixture
 def memory_client(dummy_headers):
     context = SimpleNamespace(to_headers=lambda: dict(dummy_headers))
-    hanzo_agents_client = SimpleNamespace(api_base="http://hanzo_agents.local/api/v1")
+    hanzo_agents_client = SimpleNamespace(api_base="http://hanzo_agents.local/v1")
     return MemoryClient(hanzo_agents_client, context)
 
 
@@ -164,7 +164,7 @@ async def test_set_vector_calls_vector_endpoint(memory_client, monkeypatch):
 
     await memory_client.set_vector("chunk_1", [0.1, 0.2], metadata={"source": "doc"})
 
-    assert captured["url"].endswith("/memory/vector/set")
+    assert captured["url"].endswith("/memory/vector")
     assert captured["json"]["key"] == "chunk_1"  # type: ignore[index]
     assert captured["json"]["metadata"] == {"source": "doc"}  # type: ignore[index]
 
@@ -178,17 +178,19 @@ async def test_delete_vector_calls_vector_endpoint(memory_client, monkeypatch):
         def raise_for_status(self):
             return None
 
-    async def fake_request(method, url, json=None, headers=None, timeout=None):  # type: ignore[override]
+    async def fake_request(method, url, params=None, headers=None, timeout=None):  # type: ignore[override]
+        captured["method"] = method
         captured["url"] = url
-        captured["json"] = json
+        captured["params"] = params
         return DummyResponse()
 
     monkeypatch.setattr(memory_client, "_async_request", fake_request)
 
-    await memory_client.delete_vector("chunk_1")
+    await memory_client.delete_vector("chunk_1", scope="session")
 
-    assert captured["url"].endswith("/memory/vector/delete")
-    assert captured["json"]["key"] == "chunk_1"  # type: ignore[index]
+    assert captured["method"] == "DELETE"
+    assert captured["url"].endswith("/memory/vector/chunk_1")
+    assert captured["params"] == {"scope": "session"}
 
 
 @pytest.mark.unit
@@ -395,7 +397,7 @@ async def test_set_uses_async_request_when_available(dummy_headers):
 
     context = SimpleNamespace(to_headers=lambda: dict(dummy_headers))
     hanzo_agents_client = SimpleNamespace(
-        api_base="http://hanzo_agents.local/api/v1",
+        api_base="http://hanzo_agents.local/v1",
         _async_request=fake_async_request,
     )
     client = MemoryClient(hanzo_agents_client, context)

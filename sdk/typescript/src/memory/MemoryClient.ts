@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, isAxiosError } from 'axios';
 import type { MemoryScope } from '../types/agent.js';
 import { httpAgent, httpsAgent } from '../utils/httpAgents.js';
-import type { MemoryBackend } from './MemoryBackend.js';
+import { resolveScope, type MemoryBackend } from './MemoryBackend.js';
 
 export interface MemoryRequestMetadata {
   workflowId?: string;
@@ -106,16 +106,14 @@ export class MemoryClient implements MemoryBackend {
     if (metadata !== undefined) payload.metadata = metadata;
     if (options.scope) payload.scope = options.scope;
 
-    await this.http.post('/v1/memory/vector/set', payload, {
+    await this.http.post('/v1/memory/vector', payload, {
       headers: this.buildHeaders(options)
     });
   }
 
   async deleteVector(key: string, options: MemoryRequestOptions = {}) {
-    const payload: any = { key };
-    if (options.scope) payload.scope = options.scope;
-
-    await this.http.post('/v1/memory/vector/delete', payload, {
+    await this.http.delete(`/v1/memory/vector/${encodeURIComponent(key)}`, {
+      params: options.scope ? { scope: options.scope } : undefined,
       headers: this.buildHeaders(options)
     });
   }
@@ -151,7 +149,7 @@ export class MemoryClient implements MemoryBackend {
     if (metadata?.agentNodeId) headers['X-Agent-Node-ID'] = metadata.agentNodeId;
 
     const headerName = this.scopeToHeader(scope);
-    const resolvedScopeId = this.resolveScopeId(scope, scopeId, metadata);
+    const resolvedScopeId = scope ? resolveScope({ scope, scopeId, metadata }).scopeId : undefined;
     if (headerName && resolvedScopeId) {
       headers[headerName] = resolvedScopeId;
     }
@@ -167,22 +165,6 @@ export class MemoryClient implements MemoryBackend {
         return 'X-Session-ID';
       case 'actor':
         return 'X-Actor-ID';
-      default:
-        return undefined;
-    }
-  }
-
-  private resolveScopeId(scope?: MemoryScope, scopeId?: string, metadata?: MemoryRequestMetadata) {
-    if (scopeId) return scopeId;
-    switch (scope) {
-      case 'workflow':
-        return metadata?.workflowId ?? metadata?.runId;
-      case 'session':
-        return metadata?.sessionId;
-      case 'actor':
-        return metadata?.actorId;
-      case 'global':
-        return 'global';
       default:
         return undefined;
     }

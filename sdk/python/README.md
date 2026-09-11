@@ -11,7 +11,7 @@ pip install hanzo-agents
 To work on the SDK locally:
 
 ```bash
-git clone https://github.com/hanzoai/agents.git
+git clone https://github.com/hanzoai/agent.git
 cd hanzo-agents/sdk/python
 python -m pip install -e .[dev]
 ```

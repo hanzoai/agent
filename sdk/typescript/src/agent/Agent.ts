@@ -229,8 +229,6 @@ export class Agent {
     if (!execMetadata) return;
 
     const baseUrl = (this.config.controlPlaneUrl ?? 'http://localhost:8080').replace(/\/$/, '');
-    // The UI reads notes from a /ui subtree of the version prefix, the same
-    // address the Python SDK sends them to.
     const uiApiUrl = `${baseUrl}/v1/ui`;
 
     this.controlPlaneClient.sendNote(message, tags, this.config.nodeId, execMetadata, uiApiUrl, this.config.devMode);
@@ -412,12 +410,8 @@ export class Agent {
       res.json(this.skills.all().map((s) => s.name));
     });
 
-    // One address per operation, the one the Python SDK also serves. There
-    // used to be a second spelling of each under an /api/v1/ prefix, reading
-    // the name out of a bare `*`. Express 5 refuses that pattern outright, so
-    // the agent's own server could not start — and `/api/` is not a shape this
-    // estate serves. A name may carry dots (`node-id.double`), which a single
-    // segment parameter matches.
+    // The addresses the Python SDK serves. A name may carry dots
+    // (`node-id.double`), which a segment parameter matches.
     this.app.post('/reasoners/:name', (req, res) => this.executeReasoner(req, res, req.params.name));
     this.app.post('/skills/:name', (req, res) => this.executeSkill(req, res, req.params.name));
 

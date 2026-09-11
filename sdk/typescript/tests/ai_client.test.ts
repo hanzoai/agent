@@ -99,9 +99,7 @@ describe('AIClient', () => {
   });
 
   describe('provider selection for text generation', () => {
-    // Our own stack, and our own model. It speaks the OpenAI dialect, so the
-    // client it builds is the same one — what makes it ours is the address and
-    // the model, which is exactly what this asserts.
+    // Hanzo speaks the OpenAI dialect: the same client, our address and model.
     it('answers from Hanzo by default', async () => {
       const client = new AIClient({ apiKey: 'test-key' });
       await client.generate('test prompt');

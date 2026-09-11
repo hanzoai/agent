@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hanzoai/agents/sdk/go/types"
+	"github.com/hanzoai/agent/sdk/go/types"
 )
 
 // DiscoveryOption configures discovery requests.

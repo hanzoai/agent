@@ -54,7 +54,7 @@ func (b *ControlPlaneMemoryBackend) Set(scope MemoryScope, scopeID, key string, 
 	body := map[string]any{
 		"key":   key,
 		"data":  value,
-		"scope": b.apiScope(scope),
+		"scope": apiScope(scope),
 	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
 	if err != nil {
@@ -83,7 +83,7 @@ func (b *ControlPlaneMemoryBackend) Get(scope MemoryScope, scopeID, key string) 
 
 	body := map[string]any{
 		"key":   key,
-		"scope": b.apiScope(scope),
+		"scope": apiScope(scope),
 	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
 	if err != nil {
@@ -120,7 +120,7 @@ func (b *ControlPlaneMemoryBackend) Delete(scope MemoryScope, scopeID, key strin
 
 	body := map[string]any{
 		"key":   key,
-		"scope": b.apiScope(scope),
+		"scope": apiScope(scope),
 	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
 	if err != nil {
@@ -150,7 +150,7 @@ func (b *ControlPlaneMemoryBackend) List(scope MemoryScope, scopeID string) ([]s
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, endpoint+"?scope="+url.QueryEscape(b.apiScope(scope)), nil)
+	req, err := http.NewRequest(http.MethodGet, endpoint+"?scope="+url.QueryEscape(apiScope(scope)), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (b *ControlPlaneMemoryBackend) List(scope MemoryScope, scopeID string) ([]s
 }
 
 func (b *ControlPlaneMemoryBackend) SetVector(scope MemoryScope, scopeID, key string, embedding []float64, metadata map[string]any) error {
-	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector/set")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector")
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (b *ControlPlaneMemoryBackend) SetVector(scope MemoryScope, scopeID, key st
 		"key":       key,
 		"embedding": embeddingF32,
 		"metadata":  metadata,
-		"scope":     b.apiScope(scope),
+		"scope":     apiScope(scope),
 	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
 	if err != nil {
@@ -225,7 +225,7 @@ func (b *ControlPlaneMemoryBackend) GetVector(scope MemoryScope, scopeID, key st
 		return nil, nil, false, err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, endpoint+"?scope="+url.QueryEscape(b.apiScope(scope)), nil)
+	req, err := http.NewRequest(http.MethodGet, endpoint+"?scope="+url.QueryEscape(apiScope(scope)), nil)
 	if err != nil {
 		return nil, nil, false, err
 	}
@@ -279,10 +279,10 @@ func (b *ControlPlaneMemoryBackend) SearchVector(scope MemoryScope, scopeID stri
 		"top_k":           opts.Limit,
 		"threshold":       opts.Threshold,
 		"filters":         opts.Filters,
-		"scope":           b.apiScope(scope),
+		"scope":           apiScope(scope),
 	}
 	if opts.Scope != "" {
-		body["scope"] = b.apiScope(opts.Scope)
+		body["scope"] = apiScope(opts.Scope)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
@@ -327,19 +327,12 @@ func (b *ControlPlaneMemoryBackend) SearchVector(scope MemoryScope, scopeID stri
 }
 
 func (b *ControlPlaneMemoryBackend) DeleteVector(scope MemoryScope, scopeID, key string) error {
-	// The address and the shape the Python and TypeScript SDKs both send:
-	// POST, with the key in the body. This was alone in deleting a vector by a
-	// keyed DELETE, which no server serving the other two would answer.
-	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector/delete")
+	endpoint, err := url.JoinPath(b.baseURL, "/v1/memory/vector", url.PathEscape(key))
 	if err != nil {
 		return err
 	}
 
-	body := map[string]any{
-		"key":   key,
-		"scope": b.apiScope(scope),
-	}
-	req, err := http.NewRequest(http.MethodPost, endpoint, mustJSONReader(body))
+	req, err := http.NewRequest(http.MethodDelete, endpoint+"?scope="+url.QueryEscape(apiScope(scope)), nil)
 	if err != nil {
 		return err
 	}
@@ -372,7 +365,7 @@ func (b *ControlPlaneMemoryBackend) applyHeaders(req *http.Request, scope Memory
 	}
 
 	// Provide the scope ID via headers so the control plane can resolve scope_id consistently.
-	switch b.apiScope(scope) {
+	switch apiScope(scope) {
 	case "workflow":
 		if scopeID != "" {
 			req.Header.Set("X-Workflow-ID", scopeID)
@@ -390,7 +383,9 @@ func (b *ControlPlaneMemoryBackend) applyHeaders(req *http.Request, scope Memory
 	}
 }
 
-func (b *ControlPlaneMemoryBackend) apiScope(scope MemoryScope) string {
+// apiScope is the name the control plane and the other SDKs give a scope. Go
+// calls the per-user scope "user"; everyone else calls it "actor".
+func apiScope(scope MemoryScope) string {
 	switch scope {
 	case ScopeWorkflow:
 		return "workflow"

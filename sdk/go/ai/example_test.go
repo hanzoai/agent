@@ -6,14 +6,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/hanzoai/agents/sdk/go/ai"
+	"github.com/hanzoai/agent/sdk/go/ai"
 )
 
-// The shortest thing this client does: one prompt, one answer.
-//
-// A nil config reads the environment: HANZO_API_KEY selects api.hanzo.ai, and
-// a third-party key selects that provider instead. Nothing here names an
-// address, because the default is already ours.
+// One prompt, one answer. A nil config reads the environment, so HANZO_API_KEY
+// is all this needs.
 func ExampleClient_Complete() {
 	client, err := ai.NewClient(nil)
 	if err != nil {
@@ -21,8 +18,7 @@ func ExampleClient_Complete() {
 		return
 	}
 
-	// A deadline, because a model call is a network call and an example without
-	// one teaches a program that can hang.
+	// A model call is a network call; give it a deadline.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -32,9 +28,7 @@ func ExampleClient_Complete() {
 		return
 	}
 
-	// Choices is a slice and a refusal can leave it empty, so it is checked
-	// rather than indexed — Choices[0] on an empty answer panics, which is a
-	// worse failure than the one that produced it.
+	// A refusal can leave Choices empty.
 	if len(answer.Choices) == 0 {
 		fmt.Println("the model returned no choices")
 		return

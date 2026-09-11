@@ -20,6 +20,8 @@ type fakeBase struct {
 	// Every path this backend asked for, so a test can say what it sent and
 	// not only what it got back.
 	asked []string
+	// Runs before a create is decided, which is where a second writer lands.
+	beforeCreate func()
 }
 
 var clause = regexp.MustCompile(`(\w+)='((?:[^'\\]|\\.)*)'`)
@@ -118,15 +120,30 @@ func (f *fakeBase) list(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(baseList{Items: hits[from:to], TotalItems: total})
 }
 
+// A create under the unique index over scope, scope_id and mkey.
 func (f *fakeBase) create(w http.ResponseWriter, r *http.Request) {
 	var rec baseRecord
 	json.NewDecoder(r.Body).Decode(&rec)
+	if f.beforeCreate != nil {
+		f.beforeCreate()
+	}
+	w.Header().Set("Content-Type", "application/json")
+	for _, have := range f.records {
+		if have.Scope == rec.Scope && have.ScopeID == rec.ScopeID && have.MKey == rec.MKey {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message":"Failed to create record.","data":{"mkey":{"code":"validation_not_unique"}}}`))
+			return
+		}
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(f.insert(rec))
+}
+
+func (f *fakeBase) insert(rec baseRecord) *baseRecord {
 	f.next++
 	rec.ID = fmt.Sprintf("r%d", f.next)
 	f.records[rec.ID] = &rec
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(rec)
+	return &rec
 }
 
 // A merge, which is what PATCH means: a field the request does not carry keeps
@@ -396,6 +413,45 @@ func TestBaseMemorySearchRefusesEmptyQuery(t *testing.T) {
 
 	if _, err := backend.SearchVector(ScopeSession, "s1", nil, SearchOptions{}); err == nil {
 		t.Fatal("searching with no query vector should refuse")
+	}
+}
+
+// Two writers creating one key race between the read and the create, and the
+// unique index refuses the second record. A Set means the last write wins, so
+// the loser updates the record that won rather than failing.
+func TestBaseMemoryLastWriteWinsARace(t *testing.T) {
+	backend, fake := backedByFake(t)
+	fake.beforeCreate = func() {
+		fake.beforeCreate = nil
+		fake.insert(baseRecord{Scope: "session", ScopeID: "s1", MKey: "k", Value: `"theirs"`})
+	}
+
+	if err := backend.Set(ScopeSession, "s1", "k", "ours"); err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	if got, _, _ := backend.Get(ScopeSession, "s1", "k"); got != "ours" {
+		t.Fatalf("got %#v, want ours", got)
+	}
+	if len(fake.records) != 1 {
+		t.Fatalf("%d records, want 1", len(fake.records))
+	}
+}
+
+// Go names the per-user scope "user"; the control plane and the other SDKs
+// name it "actor". Records are filed under the shared name so every SDK reads
+// the others' records.
+func TestBaseMemoryFilesUserScopeAsActor(t *testing.T) {
+	backend, fake := backedByFake(t)
+	if err := backend.Set(ScopeUser, "u1", "tone", "plain"); err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	for _, rec := range fake.records {
+		if rec.Scope != "actor" {
+			t.Fatalf("filed under %q, want actor", rec.Scope)
+		}
+	}
+	if got, found, _ := backend.Get(ScopeUser, "u1", "tone"); !found || got != "plain" {
+		t.Fatalf("got %#v found=%v", got, found)
 	}
 }
 

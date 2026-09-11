@@ -5,7 +5,7 @@ The Hanzo Agents Go SDK provides idiomatic Go bindings for interacting with the 
 ## Installation
 
 ```bash
-go get github.com/hanzoai/agents/sdk/go
+go get github.com/hanzoai/agent/sdk/go
 ```
 
 ## Quick Start
@@ -17,7 +17,7 @@ import (
     "context"
     "log"
 
-    hanzo-agentsagent "github.com/hanzoai/agents/sdk/go/agent"
+    hanzo-agentsagent "github.com/hanzoai/agent/sdk/go/agent"
 )
 
 func main() {

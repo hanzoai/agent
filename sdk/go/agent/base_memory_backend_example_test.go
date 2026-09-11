@@ -4,16 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hanzoai/agents/sdk/go/agent"
+	"github.com/hanzoai/agent/sdk/go/agent"
 )
 
-// Keeping an agent's memory in Hanzo Base.
-//
-// The collection must already exist, carrying the fields the backend writes:
-// scope, scope_id, mkey and value as text, embedding and metadata as json.
-// Create it once with the Base admin UI or its CLI — an SDK that creates
-// schema on first write can create the WRONG schema from a typo, and then read
-// nothing from the collection everyone else is looking at.
+// Keeping an agent's memory in Hanzo Base. Import agent_memory.collection.json
+// once first; MEMORY.md shows how.
 func ExampleNewBaseMemoryBackend() {
 	memory := agent.NewMemory(
 		agent.NewBaseMemoryBackend("http://127.0.0.1:8090", token, "agent_memory"),
@@ -24,8 +19,7 @@ func ExampleNewBaseMemoryBackend() {
 		panic(err)
 	}
 
-	// GetWithDefault, because Memory.Get folds an absent key and a stored nil
-	// into one answer — the backend tells them apart, the wrapper does not.
+	// Memory.Get cannot tell an absent key from a stored nil; this can.
 	tone, err := memory.GetWithDefault(ctx, "tone", "plain")
 	if err != nil {
 		panic(err)
@@ -33,9 +27,7 @@ func ExampleNewBaseMemoryBackend() {
 	fmt.Println(tone)
 }
 
-// Recalling by similarity. The embedding is the caller's to compute — the
-// backend stores the vector it is handed and scores against it, so which model
-// produced it stays one decision made in one place.
+// Recalling by similarity. The caller computes the embedding.
 func ExampleNewBaseMemoryBackend_recall() {
 	memory := agent.NewMemory(
 		agent.NewBaseMemoryBackend("http://127.0.0.1:8090", token, "agent_memory"),
@@ -60,9 +52,7 @@ func ExampleNewBaseMemoryBackend_recall() {
 	}
 }
 
-// Stand-ins so the examples above read as the calling code someone writes,
-// rather than as setup. A real token comes from Hanzo IAM and a real embedding
-// from whichever model the caller has chosen.
+// Stand-ins: a real token comes from Hanzo IAM, a real embedding from a model.
 var token = "..."
 
 func embed(string) []float64 { return nil }

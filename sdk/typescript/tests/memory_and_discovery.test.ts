@@ -45,7 +45,7 @@ describe('MemoryClient vector operations', () => {
     );
 
     expect(post).toHaveBeenCalledWith(
-      '/v1/memory/vector/set',
+      '/v1/memory/vector',
       {
         key: 'chunk_1',
         embedding: [0.1, 0.2],
@@ -94,8 +94,8 @@ describe('MemoryClient vector operations', () => {
   it('deletes vectors with scoped headers', async () => {
     const client = new MemoryClient('http://localhost:8080');
     const http = getCreatedClient();
-    const post = vi.fn().mockResolvedValue({ data: {} });
-    http.post = post;
+    const del = vi.fn().mockResolvedValue({ data: {} });
+    http.delete = del;
 
     await client.deleteVector('chunk_2', {
       scope: 'session',
@@ -103,13 +103,10 @@ describe('MemoryClient vector operations', () => {
       metadata: { sessionId: 's1' }
     });
 
-    expect(post).toHaveBeenCalledWith(
-      '/v1/memory/vector/delete',
-      {
-        key: 'chunk_2',
-        scope: 'session'
-      },
+    expect(del).toHaveBeenCalledWith(
+      '/v1/memory/vector/chunk_2',
       expect.objectContaining({
+        params: { scope: 'session' },
         headers: expect.objectContaining({
           'X-Session-ID': 's1'
         })

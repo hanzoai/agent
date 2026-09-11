@@ -1173,13 +1173,12 @@ class Agent(FastAPI):
         if not self._current_execution_context:
             return None
 
-        # `store` selects where state is kept: pass a BaseMemory to keep it in
-        # Hanzo Base. Absent, it goes to the control plane as before. Named
-        # `store` rather than `memory` because `memory` is already the property
-        # a handler reads through.
-        memory_client = self.store or MemoryClient(
-            self.client, self._current_execution_context, agent_node_id=self.node_id
-        )
+        if self.store:
+            memory_client = self.store.bind(self._current_execution_context)
+        else:
+            memory_client = MemoryClient(
+                self.client, self._current_execution_context, agent_node_id=self.node_id
+            )
         if not self.memory_event_client:
             self.memory_event_client = MemoryEventClient(
                 self.hanzo_agents_server, self._get_current_execution_context(), self.api_key
@@ -3419,11 +3418,7 @@ class Agent(FastAPI):
                     import aiohttp
 
                     timeout = aiohttp.ClientTimeout(total=5.0)  # 5 second timeout
-                    # The UI reads notes from a /ui subtree of the same
-                    # version prefix. Appended rather than substituted: the old
-                    # replace("/v1", "/v1/ui") rewrote the FIRST /v1 it found,
-                    # which is a base url's own path segment whenever one has
-                    # a version in it, and its comment claimed the last.
+                    # Notes go to the /ui subtree of the version prefix.
                     ui_api_base = f"{self.client.api_base}/ui"
 
                     if self.dev_mode:

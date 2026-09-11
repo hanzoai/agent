@@ -77,16 +77,7 @@ export interface AIEmbeddingOptions {
 const HANZO_BASE_URL = 'https://api.hanzo.ai/v1';
 const HANZO_MODEL = 'zen3-vl';
 
-/**
- * The address for a provider that speaks the OpenAI dialect, where the caller
- * gave none.
- *
- * One function rather than a copy in each switch: the model path and the
- * embedding path both route these four through the same client, and two copies
- * of the mapping is how they come to disagree about where `hanzo` lives.
- * `undefined` leaves the underlying client's own default, which is correct for
- * openai.
- */
+/** The address for an OpenAI-dialect provider where the caller gave none. */
 function defaultBaseUrl(provider: string): string | undefined {
   switch (provider) {
     case 'hanzo':
@@ -124,10 +115,8 @@ export class AIClient {
 
     if (options.schema) {
       const schema = options.schema;
-      // `mode` is still accepted on this SDK's own options, and is no longer
-      // forwarded: the ai package removed it from generateObject, which now
-      // chooses between structured output and tool calling itself. Passing it
-      // was a type error, so nothing downstream ever saw it.
+      // `mode` is not forwarded: generateObject chooses structured output or tool
+      // calling itself. The cast avoids TS2589 on generic caller types.
       const call = async () =>
         generateObject({
           model: model,
@@ -138,7 +127,7 @@ export class AIClient {
           maxOutputTokens: options.maxTokens ?? this.config.maxTokens,
           schema,
           experimental_repairText: async ({ text }) => repairJsonText(text)
-        });
+        } as Parameters<typeof generateObject>[0]);
 
       const response = await this.withRateLimitRetry(call);
       return response.object as T;
@@ -193,9 +182,7 @@ export class AIClient {
   }
 
   private buildModel(options: AIRequestOptions) {
-    // Ours where nobody chose. An explicit provider still selects that
-    // provider — only the unspecified case moved, and it used to send this
-    // SDK's callers to another company by default.
+    // Hanzo unless the caller names a provider.
     const provider = options.provider ?? this.config.provider ?? 'hanzo';
     const modelName = options.model ?? this.config.model ?? HANZO_MODEL;
 

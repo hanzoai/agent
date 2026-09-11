@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hanzoai/agents/sdk/go/types"
+	"github.com/hanzoai/agent/sdk/go/types"
 )
 
 // Client provides a thin wrapper over the HanzoAgents control plane REST API.

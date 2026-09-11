@@ -9,6 +9,7 @@ import { BaseMemory } from '../src/memory/BaseMemory.js';
  */
 class FakeBase {
   records = new Map<string, any>();
+  beforeCreate?: () => void;
   private next = 0;
   private server?: http.Server;
 
@@ -39,7 +40,12 @@ class FakeBase {
     const body = await read(req);
 
     if (req.method === 'GET' && !id) return json(res, this.list(url));
-    if (req.method === 'POST' && !id) return json(res, this.create(body), 201);
+    if (req.method === 'POST' && !id) {
+      const record = this.create(body);
+      return record
+        ? json(res, record, 201)
+        : json(res, { message: 'Failed to create record.', data: { mkey: { code: 'validation_not_unique' } } }, 400);
+    }
     if (req.method === 'PATCH' && id) return json(res, this.patch(id, body));
     if (req.method === 'DELETE' && id) {
       this.records.delete(id);
@@ -72,7 +78,16 @@ class FakeBase {
     return { items: hits.slice(from, from + perPage), totalItems: total };
   }
 
+  /** A create under the unique index over scope, scope_id and mkey. */
   private create(body: any) {
+    this.beforeCreate?.();
+    const taken = [...this.records.values()].some(
+      (rec) => rec.scope === body.scope && rec.scope_id === body.scope_id && rec.mkey === body.mkey
+    );
+    return taken ? undefined : this.insert(body);
+  }
+
+  insert(body: any) {
     const record = { ...body, id: `r${++this.next}` };
     this.records.set(record.id, record);
     return record;
@@ -237,6 +252,33 @@ describe('BaseMemory', () => {
     await memory.deleteVector('doc', where);
     expect((await memory.searchVector([1, 0], where)).length).toBe(0);
     expect(await memory.get('doc', where)).toBe('the text');
+  });
+
+  it('takes the scope id from the execution the request carries', async () => {
+    const memory = await backedByFake();
+    await memory.set('step', 'one', { scope: 'workflow', metadata: { workflowId: 'w1' } });
+    await memory.set('step', 'two', { scope: 'workflow', metadata: { workflowId: 'w2' } });
+
+    expect(await memory.get('step', { scope: 'workflow', metadata: { workflowId: 'w1' } })).toBe('one');
+    expect(await memory.get('step', { scope: 'workflow', metadata: { workflowId: 'w2' } })).toBe('two');
+  });
+
+  it('files global under the id every SDK uses', async () => {
+    const memory = await backedByFake();
+    await memory.set('shared', true, { scope: 'global' });
+    expect([...fake!.records.values()][0].scope_id).toBe('global');
+  });
+
+  it('keeps the last write when two writers create one key at once', async () => {
+    const memory = await backedByFake();
+    fake!.beforeCreate = () => {
+      fake!.beforeCreate = undefined;
+      fake!.insert({ scope: 'session', scope_id: 's1', mkey: 'k', value: JSON.stringify('theirs') });
+    };
+    await memory.set('k', 'ours', { scope: 'session', scopeId: 's1' });
+
+    expect(await memory.get('k', { scope: 'session', scopeId: 's1' })).toBe('ours');
+    expect(fake!.records.size).toBe(1);
   });
 
   it('names a path Base does not serve, rather than failing to parse it', async () => {

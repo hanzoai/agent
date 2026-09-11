@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import type { MemoryScope } from '../types/agent.js';
 import { httpAgent, httpsAgent } from '../utils/httpAgents.js';
-import type { MemoryBackend } from './MemoryBackend.js';
+import { resolveScope, type MemoryBackend } from './MemoryBackend.js';
 import type {
   MemoryRequestOptions,
   VectorSearchOptions,
@@ -9,23 +9,9 @@ import type {
 } from './MemoryClient.js';
 
 /**
- * Agent memory kept in Hanzo Base.
- *
- * Base is the single-binary Go backend, so an agent's state sits in the same
- * process tree as everything it runs beside: no second database, no separate
- * migration, and the records are visible in Base's own admin view while the
- * agent is running.
- *
- * One record per scope and key, in one collection. A collection per scope
- * would make the number of collections a function of how many workflows have
- * ever run.
- *
- * The collection must exist, carrying the fields this writes. Import
- * `agent_memory.collection.json` from the Go SDK once — the schema is the same
- * one, because the two SDKs read each other's records. It is not created on
- * first write: a client that builds its own schema can build the wrong one
- * from a typo and then read nothing from the collection everyone else is
- * looking at.
+ * Agent memory kept in Hanzo Base, one record per scope and key in one
+ * collection. Import `agent_memory.collection.json` from the Go SDK once; the
+ * Go, TypeScript and Python stores share it.
  */
 export class BaseMemory implements MemoryBackend {
   private readonly http: AxiosInstance;
@@ -38,9 +24,7 @@ export class BaseMemory implements MemoryBackend {
       httpAgent,
       httpsAgent,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-      // Base's router answers a path it does not serve with the admin SPA, at
-      // 200. Taking every status lets `read` say that, rather than throwing an
-      // error that reads like the server is broken.
+      // Every status is taken, so `ask` can name an unrouted path's HTML answer.
       validateStatus: () => true
     });
     this.collection = collection;
@@ -67,18 +51,14 @@ export class BaseMemory implements MemoryBackend {
     await this.ask('delete', `${this.records}/${encodeURIComponent(record.id)}`);
   }
 
-  /**
-   * Every key in a scope, following Base's pages to the end. A caller asking
-   * for all the keys and receiving the first page would read that as the whole
-   * answer.
-   */
+  /** Every key in a scope, across all of Base's pages. */
   async listKeys(scope: MemoryScope, options: MemoryRequestOptions = {}) {
     const keys: string[] = [];
     for (let page = 1; ; page++) {
       const answer = await this.ask('get', this.records, {
         perPage: 200,
         page,
-        filter: filterFor(scope, scopeId(options))
+        filter: filterFor(scope, resolveScope({ ...options, scope }).scopeId)
       });
       const items = answer.items ?? [];
       keys.push(...items.map((item: any) => item.mkey).filter(Boolean));
@@ -94,10 +74,7 @@ export class BaseMemory implements MemoryBackend {
     await this.write(options, key, { embedding, metadata: metadata ?? null });
   }
 
-  /**
-   * The embedding, not the record: a value may be stored at the same key and
-   * is not the caller's to lose here.
-   */
+  /** Clears the embedding and keeps any value stored at the key. */
   async deleteVector(key: string, options: MemoryRequestOptions = {}) {
     const record = await this.find(options, key);
     if (!record) return;
@@ -108,13 +85,8 @@ export class BaseMemory implements MemoryBackend {
   }
 
   /**
-   * Ranks the scope's vectors by cosine similarity.
-   *
-   * Scored here rather than in the database, and that is a limit worth
-   * stating: it reads the scope's vectors and ranks them in the client, so
-   * cost grows with the size of the scope. Right for an agent's own working
-   * set, wrong for a corpus. Base can score server-side through a hook, and a
-   * scope large enough to need that should use one.
+   * Ranks the scope's vectors by cosine similarity, in the client: cost grows
+   * with the scope, which suits an agent's working set, not a corpus.
    */
   async searchVector(
     queryEmbedding: number[],
@@ -122,8 +94,7 @@ export class BaseMemory implements MemoryBackend {
   ): Promise<VectorSearchResult[]> {
     if (!queryEmbedding?.length) throw new Error('search needs a query vector');
 
-    const scope = options.scope ?? 'workflow';
-    const id = scopeId(options);
+    const { scope, scopeId: id } = resolveScope(options);
     const found: VectorSearchResult[] = [];
 
     for (let page = 1; ; page++) {
@@ -136,9 +107,7 @@ export class BaseMemory implements MemoryBackend {
       if (!items.length) break;
 
       for (const item of items) {
-        // A vector of a different width came from a different embedding model.
-        // Cosine across two of those returns a number that means nothing, so
-        // it is skipped rather than scored.
+        // A different width is a different embedding model; skip it.
         if (item.embedding?.length !== queryEmbedding.length) continue;
         if (!matches(item.metadata, options.filters)) continue;
         found.push({
@@ -160,7 +129,7 @@ export class BaseMemory implements MemoryBackend {
   private async find(options: MemoryRequestOptions, key: string) {
     const answer = await this.ask('get', this.records, {
       perPage: 1,
-      filter: filterFor(options.scope ?? 'workflow', scopeId(options), key)
+      filter: filterFor(...where(options), key)
     });
     return answer.items?.[0];
   }
@@ -172,20 +141,23 @@ export class BaseMemory implements MemoryBackend {
    * it, and the two share a record.
    */
   private async write(options: MemoryRequestOptions, key: string, fields: Record<string, any>) {
-    const scope = options.scope ?? 'workflow';
-    const id = scopeId(options);
+    const { scope, scopeId: id } = resolveScope(options);
     const existing = await this.find(options, key);
 
     if (existing) {
       await this.ask('patch', `${this.records}/${encodeURIComponent(existing.id)}`, undefined, fields);
       return;
     }
-    await this.ask('post', this.records, undefined, {
-      scope,
-      scope_id: id,
-      mkey: key,
-      ...fields
-    });
+    try {
+      await this.ask('post', this.records, undefined, { scope, scope_id: id, mkey: key, ...fields });
+    } catch (err) {
+      // Another writer created the key between the read and this create, and
+      // the unique index refused a second record. A set means the last write
+      // wins, so update the record that won.
+      const winner = await this.find(options, key);
+      if (!winner) throw err;
+      await this.ask('patch', `${this.records}/${encodeURIComponent(winner.id)}`, undefined, fields);
+    }
   }
 
   private async ask(
@@ -196,9 +168,7 @@ export class BaseMemory implements MemoryBackend {
   ) {
     const answer = await this.http.request({ method, url: path, params, data: body });
 
-    // An HTML body on a JSON endpoint means the path was not served and the
-    // SPA catch-all answered. Saying so beats a parse error, which reads as a
-    // broken server rather than a wrong collection.
+    // Base answers a path it does not route with its admin SPA, at 200.
     if (String(answer.headers['content-type'] ?? '').startsWith('text/html')) {
       throw new Error(`base answered with HTML for ${path} — that path is not served by this Base`);
     }
@@ -209,9 +179,10 @@ export class BaseMemory implements MemoryBackend {
   }
 }
 
-/** A scope id, defaulting to the empty string so a filter clause is well formed. */
-function scopeId(options: MemoryRequestOptions) {
-  return options.scopeId ?? '';
+/** The scope and id a request addresses, in the order a filter names them. */
+function where(options: MemoryRequestOptions): [MemoryScope, string] {
+  const { scope, scopeId } = resolveScope(options);
+  return [scope, scopeId];
 }
 
 /** A clause in Base's filter grammar, with every value quoted. */
@@ -222,13 +193,9 @@ function filterFor(scope: MemoryScope, id: string, key?: string) {
 }
 
 /**
- * A single-quoted literal, escaped.
- *
- * Base's tokenizer treats a backslash as the escape rune, so a quote preceded
- * by one does not close the literal. That makes the order load-bearing:
- * backslashes double first, then quotes. The other order lets a value ending
- * in a backslash escape the closing quote and end the literal where the caller
- * chose. A scope id is caller data.
+ * A single-quoted literal. Base's tokenizer reads a backslash as an escape, so
+ * backslashes double before quotes are escaped: the other order lets a value
+ * ending in one escape the closing quote.
  */
 function quote(value: string) {
   return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
@@ -248,11 +215,7 @@ function cosine(a: number[], b: number[]) {
   return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
-/**
- * Whether a record's metadata satisfies every filter. A filter naming a key
- * the record lacks excludes it: the caller asked for records where that key
- * holds a value, and a record without it is not one.
- */
+/** Whether metadata satisfies every filter; a missing key fails its filter. */
 function matches(metadata: Record<string, any> | null | undefined, filters?: Record<string, any>) {
   if (!filters) return true;
   for (const [key, want] of Object.entries(filters)) {

@@ -9,6 +9,7 @@ import asyncio
 import json
 import sys
 from functools import wraps
+from urllib.parse import quote
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 from .client import HanzoAgentsClient
 from .execution_context import ExecutionContext
@@ -170,7 +171,7 @@ class MemoryClient:
 
         response = await self._async_request(
             "POST",
-            f"{self.hanzo_agents_client.api_base}/memory/vector/set",
+            f"{self.hanzo_agents_client.api_base}/memory/vector",
             json=payload,
             headers=headers,
             timeout=15.0,
@@ -281,13 +282,10 @@ class MemoryClient:
         Delete a stored vector embedding.
         """
         headers = self._build_headers(scope, scope_id)
-        payload: Dict[str, Any] = {"key": key}
-        if scope:
-            payload["scope"] = scope
         response = await self._async_request(
-            "POST",
-            f"{self.hanzo_agents_client.api_base}/memory/vector/delete",
-            json=payload,
+            "DELETE",
+            f"{self.hanzo_agents_client.api_base}/memory/vector/{quote(key, safe='')}",
+            params={"scope": scope} if scope else None,
             headers=headers,
             timeout=10.0,
         )

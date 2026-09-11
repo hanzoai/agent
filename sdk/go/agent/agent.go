@@ -18,9 +18,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanzoai/agents/sdk/go/ai"
-	"github.com/hanzoai/agents/sdk/go/client"
-	"github.com/hanzoai/agents/sdk/go/types"
+	"github.com/hanzoai/agent/sdk/go/ai"
+	"github.com/hanzoai/agent/sdk/go/client"
+	"github.com/hanzoai/agent/sdk/go/types"
 )
 
 type executionContextKey struct{}

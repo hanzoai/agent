@@ -220,7 +220,7 @@ async function createControlPlaneStub() {
     res.json(memory.filter((entry) => entry.scope === scope).map((entry) => ({ key: entry.key })));
   });
 
-  app.post('/v1/memory/vector/set', (req, res) => {
+  app.post('/v1/memory/vector', (req, res) => {
     const scope = req.body?.scope ?? 'workflow';
     const scopeId = resolveScopeId(scope, req.headers);
     const existing = vectors.find(
@@ -254,11 +254,11 @@ async function createControlPlaneStub() {
     res.json(matches);
   });
 
-  app.post('/v1/memory/vector/delete', (req, res) => {
-    const scope = req.body?.scope ?? 'workflow';
+  app.delete('/v1/memory/vector/:key', (req, res) => {
+    const scope = String(req.query.scope ?? 'workflow');
     const scopeId = resolveScopeId(scope, req.headers);
     const idx = vectors.findIndex(
-      (entry) => entry.scope === scope && entry.scopeId === scopeId && entry.key === req.body?.key
+      (entry) => entry.scope === scope && entry.scopeId === scopeId && entry.key === req.params.key
     );
     if (idx >= 0) vectors.splice(idx, 1);
     res.json({ ok: true });

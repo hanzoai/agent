@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanzoai/agents/sdk/go/types"
+	"github.com/hanzoai/agent/sdk/go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

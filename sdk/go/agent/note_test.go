@@ -39,7 +39,7 @@ func TestNote_Basic(t *testing.T) {
 	cfg := Config{
 		NodeID:         "test-node",
 		Version:        "1.0.0",
-		HanzoAgentsURL: server.URL + "/v1", // the note goes to /v1/ui below
+		HanzoAgentsURL: server.URL + "/v1", // Will be converted to /v1/ui
 		Logger:         log.New(io.Discard, "", 0),
 	}
 
@@ -226,12 +226,12 @@ func TestNote_URLConversion(t *testing.T) {
 		expectedPath    string
 	}{
 		{
-			name:            "a base carrying the version",
+			name:            "Standard /v1 URL",
 			controlPlaneURL: server.URL + "/v1",
 			expectedPath:    "/v1/ui/executions/note",
 		},
 		{
-			name:            "the server root",
+			name:            "URL without /v1",
 			controlPlaneURL: server.URL,
 			expectedPath:    "/v1/ui/executions/note",
 		},

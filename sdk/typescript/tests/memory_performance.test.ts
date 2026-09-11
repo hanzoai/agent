@@ -4,18 +4,8 @@ import vm from 'node:vm';
 import { Agent } from '../src/agent/Agent.js';
 
 /**
- * Collect the garbage, whatever flags this run was started with.
- *
- * These checks are about what an agent RETAINS, and the difference between
- * retained and merely uncollected is a collection. `global.gc` exists only
- * under --expose-gc, so guarding on it meant that in a normal run nothing was
- * collected and the numbers were about garbage-collector timing instead: 500
- * agents nothing holds a reference to read as 30MB of growth, which failed a
- * 25MB leak threshold whenever this file ran alone and passed whenever another
- * file had warmed the heap first.
- *
- * Asking v8 for the flag here needs no launch flag and no runner config, so
- * the measurement does not depend on how the suite was invoked.
+ * Collect the garbage whatever flags the run started with, so the leak checks
+ * measure what is retained rather than what is not yet collected.
  */
 const collect: () => void = (() => {
   if (typeof global.gc === 'function') return global.gc;

@@ -95,7 +95,7 @@ async def test_memory_round_trip(monkeypatch, dummy_headers):
     monkeypatch.setattr("hanzo_agents.logger.log_debug", lambda *args, **kwargs: None)
 
     context = SimpleNamespace(to_headers=lambda: dict(dummy_headers))
-    hanzo_agents_client = SimpleNamespace(api_base="http://hanzo_agents.local/api/v1")
+    hanzo_agents_client = SimpleNamespace(api_base="http://hanzo_agents.local/v1")
     memory_client = MemoryClient(hanzo_agents_client, context)
     interface = MemoryInterface(memory_client, SimpleNamespace())  # type: ignore[arg-type]
 
@@ -124,7 +124,7 @@ async def test_memory_client_uses_hanzo_agents_async_request(dummy_headers):
     calls: list[tuple[str, str, dict]] = []
 
     class DummyHanzoAgentsClient:
-        api_base = "http://hanzo_agents.local/api/v1"
+        api_base = "http://hanzo_agents.local/v1"
 
         async def _async_request(self, method, url, **kwargs):
             calls.append((method, url, kwargs))

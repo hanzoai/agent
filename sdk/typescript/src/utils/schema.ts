@@ -25,13 +25,7 @@ export function toJsonSchema(schema: unknown): Record<string, unknown> {
   }
 
   if (isZodSchema(schema)) {
-    // zod's own converter, which v4 ships. zod-to-json-schema reads v3's
-    // internals and cannot type a v4 schema at all — this package declares
-    // zod ^4, so the library it was calling was one major version behind the
-    // schemas handed to it.
-    //
-    // openApi-3.0 for tool calling, as before, and it emits no `$schema` — so
-    // the property this used to strip afterwards is one that never arrives.
+    // zod v4's own converter; zod-to-json-schema reads only v3 schemas.
     return toJSONSchema(schema as ZodType, {
       target: 'openApi-3.0',
     }) as Record<string, unknown>;

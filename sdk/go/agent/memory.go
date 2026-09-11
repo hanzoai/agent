@@ -464,11 +464,8 @@ func (b *InMemoryBackend) GetVector(scope MemoryScope, scopeID, key string) ([]f
 	return rec.embedding, rec.metadata, true, nil
 }
 
-// SearchVector ranks this scope's vectors by cosine similarity.
-//
-// A vector of a different width is skipped rather than scored: a different
-// width means a different embedding model, and cosine across two of those
-// returns a number that means nothing.
+// SearchVector ranks this scope's vectors by cosine similarity. Vectors of
+// another width come from another model and are skipped.
 func (b *InMemoryBackend) SearchVector(scope MemoryScope, scopeID string, embedding []float64, opts SearchOptions) ([]VectorSearchResult, error) {
 	if len(embedding) == 0 {
 		return nil, errors.New("search needs a query vector")

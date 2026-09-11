@@ -94,10 +94,6 @@ class HanzoAgentsClient:
         async_config: Optional[AsyncConfig] = None,
     ):
         self.base_url = base_url
-        # /v1/, with no /api/ segment: that is the shape this estate serves and
-        # the shape every test in this suite registers. The extra segment was
-        # never asserted anywhere, and none of these calls had run since the
-        # suite stopped collecting.
         self.api_base = f"{base_url}/v1"
         self.api_key = api_key
 

@@ -43,6 +43,7 @@ class FakeBase:
     def __init__(self, collection="agent_memory"):
         self.collection = collection
         self.records = {}
+        self.before_create = None
         self._next = 0
 
     def install(self):
@@ -66,10 +67,18 @@ class FakeBase:
         if request.method == "GET":
             return (200, headers, json.dumps(self._list(request.url)))
         if request.method == "POST":
-            self._next += 1
-            record = dict(body or {}, id=f"r{self._next}")
-            self.records[record["id"]] = record
-            return (201, headers, json.dumps(record))
+            # A create under the unique index over scope, scope_id and mkey.
+            if self.before_create:
+                hook, self.before_create = self.before_create, None
+                hook()
+            body = body or {}
+            if any(
+                all(record.get(f) == body.get(f) for f in ("scope", "scope_id", "mkey"))
+                for record in self.records.values()
+            ):
+                refusal = {"message": "Failed to create record.", "data": {"mkey": {"code": "validation_not_unique"}}}
+                return (400, headers, json.dumps(refusal))
+            return (201, headers, json.dumps(self.insert(body)))
         if request.method == "PATCH":
             record = self.records.get(record_id, {})
             # A merge, which is what PATCH means: an absent field keeps its
@@ -78,6 +87,12 @@ class FakeBase:
             return (200, headers, json.dumps(record))
         self.records.pop(record_id, None)
         return (204, headers, "")
+
+    def insert(self, body):
+        self._next += 1
+        record = dict(body, id=f"r{self._next}")
+        self.records[record["id"]] = record
+        return record
 
     def _list(self, url):
         query = parse_qs(urlparse(url).query)
@@ -292,3 +307,45 @@ async def test_an_agent_reads_and_writes_through_the_store_it_was_given(fake):
     await memory.set("tone", "plain")
     assert await memory.get("tone") == "plain"
     assert any(record.get("mkey") == "tone" for record in fake.records.values())
+
+
+def execution(workflow_id=None, session_id=None, actor_id=None):
+    return SimpleNamespace(
+        run_id=workflow_id, workflow_id=workflow_id, session_id=session_id, actor_id=actor_id
+    )
+
+
+@pytest.mark.asyncio
+async def test_takes_scope_ids_from_the_execution_it_is_bound_to(memory):
+    one, two = memory.bind(execution("w1")), memory.bind(execution("w2"))
+    await one.set("step", "one")
+    await two.set("step", "two")
+
+    assert await one.get("step") == "one"
+    assert await two.get("step") == "two"
+
+
+@pytest.mark.asyncio
+async def test_files_global_under_the_id_every_sdk_uses(memory, fake):
+    await memory.set("shared", True, scope="global")
+    assert [record["scope_id"] for record in fake.records.values()] == ["global"]
+
+
+@pytest.mark.asyncio
+async def test_a_read_without_a_scope_falls_back_through_the_hierarchy(memory):
+    bound = memory.bind(execution("w1", session_id="s1", actor_id="a1"))
+    await bound.set("tone", "plain", scope="session")
+
+    assert await bound.get("tone") == "plain"
+    assert await bound.exists("tone")
+
+
+@pytest.mark.asyncio
+async def test_keeps_the_last_write_when_two_writers_create_one_key(memory, fake):
+    fake.before_create = lambda: fake.insert(
+        {"scope": "session", "scope_id": "s1", "mkey": "k", "value": json.dumps("theirs")}
+    )
+    await memory.set("k", "ours", scope="session", scope_id="s1")
+
+    assert await memory.get("k", scope="session", scope_id="s1") == "ours"
+    assert len(fake.records) == 1
