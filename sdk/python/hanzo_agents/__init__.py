@@ -1,4 +1,5 @@
 from .agent import Agent
+from .base_memory import BaseMemory
 from .router import AgentRouter
 from .types import (
     AIConfig,
@@ -40,6 +41,7 @@ from .media_providers import (
 )
 
 __all__ = [
+    "BaseMemory",
     "Agent",
     "AIConfig",
     "MemoryConfig",
