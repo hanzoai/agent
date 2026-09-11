@@ -10,6 +10,12 @@ import (
 )
 
 func TestDefaultConfig(t *testing.T) {
+	// Ours, cleared for the whole table. Every case below describes a caller who
+	// has NOT set it, and t.Setenv restores whatever the developer's shell had.
+	// Without this the suite passes or fails depending on the environment it
+	// runs in, which is the one thing a test may not do.
+	t.Setenv("HANZO_API_KEY", "")
+
 	// Save original env vars
 	originalOpenAIKey := os.Getenv("OPENAI_API_KEY")
 	originalOpenRouterKey := os.Getenv("OPENROUTER_API_KEY")

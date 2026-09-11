@@ -15,6 +15,10 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
+	// Cleared for the same reason as in TestDefaultConfig: the default-config
+	// case asserts what a caller with nothing set receives.
+	t.Setenv("HANZO_API_KEY", "")
+
 	tests := []struct {
 		name    string
 		config  *Config

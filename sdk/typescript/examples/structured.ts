@@ -19,7 +19,6 @@ async function main(): Promise<void> {
     provider: 'openai',
     baseUrl: 'https://api.hanzo.ai/v1',
     apiKey: process.env.HANZO_API_KEY,
-    model: 'zen-3',
   });
 
   // The schema is the second argument's `schema` field, and the return type

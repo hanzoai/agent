@@ -26,7 +26,16 @@ export interface AgentConfig {
 }
 
 export interface AIConfig {
+  /**
+   * Which stack answers, defaulting to ours.
+   *
+   * `hanzo` speaks the OpenAI dialect against api.hanzo.ai, so it needs no
+   * separate client — only an address. It was absent from this union, which
+   * meant the type said Hanzo was not a provider of its own SDK, and the
+   * default below was another company.
+   */
   provider?:
+    | 'hanzo'
     | 'openai'
     | 'anthropic'
     | 'google'

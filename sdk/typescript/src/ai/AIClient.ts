@@ -73,6 +73,33 @@ export interface AIEmbeddingOptions {
   provider?: AIConfig['provider'];
 }
 
+/** Where Hanzo answers, and the model the estate defaults to. */
+const HANZO_BASE_URL = 'https://api.hanzo.ai/v1';
+const HANZO_MODEL = 'zen3-vl';
+
+/**
+ * The address for a provider that speaks the OpenAI dialect, where the caller
+ * gave none.
+ *
+ * One function rather than a copy in each switch: the model path and the
+ * embedding path both route these four through the same client, and two copies
+ * of the mapping is how they come to disagree about where `hanzo` lives.
+ * `undefined` leaves the underlying client's own default, which is correct for
+ * openai.
+ */
+function defaultBaseUrl(provider: string): string | undefined {
+  switch (provider) {
+    case 'hanzo':
+      return HANZO_BASE_URL;
+    case 'openrouter':
+      return 'https://openrouter.ai/api/v1';
+    case 'ollama':
+      return 'http://localhost:11434/v1';
+    default:
+      return undefined;
+  }
+}
+
 export class AIClient {
   private readonly config: AIConfig;
   private rateLimiter?: StatelessRateLimiter;
@@ -166,8 +193,11 @@ export class AIClient {
   }
 
   private buildModel(options: AIRequestOptions) {
-    const provider = options.provider ?? this.config.provider ?? 'openai';
-    const modelName = options.model ?? this.config.model ?? 'gpt-4o';
+    // Ours where nobody chose. An explicit provider still selects that
+    // provider — only the unspecified case moved, and it used to send this
+    // SDK's callers to another company by default.
+    const provider = options.provider ?? this.config.provider ?? 'hanzo';
+    const modelName = options.model ?? this.config.model ?? HANZO_MODEL;
 
     switch (provider) {
       case 'anthropic': {
@@ -244,11 +274,12 @@ export class AIClient {
         return ollama(modelName);
       }
 
+      case 'hanzo':
       case 'openai':
       default: {
         const openai = createOpenAI({
           apiKey: this.config.apiKey,
-          baseURL: this.config.baseUrl
+          baseURL: this.config.baseUrl ?? defaultBaseUrl(provider)
         });
         return openai(modelName);
       }
@@ -256,7 +287,7 @@ export class AIClient {
   }
 
   private buildEmbeddingModel(options: AIEmbeddingOptions) {
-    const provider = options.provider ?? this.config.provider ?? 'openai';
+    const provider = options.provider ?? this.config.provider ?? 'hanzo';
     const modelName = options.model ?? this.config.embeddingModel ?? 'text-embedding-3-small';
 
     // Providers without embedding support
@@ -290,19 +321,14 @@ export class AIClient {
         return cohere.textEmbeddingModel(modelName);
       }
 
+      case 'hanzo':
       case 'openai':
       case 'openrouter':
       case 'ollama':
       default: {
         const openai = createOpenAI({
           apiKey: this.config.apiKey ?? (provider === 'ollama' ? 'ollama' : undefined),
-          baseURL:
-            this.config.baseUrl ??
-            (provider === 'openrouter'
-              ? 'https://openrouter.ai/api/v1'
-              : provider === 'ollama'
-                ? 'http://localhost:11434/v1'
-                : undefined)
+          baseURL: this.config.baseUrl ?? defaultBaseUrl(provider)
         });
         return openai.embedding(modelName);
       }

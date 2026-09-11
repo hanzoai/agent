@@ -11,16 +11,11 @@ import (
 
 // The shortest thing this client does: one prompt, one answer.
 //
-// BaseURL is set rather than left to the default. The zero value points at
-// api.openai.com, which is not where this estate's models are — api.hanzo.ai
-// is the one endpoint, and an example that quietly talked to somebody else's
-// would teach the wrong address.
+// A nil config reads the environment: HANZO_API_KEY selects api.hanzo.ai, and
+// a third-party key selects that provider instead. Nothing here names an
+// address, because the default is already ours.
 func ExampleClient_Complete() {
-	client, err := ai.NewClient(&ai.Config{
-		APIKey:  os.Getenv("HANZO_API_KEY"),
-		BaseURL: "https://api.hanzo.ai/v1",
-		Model:   "zen-3",
-	})
+	client, err := ai.NewClient(nil)
 	if err != nil {
 		fmt.Println("config:", err)
 		return
@@ -52,9 +47,11 @@ func ExampleClient_Complete() {
 // Options are variadic and each is independent, which is what lets a caller
 // add one without restating the rest.
 func ExampleClient_Complete_options() {
+	// Spelled out, to show what the nil form above resolves to.
 	client, err := ai.NewClient(&ai.Config{
 		APIKey:  os.Getenv("HANZO_API_KEY"),
 		BaseURL: "https://api.hanzo.ai/v1",
+		Timeout: 30 * time.Second,
 	})
 	if err != nil {
 		fmt.Println("config:", err)
@@ -66,7 +63,7 @@ func ExampleClient_Complete_options() {
 
 	answer, err := client.Complete(ctx, "Explain a hash map.",
 		ai.WithSystem("You answer in exactly one sentence."),
-		ai.WithModel("zen-3"),
+		ai.WithModel("zen3-vl"),
 		ai.WithTemperature(0),
 		ai.WithMaxTokens(120),
 	)
