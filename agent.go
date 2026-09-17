@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	openai "github.com/hanzoai/go-openai"
@@ -179,11 +180,11 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 		plane:     plane,
 		principal: resolve,
 	}
-	app.Post(prefix, s.handleRun)
-	app.Get(prefix+"/presets", s.handlePresets)
-	app.Post(prefix+"/conversations", s.handleRecord)
-	app.Get(prefix+"/conversations", s.handleListConversations)
-	app.Get(prefix+"/conversations/:id", s.handleConversation)
+	app.Raw(http.MethodPost, prefix, s.handleRun)
+	app.Raw(http.MethodGet, prefix+"/presets", s.handlePresets)
+	app.Raw(http.MethodPost, prefix+"/conversations", s.handleRecord)
+	app.Raw(http.MethodGet, prefix+"/conversations", s.handleListConversations)
+	app.Raw(http.MethodGet, prefix+"/conversations/:id", s.handleConversation)
 	s.log.Info("agent mounted", "route", prefix, "presets", len(presets), "brand", deps.Brand)
 	return s, nil
 }
