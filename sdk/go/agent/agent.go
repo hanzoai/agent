@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -342,9 +343,7 @@ func cloneInputMap(input map[string]any) map[string]any {
 		return nil
 	}
 	copied := make(map[string]any, len(input))
-	for k, v := range input {
-		copied[k] = v
-	}
+	maps.Copy(copied, input)
 	return copied
 }
 
@@ -916,7 +915,7 @@ func (a *Agent) sendExecutionStatus(executionID string, payload map[string]any) 
 
 func (a *Agent) postExecutionStatus(ctx context.Context, callbackURL string, payload []byte) error {
 	var lastErr error
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := range 5 {
 		attemptCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		req, err := http.NewRequestWithContext(attemptCtx, http.MethodPost, callbackURL, bytes.NewReader(payload))
 		if err != nil {

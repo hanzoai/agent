@@ -107,14 +107,8 @@ func (f *fakeBase) list(w http.ResponseWriter, r *http.Request) {
 	if page <= 0 {
 		page = 1
 	}
-	from := (page - 1) * per
-	if from > total {
-		from = total
-	}
-	to := from + per
-	if to > total {
-		to = total
-	}
+	from := min((page-1)*per, total)
+	to := min(from+per, total)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(baseList{Items: hits[from:to], TotalItems: total})
@@ -297,7 +291,7 @@ func TestBaseMemoryListPagesToTheEnd(t *testing.T) {
 	backend, _ := backedByFake(t)
 
 	const many = 250 // more than one 200-record page
-	for i := 0; i < many; i++ {
+	for i := range many {
 		if err := backend.Set(ScopeGlobal, "", fmt.Sprintf("k%03d", i), i); err != nil {
 			t.Fatalf("set %d: %v", i, err)
 		}

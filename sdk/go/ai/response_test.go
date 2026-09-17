@@ -73,9 +73,9 @@ func TestResponse_JSON(t *testing.T) {
 	tests := []struct {
 		name        string
 		response    *Response
-		dest        interface{}
+		dest        any
 		wantErr     bool
-		checkResult func(t *testing.T, dest interface{})
+		checkResult func(t *testing.T, dest any)
 	}{
 		{
 			name: "valid JSON content",
@@ -93,7 +93,7 @@ func TestResponse_JSON(t *testing.T) {
 				Age  int    `json:"age"`
 			}{},
 			wantErr: false,
-			checkResult: func(t *testing.T, dest interface{}) {
+			checkResult: func(t *testing.T, dest any) {
 				obj := dest.(*struct {
 					Name string `json:"name"`
 					Age  int    `json:"age"`
@@ -113,7 +113,7 @@ func TestResponse_JSON(t *testing.T) {
 					},
 				},
 			},
-			dest:    &map[string]interface{}{},
+			dest:    &map[string]any{},
 			wantErr: true,
 		},
 		{
@@ -127,7 +127,7 @@ func TestResponse_JSON(t *testing.T) {
 					},
 				},
 			},
-			dest:    &map[string]interface{}{},
+			dest:    &map[string]any{},
 			wantErr: true,
 		},
 		{
@@ -135,7 +135,7 @@ func TestResponse_JSON(t *testing.T) {
 			response: &Response{
 				Choices: []Choice{},
 			},
-			dest:    &map[string]interface{}{},
+			dest:    &map[string]any{},
 			wantErr: true,
 		},
 	}

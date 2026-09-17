@@ -265,13 +265,13 @@ func (d *SSEDecoder) Decode() (StreamChunk, error) {
 	for {
 		// First check if we already have a complete message in accumulated buffer
 		data := string(d.accumulated)
-		if idx := strings.Index(data, "\n\n"); idx >= 0 {
-			message := data[:idx]
-			d.accumulated = []byte(data[idx+2:])
+		if before, after, ok := strings.Cut(data, "\n\n"); ok {
+			message := before
+			d.accumulated = []byte(after)
 
 			// Parse SSE message
-			if strings.HasPrefix(message, "data: ") {
-				jsonData := strings.TrimPrefix(message, "data: ")
+			if after, ok := strings.CutPrefix(message, "data: "); ok {
+				jsonData := after
 				jsonData = strings.TrimSpace(jsonData)
 
 				// Check for stream end
@@ -317,7 +317,7 @@ func SimpleAI(ctx context.Context, prompt string) (string, error) {
 }
 
 // StructuredAI makes an AI call and returns structured data.
-func StructuredAI(ctx context.Context, prompt string, schema interface{}, dest interface{}) error {
+func StructuredAI(ctx context.Context, prompt string, schema any, dest any) error {
 	client, err := NewClient(DefaultConfig())
 	if err != nil {
 		return err

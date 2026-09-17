@@ -1,6 +1,6 @@
 module github.com/hanzoai/agent/sdk/go
 
-go 1.26.4
+go 1.27.1
 
 require (
 	github.com/stretchr/testify v1.8.4

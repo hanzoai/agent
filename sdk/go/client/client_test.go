@@ -282,7 +282,7 @@ func TestUpdateStatus(t *testing.T) {
 
 			payload := types.NodeStatusUpdate{
 				Phase:       "ready",
-				HealthScore: intPtr(100),
+				HealthScore: new(100),
 			}
 
 			resp, err := client.UpdateStatus(context.Background(), "node-1", payload)
@@ -694,10 +694,6 @@ func TestClient_ContextTimeout(t *testing.T) {
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
 
-func intPtr(i int) *int {
-	return &i
-}
-
 // =====================================================
 // API Key Authentication Tests
 // =====================================================
@@ -871,7 +867,7 @@ func TestUpdateStatusWithAPIKey(t *testing.T) {
 
 	payload := types.NodeStatusUpdate{
 		Phase:       "ready",
-		HealthScore: intPtr(100),
+		HealthScore: new(100),
 	}
 
 	resp, err := client.UpdateStatus(context.Background(), "node-1", payload)

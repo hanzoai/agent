@@ -362,7 +362,7 @@ func TestNote_MultipleNotes(t *testing.T) {
 	})
 
 	// Send multiple notes
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		agent.Notef(ctx, "Note %d", i)
 	}
 

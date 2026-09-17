@@ -87,12 +87,12 @@ func TestWithSchema_WithStruct(t *testing.T) {
 	assert.True(t, req.ResponseFormat.JSONSchema.Strict)
 
 	// Verify schema structure
-	var schema map[string]interface{}
+	var schema map[string]any
 	err = json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema)
 	assert.NoError(t, err)
 	assert.Equal(t, "object", schema["type"])
 
-	properties, ok := schema["properties"].(map[string]interface{})
+	properties, ok := schema["properties"].(map[string]any)
 	assert.True(t, ok)
 	assert.Contains(t, properties, "name")
 	assert.Contains(t, properties, "age")
@@ -156,7 +156,7 @@ func TestStructToJSONSchema(t *testing.T) {
 	assert.Equal(t, "User", name)
 	assert.Equal(t, "object", schema["type"])
 
-	properties, ok := schema["properties"].(map[string]interface{})
+	properties, ok := schema["properties"].(map[string]any)
 	assert.True(t, ok)
 	assert.Contains(t, properties, "id")
 	assert.Contains(t, properties, "name")
@@ -187,7 +187,7 @@ func TestStructToJSONSchema_WithPointer(t *testing.T) {
 func TestStructToJSONSchema_InvalidType(t *testing.T) {
 	tests := []struct {
 		name string
-		val  interface{}
+		val  any
 	}{
 		{"string", "not a struct"},
 		{"int", 42},
@@ -206,7 +206,7 @@ func TestStructToJSONSchema_InvalidType(t *testing.T) {
 func TestGoTypeToJSONType(t *testing.T) {
 	tests := []struct {
 		name     string
-		goType   interface{}
+		goType   any
 		expected string
 	}{
 		{"string", "test", "string"},

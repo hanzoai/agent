@@ -113,7 +113,7 @@ func WithJSONMode() Option {
 
 // WithSchema enables structured output with a JSON schema.
 // Accepts either a Go struct (will be converted to JSON schema) or json.RawMessage.
-func WithSchema(schema interface{}) Option {
+func WithSchema(schema any) Option {
 	return func(r *Request) error {
 		var schemaBytes json.RawMessage
 		var schemaName string
@@ -156,9 +156,9 @@ func WithSchema(schema interface{}) Option {
 // structToJSONSchema converts a Go struct to a JSON schema.
 // This is a simplified version - you may want to use a library like
 // github.com/invopop/jsonschema for production.
-func structToJSONSchema(v interface{}) (map[string]interface{}, string, error) {
+func structToJSONSchema(v any) (map[string]any, string, error) {
 	t := reflect.TypeOf(v)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
@@ -170,11 +170,10 @@ func structToJSONSchema(v interface{}) (map[string]interface{}, string, error) {
 		schemaName = "response"
 	}
 
-	properties := make(map[string]interface{})
+	properties := make(map[string]any)
 	required := []string{}
 
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
+	for field := range t.Fields() {
 		jsonTag := field.Tag.Get("json")
 		if jsonTag == "" || jsonTag == "-" {
 			continue
@@ -196,7 +195,7 @@ func structToJSONSchema(v interface{}) (map[string]interface{}, string, error) {
 		}
 
 		// Build property schema
-		prop := make(map[string]interface{})
+		prop := make(map[string]any)
 		prop["type"] = goTypeToJSONType(field.Type)
 
 		// Add description from struct tag if present
@@ -211,7 +210,7 @@ func structToJSONSchema(v interface{}) (map[string]interface{}, string, error) {
 		}
 	}
 
-	schema := map[string]interface{}{
+	schema := map[string]any{
 		"type":                 "object",
 		"properties":           properties,
 		"required":             required,
@@ -223,7 +222,7 @@ func structToJSONSchema(v interface{}) (map[string]interface{}, string, error) {
 
 // goTypeToJSONType converts Go types to JSON schema types.
 func goTypeToJSONType(t reflect.Type) string {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

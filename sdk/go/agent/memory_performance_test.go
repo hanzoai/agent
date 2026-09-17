@@ -67,7 +67,7 @@ func TestInMemoryBackendMemoryPerformance(t *testing.T) {
 		metrics := measureMemory("InMemoryBackend_ManyEntries", 10000, func(n int) {
 			backend := NewInMemoryBackend()
 
-			for i := 0; i < n; i++ {
+			for i := range n {
 				key := fmt.Sprintf("key_%06d", i)
 				// Create ~1KB payload per entry
 				value := strings.Repeat("x", 1000)
@@ -93,7 +93,7 @@ func TestInMemoryBackendMemoryPerformance(t *testing.T) {
 
 			scopes := []MemoryScope{ScopeGlobal, ScopeUser, ScopeSession, ScopeWorkflow}
 
-			for i := 0; i < n; i++ {
+			for i := range n {
 				for _, scope := range scopes {
 					key := fmt.Sprintf("key_%06d", i)
 					value := strings.Repeat("y", 500)
@@ -114,7 +114,7 @@ func TestInMemoryBackendMemoryPerformance(t *testing.T) {
 		backend := NewInMemoryBackend()
 
 		// Add many entries
-		for i := 0; i < 5000; i++ {
+		for i := range 5000 {
 			key := fmt.Sprintf("key_%06d", i)
 			value := strings.Repeat("z", 2000)
 			_ = backend.Set(ScopeSession, "test-session", key, value)
@@ -169,7 +169,7 @@ func BenchmarkInMemoryBackendGet(b *testing.B) {
 	backend := NewInMemoryBackend()
 
 	// Pre-populate with data
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		key := fmt.Sprintf("key_%d", i)
 		value := strings.Repeat("x", 1000)
 		_ = backend.Set(ScopeSession, "bench-session", key, value)
@@ -189,7 +189,7 @@ func BenchmarkInMemoryBackendList(b *testing.B) {
 	backend := NewInMemoryBackend()
 
 	// Pre-populate with data
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		key := fmt.Sprintf("key_%d", i)
 		value := strings.Repeat("x", 100)
 		_ = backend.Set(ScopeSession, "bench-session", key, value)
@@ -210,7 +210,7 @@ func TestMemoryPerformanceReport(t *testing.T) {
 	// Test 1: InMemoryBackend with completions
 	metrics = append(metrics, measureMemory("InMemoryBackend_1K", 1000, func(n int) {
 		backend := NewInMemoryBackend()
-		for i := 0; i < n; i++ {
+		for i := range n {
 			key := fmt.Sprintf("k_%d", i)
 			_ = backend.Set(ScopeSession, "s", key, strings.Repeat("x", 10000))
 		}
@@ -220,7 +220,7 @@ func TestMemoryPerformanceReport(t *testing.T) {
 	metrics = append(metrics, measureMemory("InMemoryBackend_MultiScope", 1000, func(n int) {
 		backend := NewInMemoryBackend()
 		scopes := []MemoryScope{ScopeGlobal, ScopeUser, ScopeSession, ScopeWorkflow}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			for _, scope := range scopes {
 				key := fmt.Sprintf("k_%d", i)
 				_ = backend.Set(scope, fmt.Sprintf("id_%d", i%10), key, strings.Repeat("y", 1000))
@@ -231,7 +231,7 @@ func TestMemoryPerformanceReport(t *testing.T) {
 	// Test 3: High-frequency operations
 	metrics = append(metrics, measureMemory("InMemoryBackend_HighFreq", 10000, func(n int) {
 		backend := NewInMemoryBackend()
-		for i := 0; i < n; i++ {
+		for i := range n {
 			key := fmt.Sprintf("k_%d", i%100)
 			_ = backend.Set(ScopeSession, "s", key, i)
 			_, _, _ = backend.Get(ScopeSession, "s", key)

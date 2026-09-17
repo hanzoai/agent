@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -90,9 +91,7 @@ func GetCLIArgs(ctx context.Context) map[string]string {
 		return nil
 	}
 	out := make(map[string]string, len(cliCtx.args))
-	for k, v := range cliCtx.args {
-		out[k] = v
-	}
+	maps.Copy(out, cliCtx.args)
 	return out
 }
 
@@ -255,9 +254,7 @@ func (a *Agent) parseCLIArgs(args []string) (cliInvocation, error) {
 
 func buildCLIArgMap(inv cliInvocation) map[string]string {
 	args := make(map[string]string, len(inv.setValues)+3)
-	for k, v := range inv.setValues {
-		args[k] = v
-	}
+	maps.Copy(args, inv.setValues)
 	args["__command"] = inv.command
 	args["__output"] = inv.outputFormat
 	if inv.useColor {
@@ -339,9 +336,7 @@ func mergeInput(stdin, file, flag map[string]any, setValues map[string]string) m
 	merged := make(map[string]any)
 
 	for _, source := range []map[string]any{stdin, file, flag} {
-		for k, v := range source {
-			merged[k] = v
-		}
+		maps.Copy(merged, source)
 	}
 
 	for k, v := range setValues {

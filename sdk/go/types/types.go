@@ -90,17 +90,17 @@ type ShutdownRequest struct {
 // It allows agents to emit parent/child execution details without routing work
 // through the control plane.
 type WorkflowExecutionEvent struct {
-	ExecutionID       string                 `json:"execution_id"`
-	WorkflowID        string                 `json:"workflow_id,omitempty"`
-	RunID             string                 `json:"run_id,omitempty"`
-	ReasonerID        string                 `json:"reasoner_id,omitempty"`
-	Type              string                 `json:"type,omitempty"`
-	AgentNodeID       string                 `json:"agent_node_id,omitempty"`
-	Status            string                 `json:"status"`
-	ParentExecutionID *string                `json:"parent_execution_id,omitempty"`
-	ParentWorkflowID  *string                `json:"parent_workflow_id,omitempty"`
-	InputData         map[string]interface{} `json:"input_data,omitempty"`
-	Result            interface{}            `json:"result,omitempty"`
-	Error             string                 `json:"error,omitempty"`
-	DurationMS        *int64                 `json:"duration_ms,omitempty"`
+	ExecutionID       string         `json:"execution_id"`
+	WorkflowID        string         `json:"workflow_id,omitempty"`
+	RunID             string         `json:"run_id,omitempty"`
+	ReasonerID        string         `json:"reasoner_id,omitempty"`
+	Type              string         `json:"type,omitempty"`
+	AgentNodeID       string         `json:"agent_node_id,omitempty"`
+	Status            string         `json:"status"`
+	ParentExecutionID *string        `json:"parent_execution_id,omitempty"`
+	ParentWorkflowID  *string        `json:"parent_workflow_id,omitempty"`
+	InputData         map[string]any `json:"input_data,omitempty"`
+	Result            any            `json:"result,omitempty"`
+	Error             string         `json:"error,omitempty"`
+	DurationMS        *int64         `json:"duration_ms,omitempty"`
 }

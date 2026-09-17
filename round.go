@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -361,11 +362,11 @@ func decodeArgs(raw string) map[string]any {
 // lastUserMessage returns the last user turn's content — the request this round
 // answers, persisted as the incoming user message.
 func lastUserMessage(msgs []inMessage) string {
-	for i := len(msgs) - 1; i >= 0; i-- {
-		role := strings.TrimSpace(msgs[i].Role)
+	for _, msg := range slices.Backward(msgs) {
+		role := strings.TrimSpace(msg.Role)
 		if role == "" || role == openai.ChatMessageRoleUser {
-			if strings.TrimSpace(msgs[i].Content) != "" {
-				return msgs[i].Content
+			if strings.TrimSpace(msg.Content) != "" {
+				return msg.Content
 			}
 		}
 	}

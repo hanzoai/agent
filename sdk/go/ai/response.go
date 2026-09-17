@@ -72,7 +72,7 @@ func (r *Response) Text() string {
 }
 
 // JSON parses the response content as JSON into the provided destination.
-func (r *Response) JSON(dest interface{}) error {
+func (r *Response) JSON(dest any) error {
 	content := r.Text()
 	if content == "" {
 		return fmt.Errorf("empty response content")
@@ -81,6 +81,6 @@ func (r *Response) JSON(dest interface{}) error {
 }
 
 // Into is an alias for JSON for ergonomic usage.
-func (r *Response) Into(dest interface{}) error {
+func (r *Response) Into(dest any) error {
 	return r.JSON(dest)
 }

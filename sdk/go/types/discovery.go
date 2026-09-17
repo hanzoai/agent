@@ -33,22 +33,22 @@ type AgentCapability struct {
 
 // ReasonerCapability contains metadata for a reasoner.
 type ReasonerCapability struct {
-	ID               string                   `json:"id"`
-	Description      *string                  `json:"description,omitempty"`
-	Tags             []string                 `json:"tags,omitempty"`
-	InputSchema      map[string]interface{}   `json:"input_schema,omitempty"`
-	OutputSchema     map[string]interface{}   `json:"output_schema,omitempty"`
-	Examples         []map[string]interface{} `json:"examples,omitempty"`
-	InvocationTarget string                   `json:"invocation_target"`
+	ID               string           `json:"id"`
+	Description      *string          `json:"description,omitempty"`
+	Tags             []string         `json:"tags,omitempty"`
+	InputSchema      map[string]any   `json:"input_schema,omitempty"`
+	OutputSchema     map[string]any   `json:"output_schema,omitempty"`
+	Examples         []map[string]any `json:"examples,omitempty"`
+	InvocationTarget string           `json:"invocation_target"`
 }
 
 // SkillCapability contains metadata for a skill.
 type SkillCapability struct {
-	ID               string                 `json:"id"`
-	Description      *string                `json:"description,omitempty"`
-	Tags             []string               `json:"tags,omitempty"`
-	InputSchema      map[string]interface{} `json:"input_schema,omitempty"`
-	InvocationTarget string                 `json:"invocation_target"`
+	ID               string         `json:"id"`
+	Description      *string        `json:"description,omitempty"`
+	Tags             []string       `json:"tags,omitempty"`
+	InputSchema      map[string]any `json:"input_schema,omitempty"`
+	InvocationTarget string         `json:"invocation_target"`
 }
 
 // CompactDiscoveryResponse is returned when requesting the compact format.
