@@ -163,3 +163,8 @@ control-plane/web/client/node_modules/
 # the negation.
 .hanzo/*
 !.hanzo/workflows/
+
+# Local symlinks to LLM.md
+CLAUDE.md
+AGENTS.md
+GEMINI.md
