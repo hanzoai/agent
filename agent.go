@@ -91,11 +91,12 @@ type ToolPlane interface {
 // the tool listing (never a client-supplied field); Cred is the caller's own
 // credential headers, opaque to agent, replayed by the injected Completer /
 // ToolPlane so an in-process call carries exactly the caller's identity. Name is
-// how the caller is shown to someone whose shared chat they opened (an email or
-// a display name). Admin reports that the caller administers Org, and Person
-// that the caller is a person signed in through the identity provider under a
-// subject nobody else presents — the only callers a shared chat opens for — as
-// the host's identity provider says.
+// how the caller is shown to the people a share involves — the sharer to its
+// readers, a reader to the sharer: the name they signed in with, never an
+// email. Admin reports that the caller administers Org, and Person that the
+// caller is a person signed in through the identity provider under a subject
+// nobody else presents — the only callers a shared chat opens for — as the
+// host's identity provider says.
 type Principal struct {
 	Org     string
 	Project string
@@ -263,5 +264,5 @@ func headerPrincipal(c *zip.Ctx) (Principal, bool) {
 			cred[h] = v
 		}
 	}
-	return Principal{Org: org, User: c.User(), Name: c.UserEmail(), Admin: c.IsOrgAdmin(), Person: c.User() != "", Cred: cred}, true
+	return Principal{Org: org, User: c.User(), Name: c.Header(zip.HeaderUserName), Admin: c.IsOrgAdmin(), Person: c.User() != "", Cred: cred}, true
 }

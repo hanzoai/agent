@@ -236,6 +236,34 @@ func (s *store) conversationMessages(ctx context.Context, org, user, convID stri
 	return items, nil
 }
 
+// whole reports whether the stored transcript is everything a round's caller
+// put in front of the model: no system text of the caller's, no tools of the
+// caller's, and the messages sent equal, turn for turn, the user and assistant
+// turns the conversation holds.
+func (s *store) whole(ctx context.Context, org, user, convID string, body runRequest) (bool, error) {
+	if strings.TrimSpace(body.System) != "" || len(body.Tools) > 0 {
+		return false, nil
+	}
+	held, err := s.conversationMessages(ctx, org, user, convID)
+	if err != nil {
+		return false, err
+	}
+	if len(held) != len(body.Messages) {
+		return false, nil
+	}
+	for i, m := range held {
+		sent := body.Messages[i]
+		role := strings.TrimSpace(sent.Role)
+		if role == "" {
+			role = "user"
+		}
+		if (m.Role != "user" && m.Role != "assistant") || m.Role != role || m.Content != sent.Content {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // owns reports whether a conversation is this member's to list and read: theirs,
 // or one recorded before users were kept.
 func owns(cv *Conversation, user string) bool {

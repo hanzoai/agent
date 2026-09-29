@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -137,9 +138,16 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 		out.Ops = append(out.Ops, op{Name: name, Args: args})
 	}
 
-	model := strings.TrimSpace(resp.Model)
-	if model == "" {
-		model = req.Model
+	// The answer is stamped with the model that produced it only when everything
+	// the caller put in front of that model is in the stored transcript a reader
+	// of this conversation sees. Caller instructions, caller tools, or turns the
+	// store does not hold shaped the answer out of sight, so it is kept unstamped
+	// and a share shows it as the sharer's.
+	model := ""
+	if whole, err := s.store.whole(ctx, p.Org, p.User, conv.Id(), body); err != nil {
+		return zip.Errorf(http.StatusInternalServerError, "agent: provenance: %v", err)
+	} else if whole {
+		model = cmp.Or(strings.TrimSpace(resp.Model), req.Model)
 	}
 	if err := s.persistAssistant(ctx, p.Org, conv, msg, model); err != nil {
 		return zip.Errorf(http.StatusInternalServerError, "agent: persist assistant: %v", err)

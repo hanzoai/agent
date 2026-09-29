@@ -60,12 +60,14 @@ const secretBytes = 32
 // secretLen is the secret's length as unpadded base64url.
 var secretLen = base64.RawURLEncoding.EncodedLen(secretBytes)
 
-// Share is one link to a conversation, kept in the owning org's store.
+// Share is one link to a conversation, kept in the owning org's store. Name is
+// how the member who made it is shown to the people who open it.
 type Share struct {
 	orm.Model[Share]
 	ConversationId string `json:"conversationId"`
 	Org            string `json:"org"`
 	User           string `json:"user"`
+	Name           string `json:"name"`
 	Hash           string `json:"hash"`
 	Access         string `json:"access"`
 	Through        string `json:"through"`
@@ -185,7 +187,7 @@ func (s *store) ownedConversation(org, user, convID string) (orm.DB, *Conversati
 
 // createShare makes a read-only link to a conversation the member owns and
 // returns its secret. The secret is returned once and kept nowhere.
-func (s *store) createShare(ctx context.Context, org, user, convID string) (string, *Share, error) {
+func (s *store) createShare(ctx context.Context, org, user, name, convID string) (string, *Share, error) {
 	db, conv, err := s.ownedConversation(org, user, convID)
 	if err != nil {
 		return "", nil, err
@@ -217,6 +219,7 @@ func (s *store) createShare(ctx context.Context, org, user, convID string) (stri
 	sh.ConversationId = conv.Id()
 	sh.Org = org
 	sh.User = strings.TrimSpace(user)
+	sh.Name = strings.TrimSpace(name)
 	sh.Hash = hash
 	sh.Access = AccessRead
 	sh.Through = through
@@ -476,7 +479,55 @@ func (s *store) admit(ctx context.Context, sh *Share, p Principal) error {
 	v.ConversationId = sh.ConversationId
 	v.User = p.User
 	v.Name = strings.TrimSpace(p.Name)
-	return v.CreateCtx(ctx)
+	v.CreatedAt = time.Now()
+	v.UpdatedAt = v.CreatedAt
+	// First writer wins and a row that is there is never written over, so an open
+	// racing another open, or the owner's removal, cannot rewrite the row.
+	created, err := keys.CreateIfAbsent(ctx, v.Key(), v)
+	if err != nil {
+		return err
+	}
+	if !created {
+		had, err := orm.Get[Viewer](keys, id)
+		if err != nil {
+			return err
+		}
+		if had.Removed {
+			return errShareGone
+		}
+		return nil
+	}
+	// A revoke that ran between the read of the share and this write deleted
+	// every viewer row it found; this one came after, so it goes too.
+	db, err := s.dbFor(sh.Org)
+	if err != nil {
+		return err
+	}
+	now, err := orm.Get[Share](db, sh.Id())
+	if err != nil || now.Revoked {
+		_ = v.DeleteCtx(ctx)
+		return errShareGone
+	}
+	return nil
+}
+
+// viewer reports whether p is a live viewer of sh: recorded, and not removed.
+// A removed viewer is errShareGone.
+func (s *store) viewer(sh *Share, p Principal) (bool, error) {
+	keys, err := s.index()
+	if err != nil {
+		return false, err
+	}
+	v, err := orm.Get[Viewer](keys, viewerID(sh.Org, sh.Id(), p.User))
+	switch {
+	case errors.Is(err, orm.ErrNotFound):
+		return false, nil
+	case err != nil:
+		return false, err
+	case v.Removed:
+		return false, errShareGone
+	}
+	return true, nil
 }
 
 // viewing returns the share id names when user is one of its live viewers, and
@@ -511,7 +562,11 @@ func (s *store) viewing(user, shareID string) (orm.DB, *Share, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if sh.Revoked || sh.Org != v.Org {
+	if sh.Revoked {
+		_ = v.DeleteCtx(context.Background())
+		return nil, nil, errShareGone
+	}
+	if sh.Org != v.Org {
 		return nil, nil, errShareGone
 	}
 	return db, sh, nil
@@ -569,7 +624,7 @@ func (s *store) sharedWith(ctx context.Context, user string) ([]sharedItem, erro
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, sharedItem{Share: sh.Id(), Title: conv.Title, OpenedAt: stamp(v.CreatedAt)})
+		out = append(out, sharedItem{Share: sh.Id(), Title: conv.Title, By: sh.Name, OpenedAt: stamp(v.CreatedAt)})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].OpenedAt > out[j].OpenedAt })
 	return out, nil
@@ -611,10 +666,11 @@ type orgShareOut struct {
 	Viewers        int    `json:"viewers"`
 }
 
-// sharedItem is one chat shared with the caller.
+// sharedItem is one chat shared with the caller, and who shared it.
 type sharedItem struct {
 	Share    string `json:"share"`
 	Title    string `json:"title"`
+	By       string `json:"by"`
 	OpenedAt string `json:"openedAt"`
 }
 
@@ -652,7 +708,7 @@ func readOut(sh *Share, conv *Conversation, turns []*Message) map[string]any {
 		}
 		out = append(out, t)
 	}
-	return map[string]any{"share": sh.Id(), "title": conv.Title, "access": sh.Access, "full": true, "messages": out}
+	return map[string]any{"share": sh.Id(), "title": conv.Title, "by": sh.Name, "access": sh.Access, "full": true, "messages": out}
 }
 
 // signedIn returns the caller's principal when it is a person signed in with an
@@ -687,7 +743,7 @@ func (s *Service) handleShare(c *zip.Ctx) error {
 	if id == "" {
 		return zip.ErrBadRequest("conversation id required")
 	}
-	secret, sh, err := s.store.createShare(c.Context(), p.Org, p.User, id)
+	secret, sh, err := s.store.createShare(c.Context(), p.Org, p.User, p.Name, id)
 	if err != nil {
 		return shareRefusal(err, "conversation")
 	}
@@ -751,18 +807,23 @@ func (s *Service) handleUnview(c *zip.Ctx) error {
 }
 
 // openRequest carries a share secret in the body, so it never sits in a URL an
-// access log keeps.
+// access log keeps. Open is the reader's go-ahead to be recorded as a viewer,
+// given after they were told who shared the chat and that their name is shown
+// to them.
 type openRequest struct {
 	Token string `json:"token"`
+	Open  bool   `json:"open"`
 }
 
 // handleOpenShare opens a link. POST {prefix}/shares/read.
 //
-// A caller with no signed-in principal gets the title and `full: false`, and no
-// turn of the transcript. A signed-in caller, of any org, is recorded as a
-// viewer and reads the whole snapshot; the reader's own org is neither read nor
-// changed. A link that does not open — or that its owner closed to this viewer —
-// answers 404 whatever the reason.
+// A caller who is not a signed-in person gets the title and `full: false`, and
+// no turn of the transcript. A signed-in person who has not opened this link
+// before gets the title, who shared it (`by`) and `confirm: true`, and nothing
+// is recorded; asked again with `open: true`, they are recorded as a viewer —
+// the sharer sees their name — and read the whole snapshot. The owner, and a
+// viewer already recorded, read it at once. A link that does not open — or that
+// its owner closed to this viewer — answers 404 whatever the reason.
 func (s *Service) handleOpenShare(c *zip.Ctx) error {
 	var body openRequest
 	if err := c.Bind(&body); err != nil {
@@ -781,8 +842,19 @@ func (s *Service) handleOpenShare(c *zip.Ctx) error {
 	if !ok {
 		return c.JSON(http.StatusOK, map[string]any{"title": conv.Title, "access": sh.Access, "full": false, "messages": []sharedTurn{}})
 	}
-	if err := s.store.admit(ctx, sh, p); err != nil {
-		return shareRefusal(err, "share")
+	if !owner(sh, p) {
+		seen, err := s.store.viewer(sh, p)
+		if err != nil {
+			return shareRefusal(err, "share")
+		}
+		if !seen && !body.Open {
+			return c.JSON(http.StatusOK, map[string]any{"title": conv.Title, "by": sh.Name, "access": sh.Access, "full": false, "confirm": true, "messages": []sharedTurn{}})
+		}
+		if !seen {
+			if err := s.store.admit(ctx, sh, p); err != nil {
+				return shareRefusal(err, "share")
+			}
+		}
 	}
 	return c.JSON(http.StatusOK, readOut(sh, conv, turns))
 }
