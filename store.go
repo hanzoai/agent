@@ -65,6 +65,8 @@ type store struct {
 	dataDir string
 	mu      sync.Mutex
 	byOrg   map[string]orm.DB
+	// keys is the share index, {dataDir}/shares.db (share.go), opened on first use.
+	keys orm.DB
 }
 
 func newStore(dataDir string) *store {
@@ -104,6 +106,12 @@ func (s *store) closeAll() error {
 			first = err
 		}
 		delete(s.byOrg, k)
+	}
+	if s.keys != nil {
+		if err := s.keys.Close(); err != nil && first == nil {
+			first = err
+		}
+		s.keys = nil
 	}
 	return first
 }

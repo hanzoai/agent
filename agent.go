@@ -115,6 +115,10 @@ type Deps struct {
 	// Principal resolves the validated caller from a request. Defaults to
 	// header-based resolution (X-Org-Id / X-User-Id) when nil.
 	Principal func(*zip.Ctx) (Principal, bool)
+	// Audit appends one record to the host's audit trail for a change to a
+	// share: action is agent.share.create or agent.share.revoke. Optional; a nil
+	// Audit leaves the log line as the only record.
+	Audit func(c *zip.Ctx, action, conversation, share string)
 }
 
 // Service is the mounted orchestrator handle. Its handlers are plain zip
@@ -126,6 +130,7 @@ type Service struct {
 	completer Completer
 	plane     ToolPlane
 	principal func(*zip.Ctx) (Principal, bool)
+	audit     func(c *zip.Ctx, action, conversation, share string)
 }
 
 // DefaultPrefix is where the standalone daemon answers. A host whose own router
@@ -148,6 +153,10 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 //	POST {prefix}/conversations       — record turns in a conversation
 //	GET  {prefix}/conversations       — list the caller-org's conversations
 //	GET  {prefix}/conversations/:id   — one conversation's messages
+//	POST   {prefix}/conversations/:id/shares        — make a read-only link
+//	GET    {prefix}/conversations/:id/shares        — list its live links
+//	DELETE {prefix}/conversations/:id/shares/:share — revoke one
+//	POST   {prefix}/shares/read                     — read a shared conversation
 func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
 	if app == nil {
 		return nil, fmt.Errorf("agent.Mount: nil zip.App")
@@ -179,12 +188,17 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 		completer: completer,
 		plane:     plane,
 		principal: resolve,
+		audit:     deps.Audit,
 	}
 	app.Raw(http.MethodPost, prefix, s.handleRun)
 	app.Raw(http.MethodGet, prefix+"/presets", s.handlePresets)
 	app.Raw(http.MethodPost, prefix+"/conversations", s.handleRecord)
 	app.Raw(http.MethodGet, prefix+"/conversations", s.handleListConversations)
 	app.Raw(http.MethodGet, prefix+"/conversations/:id", s.handleConversation)
+	app.Raw(http.MethodPost, prefix+"/conversations/:id/shares", s.handleShare)
+	app.Raw(http.MethodGet, prefix+"/conversations/:id/shares", s.handleShares)
+	app.Raw(http.MethodDelete, prefix+"/conversations/:id/shares/:share", s.handleUnshare)
+	app.Raw(http.MethodPost, prefix+"/shares/read", s.handleOpenShare)
 	s.log.Info("agent mounted", "route", prefix, "presets", len(presets), "brand", deps.Brand)
 	return s, nil
 }
