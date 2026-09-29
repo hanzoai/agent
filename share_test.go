@@ -345,6 +345,13 @@ func TestARecipientFindsItUnderSharedWithThem(t *testing.T) {
 	if got := sharedWith(t, app, alice); len(got) != 0 {
 		t.Fatalf("the owner lists their own chat as shared with them: %+v", got)
 	}
+	// The owner reads their own share by its id; another member of their org does not.
+	if status, read := readShared(t, app, alice, s.Share.ID); status != http.StatusOK || len(read.Messages) != 2 {
+		t.Fatalf("the owner reads their share by id: %d %+v", status, read)
+	}
+	if status, _ := readShared(t, app, bob, s.Share.ID); status != http.StatusNotFound {
+		t.Fatalf("another member reads alice's share by id: %d", status)
+	}
 }
 
 // Revoking a link ends it for every viewer and makes the secret read as never

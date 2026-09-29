@@ -517,6 +517,25 @@ func (s *store) viewing(user, shareID string) (orm.DB, *Share, error) {
 	return db, sh, nil
 }
 
+// own returns a live share p made, from p's own org store.
+func (s *store) own(p Principal, shareID string) (orm.DB, *Share, error) {
+	db, err := s.dbFor(p.Org)
+	if err != nil {
+		return nil, nil, errShareGone
+	}
+	sh, err := orm.Get[Share](db, strings.TrimSpace(shareID))
+	if errors.Is(err, orm.ErrNotFound) {
+		return nil, nil, errShareGone
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	if sh.Revoked || !owner(sh, p) {
+		return nil, nil, errShareGone
+	}
+	return db, sh, nil
+}
+
 // sharedWith returns the live shares user is a viewer of, most recently opened
 // first, each with its conversation.
 func (s *store) sharedWith(ctx context.Context, user string) ([]sharedItem, error) {
@@ -782,7 +801,8 @@ func (s *Service) handleSharedWithMe(c *zip.Ctx) error {
 	return c.JSON(http.StatusOK, map[string]any{"shared": items})
 }
 
-// handleReadShared reads one chat shared with the caller, without the link.
+// handleReadShared reads one chat shared with the caller, without the link:
+// the caller is one of its viewers, or the owner who made it.
 // GET {prefix}/shared/:share.
 func (s *Service) handleReadShared(c *zip.Ctx) error {
 	p, ok := s.signedIn(c)
@@ -790,6 +810,9 @@ func (s *Service) handleReadShared(c *zip.Ctx) error {
 		return zip.ErrForbidden("a validated principal is required")
 	}
 	db, sh, err := s.store.viewing(p.User, c.Param("share"))
+	if errors.Is(err, errShareGone) {
+		db, sh, err = s.store.own(p, c.Param("share"))
+	}
 	if err != nil {
 		return shareRefusal(err, "share")
 	}
