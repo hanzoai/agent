@@ -90,11 +90,19 @@ type ToolPlane interface {
 // Principal is the VALIDATED caller a round runs as. Org scopes persistence AND
 // the tool listing (never a client-supplied field); Cred is the caller's own
 // credential headers, opaque to agent, replayed by the injected Completer /
-// ToolPlane so an in-process call carries exactly the caller's identity.
+// ToolPlane so an in-process call carries exactly the caller's identity. Name is
+// how the caller is shown to someone whose shared chat they opened (an email or
+// a display name). Admin reports that the caller administers Org, and Person
+// that the caller is a person signed in through the identity provider under a
+// subject nobody else presents — the only callers a shared chat opens for — as
+// the host's identity provider says.
 type Principal struct {
 	Org     string
 	Project string
 	User    string
+	Name    string
+	Admin   bool
+	Person  bool
 	Cred    map[string]string
 }
 
@@ -116,8 +124,9 @@ type Deps struct {
 	// header-based resolution (X-Org-Id / X-User-Id) when nil.
 	Principal func(*zip.Ctx) (Principal, bool)
 	// Audit appends one record to the host's audit trail for a change to a
-	// share: action is agent.share.create or agent.share.revoke. Optional; a nil
-	// Audit leaves the log line as the only record.
+	// share: action is agent.share.create, agent.share.revoke or
+	// agent.share.unview (a viewer removed). Optional; a nil Audit leaves the log
+	// line as the only record.
 	Audit func(c *zip.Ctx, action, conversation, share string)
 }
 
@@ -154,9 +163,14 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 //	GET  {prefix}/conversations       — list the caller-org's conversations
 //	GET  {prefix}/conversations/:id   — one conversation's messages
 //	POST   {prefix}/conversations/:id/shares        — make a read-only link
-//	GET    {prefix}/conversations/:id/shares        — list its live links
+//	GET    {prefix}/conversations/:id/shares        — list its live links and viewers
 //	DELETE {prefix}/conversations/:id/shares/:share — revoke one
-//	POST   {prefix}/shares/read                     — read a shared conversation
+//	DELETE {prefix}/conversations/:id/shares/:share/viewers/:viewer — remove a viewer
+//	POST   {prefix}/shares/read                     — open a link
+//	GET    {prefix}/shared                          — the chats shared with the caller
+//	GET    {prefix}/shared/:share                   — read one of them
+//	GET    {prefix}/shares                          — every live link in the org (admin)
+//	DELETE {prefix}/shares/:share                   — revoke any of them (admin)
 func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane ToolPlane) (*Service, error) {
 	if app == nil {
 		return nil, fmt.Errorf("agent.Mount: nil zip.App")
@@ -198,7 +212,12 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 	app.Raw(http.MethodPost, prefix+"/conversations/:id/shares", s.handleShare)
 	app.Raw(http.MethodGet, prefix+"/conversations/:id/shares", s.handleShares)
 	app.Raw(http.MethodDelete, prefix+"/conversations/:id/shares/:share", s.handleUnshare)
+	app.Raw(http.MethodDelete, prefix+"/conversations/:id/shares/:share/viewers/:viewer", s.handleUnview)
 	app.Raw(http.MethodPost, prefix+"/shares/read", s.handleOpenShare)
+	app.Raw(http.MethodGet, prefix+"/shared", s.handleSharedWithMe)
+	app.Raw(http.MethodGet, prefix+"/shared/:share", s.handleReadShared)
+	app.Raw(http.MethodGet, prefix+"/shares", s.handleOrgShares)
+	app.Raw(http.MethodDelete, prefix+"/shares/:share", s.handleOrgUnshare)
 	s.log.Info("agent mounted", "route", prefix, "presets", len(presets), "brand", deps.Brand)
 	return s, nil
 }
@@ -244,5 +263,5 @@ func headerPrincipal(c *zip.Ctx) (Principal, bool) {
 			cred[h] = v
 		}
 	}
-	return Principal{Org: org, User: c.User(), Cred: cred}, true
+	return Principal{Org: org, User: c.User(), Name: c.UserEmail(), Admin: c.IsOrgAdmin(), Person: c.User() != "", Cred: cred}, true
 }

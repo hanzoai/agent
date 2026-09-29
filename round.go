@@ -90,7 +90,7 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 	}
 
 	if last := lastUserMessage(body.Messages); last != "" {
-		if _, err := s.store.appendMessage(ctx, p.Org, conv.Id(), openai.ChatMessageRoleUser, last, nil); err != nil {
+		if _, err := s.store.appendMessage(ctx, p.Org, conv.Id(), openai.ChatMessageRoleUser, last, "", nil); err != nil {
 			return zip.Errorf(http.StatusInternalServerError, "agent: persist user: %v", err)
 		}
 	}
@@ -137,15 +137,20 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 		out.Ops = append(out.Ops, op{Name: name, Args: args})
 	}
 
-	if err := s.persistAssistant(ctx, p.Org, conv, msg); err != nil {
+	model := strings.TrimSpace(resp.Model)
+	if model == "" {
+		model = req.Model
+	}
+	if err := s.persistAssistant(ctx, p.Org, conv, msg, model); err != nil {
 		return zip.Errorf(http.StatusInternalServerError, "agent: persist assistant: %v", err)
 	}
 	return c.JSON(http.StatusOK, out)
 }
 
-// persistAssistant appends the assistant reply (with its tool calls, if any) and
-// bumps the conversation's UpdatedAt so a listing surfaces recent threads first.
-func (s *Service) persistAssistant(ctx context.Context, org string, conv *Conversation, msg openai.ChatCompletionMessage) error {
+// persistAssistant appends the assistant reply (with its tool calls, if any),
+// marked with the model that produced it, and bumps the conversation's UpdatedAt
+// so a listing surfaces recent threads first.
+func (s *Service) persistAssistant(ctx context.Context, org string, conv *Conversation, msg openai.ChatCompletionMessage, model string) error {
 	var toolCalls json.RawMessage
 	if len(msg.ToolCalls) > 0 {
 		b, err := json.Marshal(msg.ToolCalls)
@@ -154,7 +159,7 @@ func (s *Service) persistAssistant(ctx context.Context, org string, conv *Conver
 		}
 		toolCalls = b
 	}
-	if _, err := s.store.appendMessage(ctx, org, conv.Id(), openai.ChatMessageRoleAssistant, msg.Content, toolCalls); err != nil {
+	if _, err := s.store.appendMessage(ctx, org, conv.Id(), openai.ChatMessageRoleAssistant, msg.Content, model, toolCalls); err != nil {
 		return err
 	}
 	return conv.UpdateCtx(ctx)
@@ -232,7 +237,7 @@ func (s *Service) handleRecord(c *zip.Ctx) error {
 		if role == "" || strings.TrimSpace(m.Content) == "" {
 			continue
 		}
-		if _, err := s.store.appendMessage(ctx, p.Org, conv.Id(), role, m.Content, nil); err != nil {
+		if _, err := s.store.appendMessage(ctx, p.Org, conv.Id(), role, m.Content, "", nil); err != nil {
 			return zip.Errorf(http.StatusInternalServerError, "agent: persist: %v", err)
 		}
 	}
@@ -252,6 +257,7 @@ type msgOut struct {
 	ID        string          `json:"id"`
 	Role      string          `json:"role"`
 	Content   string          `json:"content"`
+	Model     string          `json:"model,omitempty"`
 	ToolCalls json.RawMessage `json:"toolCalls,omitempty"`
 	CreatedAt time.Time       `json:"createdAt"`
 }
@@ -271,7 +277,7 @@ func (s *Service) handleConversation(c *zip.Ctx) error {
 	}
 	out := make([]msgOut, 0, len(msgs))
 	for _, m := range msgs {
-		out = append(out, msgOut{ID: m.Id(), Role: m.Role, Content: m.Content, ToolCalls: m.ToolCalls, CreatedAt: m.CreatedAt})
+		out = append(out, msgOut{ID: m.Id(), Role: m.Role, Content: m.Content, Model: m.Producer, ToolCalls: m.ToolCalls, CreatedAt: m.CreatedAt})
 	}
 	return c.JSON(http.StatusOK, map[string]any{"conversationId": id, "messages": out})
 }

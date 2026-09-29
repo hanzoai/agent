@@ -31,13 +31,16 @@ type Conversation struct {
 // lowercase-d so orm's PascalCase→camelCase filter (ToJSONFieldName lowercases
 // only the first rune) maps Filter("ConversationId=") onto the stored
 // "conversationId" JSON key. ToolCalls is the marshaled model tool_calls (nil for
-// a plain user/assistant turn).
+// a plain user/assistant turn). Producer names the model whose completion this
+// server received and stored as the turn — set only by the round; a turn written
+// through the record endpoint carries none, whatever role it claims.
 type Message struct {
 	orm.Model[Message]
 	ConversationId string          `json:"conversationId"`
 	Org            string          `json:"org"`
 	Role           string          `json:"role"`
 	Content        string          `json:"content"`
+	Producer       string          `json:"model,omitempty"`
 	ToolCalls      json.RawMessage `json:"toolCalls,omitempty"`
 }
 
@@ -171,8 +174,9 @@ func (s *store) loadOrCreateConversation(ctx context.Context, org, user, id, tit
 	return conv, nil
 }
 
-// appendMessage persists one turn in a conversation.
-func (s *store) appendMessage(ctx context.Context, org, convID, role, content string, toolCalls json.RawMessage) (*Message, error) {
+// appendMessage persists one turn in a conversation. model is the model whose
+// completion the turn is, or "" for a turn a caller wrote.
+func (s *store) appendMessage(ctx context.Context, org, convID, role, content, model string, toolCalls json.RawMessage) (*Message, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
@@ -183,6 +187,7 @@ func (s *store) appendMessage(ctx context.Context, org, convID, role, content st
 	m.Org = org
 	m.Role = role
 	m.Content = content
+	m.Producer = model
 	m.ToolCalls = toolCalls
 	if err := m.CreateCtx(ctx); err != nil {
 		return nil, err
