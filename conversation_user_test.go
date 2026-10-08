@@ -25,7 +25,7 @@ func TestConversationsAreTheMembers(t *testing.T) {
 	if _, err := s.loadOrCreateConversation(ctx, org, "", "", "before users were kept"); err != nil {
 		t.Fatal(err)
 	}
-	mine, err := s.listConversations(ctx, org, "bob")
+	mine, err := s.listConversations(ctx, org, "bob", false)
 	if err != nil {
 		t.Fatal(err)
 	}

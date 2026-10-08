@@ -155,9 +155,10 @@ func (s *Service) handleRun(c *zip.Ctx) error {
 	return c.JSON(http.StatusOK, out)
 }
 
-// persistAssistant appends the assistant reply (with its tool calls, if any),
-// marked with the model that produced it, and bumps the conversation's UpdatedAt
-// so a listing surfaces recent threads first.
+// persistAssistant marks the conversation spoken in (`touch`), so a listing
+// surfaces recent threads first, and appends the assistant reply (with its tool
+// calls, if any), marked with the model that produced it. A thread its owner
+// deleted while the model answered keeps no reply.
 func (s *Service) persistAssistant(ctx context.Context, org string, conv *Conversation, msg openai.ChatCompletionMessage, model string) error {
 	var toolCalls json.RawMessage
 	if len(msg.ToolCalls) > 0 {
@@ -167,10 +168,11 @@ func (s *Service) persistAssistant(ctx context.Context, org string, conv *Conver
 		}
 		toolCalls = b
 	}
-	if _, err := s.store.appendMessage(ctx, org, conv.Id(), openai.ChatMessageRoleAssistant, msg.Content, model, toolCalls); err != nil {
+	if alive, err := s.store.touch(ctx, org, conv.Id()); err != nil || !alive {
 		return err
 	}
-	return conv.UpdateCtx(ctx)
+	_, err := s.store.appendMessage(ctx, org, conv.Id(), openai.ChatMessageRoleAssistant, msg.Content, model, toolCalls)
+	return err
 }
 
 // ── read handlers ────────────────────────────────────────────────────────────────
@@ -183,22 +185,81 @@ type convSummary struct {
 	ID        string    `json:"id"`
 	Title     string    `json:"title"`
 	UpdatedAt time.Time `json:"updatedAt"`
+	Pinned    bool      `json:"pinned"`
+	Archived  bool      `json:"archived"`
 }
 
+func summary(cv *Conversation) convSummary {
+	return convSummary{ID: cv.Id(), Title: cv.Title, UpdatedAt: cv.UpdatedAt, Pinned: cv.Pinned, Archived: cv.Archived}
+}
+
+// handleListConversations lists the caller's conversations, pinned first, then
+// most recently spoken in. Archived ones are left out; `?archived=true` lists
+// them alone. GET {prefix}/conversations.
 func (s *Service) handleListConversations(c *zip.Ctx) error {
 	p, err := s.caller(c)
 	if err != nil {
 		return err
 	}
-	items, err := s.store.listConversations(c.Context(), p.Org, p.User)
+	items, err := s.store.listConversations(c.Context(), p.Org, p.User, c.Query("archived") == "true")
 	if err != nil {
 		return zip.Errorf(http.StatusInternalServerError, "agent: list: %v", err)
 	}
 	out := make([]convSummary, 0, len(items))
 	for _, cv := range items {
-		out = append(out, convSummary{ID: cv.Id(), Title: cv.Title, UpdatedAt: cv.UpdatedAt})
+		out = append(out, summary(cv))
 	}
 	return c.JSON(http.StatusOK, map[string]any{"conversations": out})
+}
+
+// handleUpdateConversation renames, pins or archives one of the caller's own
+// conversations: `{title?, pinned?, archived?}`, each absent left as it is.
+// Another member's thread, one recorded with no member, and another org's
+// answer 404. PATCH {prefix}/conversations/:id.
+func (s *Service) handleUpdateConversation(c *zip.Ctx) error {
+	p, err := s.caller(c)
+	if err != nil {
+		return err
+	}
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		return zip.ErrBadRequest("conversation id required")
+	}
+	var body change
+	if err := c.Bind(&body); err != nil {
+		return err
+	}
+	if body.Title == nil && body.Pinned == nil && body.Archived == nil {
+		return zip.ErrBadRequest("nothing to change: send title, pinned or archived")
+	}
+	conv, err := s.store.updateConversation(c.Context(), p.Org, p.User, id, body)
+	if errors.Is(err, errEmptyTitle) {
+		return zip.ErrBadRequest("title must not be empty")
+	}
+	if err != nil {
+		return conversationRefusal(err)
+	}
+	s.record(c, p, "agent.conversation.update", id, "")
+	return c.JSON(http.StatusOK, summary(conv))
+}
+
+// handleDeleteConversation deletes one of the caller's own conversations for
+// good: its turns, and every link to it, which stops opening for everyone it
+// was shared with. Answers 404 as the update does. DELETE {prefix}/conversations/:id.
+func (s *Service) handleDeleteConversation(c *zip.Ctx) error {
+	p, err := s.caller(c)
+	if err != nil {
+		return err
+	}
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		return zip.ErrBadRequest("conversation id required")
+	}
+	if err := s.store.deleteConversation(c.Context(), p.Org, p.User, id); err != nil {
+		return conversationRefusal(err)
+	}
+	s.record(c, p, "agent.conversation.delete", id, "")
+	return c.JSON(http.StatusOK, map[string]any{"id": id, "deleted": true})
 }
 
 // recordRequest is the POST {prefix}/conversations body: the turns to keep, and

@@ -124,10 +124,12 @@ type Deps struct {
 	// Principal resolves the validated caller from a request. Defaults to
 	// header-based resolution (X-Org-Id / X-User-Id) when nil.
 	Principal func(*zip.Ctx) (Principal, bool)
-	// Audit appends one record to the host's audit trail for a change to a
-	// share: action is agent.share.create, agent.share.revoke or
-	// agent.share.unview (a viewer removed). Optional; a nil Audit leaves the log
-	// line as the only record.
+	// Audit appends one record to the host's audit trail for a change a member
+	// makes: to a share, agent.share.create, agent.share.revoke or
+	// agent.share.unview (a viewer removed), each naming the share; to a
+	// conversation, agent.conversation.update (renamed, pinned or archived) or
+	// agent.conversation.delete, with share "". Optional; a nil Audit leaves the
+	// log line as the only record.
 	Audit func(c *zip.Ctx, action, conversation, share string)
 }
 
@@ -163,6 +165,8 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 //	POST {prefix}/conversations       — record turns in a conversation
 //	GET  {prefix}/conversations       — list the caller-org's conversations
 //	GET  {prefix}/conversations/:id   — one conversation's messages
+//	PATCH  {prefix}/conversations/:id — rename, pin or archive it (its owner)
+//	DELETE {prefix}/conversations/:id — delete it, its turns and its links (its owner)
 //	POST   {prefix}/conversations/:id/shares        — make a read-only link
 //	GET    {prefix}/conversations/:id/shares        — list its live links and viewers
 //	DELETE {prefix}/conversations/:id/shares/:share — revoke one
@@ -210,6 +214,8 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 	app.Raw(http.MethodPost, prefix+"/conversations", s.handleRecord)
 	app.Raw(http.MethodGet, prefix+"/conversations", s.handleListConversations)
 	app.Raw(http.MethodGet, prefix+"/conversations/:id", s.handleConversation)
+	app.Raw(http.MethodPatch, prefix+"/conversations/:id", s.handleUpdateConversation)
+	app.Raw(http.MethodDelete, prefix+"/conversations/:id", s.handleDeleteConversation)
 	app.Raw(http.MethodPost, prefix+"/conversations/:id/shares", s.handleShare)
 	app.Raw(http.MethodGet, prefix+"/conversations/:id/shares", s.handleShares)
 	app.Raw(http.MethodDelete, prefix+"/conversations/:id/shares/:share", s.handleUnshare)

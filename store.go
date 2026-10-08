@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -19,12 +20,16 @@ import (
 // isolation (one SQLite file per org) already scopes it; Org is stored for clarity
 // and defense-in-depth. User is the member who opened it: a thread is one
 // person's inside a shared org, so it lists and opens for them alone. A thread
-// recorded before users were kept has none, and stays the org's.
+// recorded before users were kept has none, and stays the org's. Pinned lists it
+// first; Archived takes it out of the list, into the archived one. UpdatedAt is
+// when it was last spoken in: a rename, a pin or an archive does not move it.
 type Conversation struct {
 	orm.Model[Conversation]
-	Org   string `json:"org"`
-	User  string `json:"user"`
-	Title string `json:"title"`
+	Org      string `json:"org"`
+	User     string `json:"user"`
+	Title    string `json:"title"`
+	Pinned   bool   `json:"pinned"`
+	Archived bool   `json:"archived"`
 }
 
 // Message is one persisted turn. ConversationId is deliberately spelled with a
@@ -195,8 +200,9 @@ func (s *store) appendMessage(ctx context.Context, org, convID, role, content, m
 	return m, nil
 }
 
-// listConversations returns the org's conversations, most-recently-updated first.
-func (s *store) listConversations(ctx context.Context, org, user string) ([]*Conversation, error) {
+// listConversations returns the member's conversations that are archived, or
+// that are not: pinned first, then most recently spoken in.
+func (s *store) listConversations(ctx context.Context, org, user string, archived bool) ([]*Conversation, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
@@ -207,12 +213,103 @@ func (s *store) listConversations(ctx context.Context, org, user string) ([]*Con
 	}
 	items := all[:0]
 	for _, cv := range all {
-		if owns(cv, user) {
+		if owns(cv, user) && cv.Archived == archived {
 			items = append(items, cv)
 		}
 	}
-	sort.SliceStable(items, func(i, j int) bool { return items[i].UpdatedAt.After(items[j].UpdatedAt) })
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].Pinned != items[j].Pinned {
+			return items[i].Pinned
+		}
+		return items[i].UpdatedAt.After(items[j].UpdatedAt)
+	})
 	return items, nil
+}
+
+// change is what a member may set on their own conversation; nil leaves it.
+type change struct {
+	Title    *string `json:"title"`
+	Pinned   *bool   `json:"pinned"`
+	Archived *bool   `json:"archived"`
+}
+
+// errEmptyTitle refuses a rename to nothing.
+var errEmptyTitle = errors.New("agent: title must not be empty")
+
+// updateConversation applies a change to a conversation the member owns. The
+// row is written as it stands, so UpdatedAt keeps the last time it was spoken in.
+func (s *store) updateConversation(ctx context.Context, org, user, convID string, ch change) (*Conversation, error) {
+	if ch.Title != nil && strings.TrimSpace(*ch.Title) == "" {
+		return nil, errEmptyTitle
+	}
+	db, conv, err := s.ownedConversation(org, user, convID)
+	if err != nil {
+		return nil, err
+	}
+	if ch.Title != nil {
+		conv.Title = clampTitle(*ch.Title)
+	}
+	if ch.Pinned != nil {
+		conv.Pinned = *ch.Pinned
+	}
+	if ch.Archived != nil {
+		conv.Archived = *ch.Archived
+	}
+	if _, err := db.Put(ctx, conv.Key(), conv); err != nil {
+		return nil, err
+	}
+	return conv, nil
+}
+
+// deleteConversation removes a conversation the member owns, for good: its links
+// first, so none opens once the call returns, then its turns, then the thread.
+// A failure part way leaves the thread listed, and deleting it again finishes.
+func (s *store) deleteConversation(ctx context.Context, org, user, convID string) error {
+	db, conv, err := s.ownedConversation(org, user, convID)
+	if err != nil {
+		return err
+	}
+	shares, err := orm.TypedQuery[Share](db).Filter("ConversationId=", conv.Id()).GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sh := range shares {
+		if err := s.endShare(ctx, sh); err != nil {
+			return err
+		}
+		if err := sh.DeleteCtx(ctx); err != nil {
+			return err
+		}
+	}
+	turns, err := orm.TypedQuery[Message](db).Filter("ConversationId=", conv.Id()).GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	for _, m := range turns {
+		if err := m.DeleteCtx(ctx); err != nil {
+			return err
+		}
+	}
+	return conv.DeleteCtx(ctx)
+}
+
+// touch marks a conversation as spoken in now, and reports whether it is still
+// there. It reads the row again rather than writing back a copy taken when the
+// round began, so a rename, pin or archive made while the model answered
+// stands, and a thread deleted meanwhile stays deleted.
+func (s *store) touch(ctx context.Context, org, convID string) (bool, error) {
+	db, err := s.dbFor(org)
+	if err != nil {
+		return false, err
+	}
+	conv, err := orm.Get[Conversation](db, convID)
+	if errors.Is(err, orm.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, conv.UpdateCtx(ctx)
 }
 
 // conversationMessages returns a conversation's messages in chronological order.
@@ -245,6 +342,10 @@ func (s *store) whole(ctx context.Context, org, user, convID string, body runReq
 		return false, nil
 	}
 	held, err := s.conversationMessages(ctx, org, user, convID)
+	if errors.Is(err, orm.ErrNotFound) {
+		// Deleted while the model answered: there is no transcript to be whole.
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}

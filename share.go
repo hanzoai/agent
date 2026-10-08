@@ -954,12 +954,12 @@ func (s *Service) handleOrgUnshare(c *zip.Ctx) error {
 	return c.JSON(http.StatusOK, map[string]any{"id": share, "revoked": true})
 }
 
-// record reports a change to a share: to the host's audit trail when it gave
+// record reports a change a member makes: to the host's audit trail when it gave
 // one (Deps.Audit), and to the log always. The ids are copied first: a route
 // parameter aliases the request buffer, which is reused once the request ends.
 func (s *Service) record(c *zip.Ctx, p Principal, action, conversation, share string) {
 	conversation, share = strings.Clone(conversation), strings.Clone(share)
-	s.log.Info("agent share", "action", action, "org", p.Org, "user", p.User, "conversation", conversation, "share", share)
+	s.log.Info("agent audit", "action", action, "org", p.Org, "user", p.User, "conversation", conversation, "share", share)
 	if s.audit != nil {
 		s.audit(c, action, conversation, share)
 	}
