@@ -47,6 +47,25 @@ make test                   # Run test suite
 - `docs/networks-and-orchestration.md` — Multi-agent docs
 - `examples/` — Working examples
 
+## Conversations (the Go package at the root)
+The Go module `github.com/hanzoai/agent` (`agent.go`, `round.go`, `store.go`, `share.go`) is
+the chat round and its history that cloud mounts at `/v1/agent/chat`. History is one SQLite
+file per org; inside it a conversation belongs to the person who opened it (`User`, the
+caller's validated subject), never to the org:
+
+- list, read, record and the round see only the caller's own conversations; an id that is
+  another member's, nobody's or absent reads 404 on GET, and a turn sent under it opens a
+  fresh conversation of the caller's, so nothing says whether the id exists;
+- rename, pin, archive, delete and share are the owner's alone;
+- a caller that names no user is refused 403;
+- a conversation recorded before users were kept (2026-09-07) names nobody and is nobody's:
+  only a SuperAdmin (`Principal.Super`) reads one — `GET .../conversations?memberless=true`
+  lists them (403 for anyone else) and GET by id opens one, each audited — and nobody
+  writes, changes or shares it. The store logs each org's count of these the first time it
+  opens the org.
+
+`owns` and `reads` in `store.go` are the rule; every handler goes through them.
+
 ## Patterns
 - OpenAI Chat Completions API compatible (works with 100+ providers via Hanzo Router)
 - Pydantic models for configuration

@@ -14,15 +14,18 @@ import (
 
 	"github.com/hanzoai/orm"
 	ormdb "github.com/hanzoai/orm/db"
+	luxlog "github.com/luxfi/log"
 )
 
 // Conversation is one persisted chat thread. Org is the owning org — physical
 // isolation (one SQLite file per org) already scopes it; Org is stored for clarity
 // and defense-in-depth. User is the member who opened it: a thread is one
-// person's inside a shared org, so it lists and opens for them alone. A thread
-// recorded before users were kept has none, and stays the org's. Pinned lists it
-// first; Archived takes it out of the list, into the archived one. UpdatedAt is
-// when it was last spoken in: a rename, a pin or an archive does not move it.
+// person's inside a shared org, so it lists, opens and takes turns for them
+// alone. A thread recorded before users were kept has none, and nothing names
+// who opened it, so it is nobody's: no member lists, opens or writes it, and a
+// SuperAdmin alone may read it. Pinned lists it first; Archived takes it out of
+// the list, into the archived one. UpdatedAt is when it was last spoken in: a
+// rename, a pin or an archive does not move it.
 type Conversation struct {
 	orm.Model[Conversation]
 	Org      string `json:"org"`
@@ -101,7 +104,27 @@ func (s *store) dbFor(org string) (orm.DB, error) {
 		return nil, fmt.Errorf("agent: open org db: %w", err)
 	}
 	s.byOrg[slug] = db
+	if n, err := memberless(db); err == nil && n > 0 {
+		luxlog.Default().Info("agent: conversations recorded with no member open for nobody but a SuperAdmin", "org", slug, "count", n)
+	}
 	return db, nil
+}
+
+// memberless counts an org's conversations recorded with no member. A row
+// written before users were kept has no `user` key at all, which a JSON filter
+// on "" does not match, so the rows are read and counted here.
+func memberless(db orm.DB) (int, error) {
+	all, err := orm.TypedQuery[Conversation](db).GetAll(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, cv := range all {
+		if nobodys(cv) {
+			n++
+		}
+	}
+	return n, nil
 }
 
 // closeAll closes every open per-org DB. Idempotent; returns the first error.
@@ -146,27 +169,27 @@ func orgSlug(org string) (string, error) {
 	return slug, nil
 }
 
-// loadOrCreateConversation returns the conversation for id (in the org's DB),
-// creating a fresh one when id is empty or not found. Physical per-org isolation
-// means a found row always belongs to org; the Org check is belt-and-suspenders.
+// loadOrCreateConversation returns the member's conversation for id (in the
+// org's DB), and opens a fresh one of theirs when id is empty, not found, or not
+// theirs. An id that is another member's, nobody's or another org's is answered
+// exactly as one that does not exist, so a turn never lands in a thread that is
+// not the caller's and the answer says nothing about whether the id was there.
 func (s *store) loadOrCreateConversation(ctx context.Context, org, user, id, title string) (*Conversation, error) {
+	if strings.TrimSpace(user) == "" {
+		return nil, errNoMember
+	}
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
 	}
 	if id = strings.TrimSpace(id); id != "" {
 		conv, gerr := orm.Get[Conversation](db, id)
-		if gerr == nil && conv.Org == org {
-			if !owns(conv, user) {
-				return nil, orm.ErrNotFound
-			}
+		if gerr == nil && conv.Org == org && owns(conv, user) {
 			return conv, nil
 		}
-		if gerr != nil && gerr != orm.ErrNotFound {
+		if gerr != nil && !errors.Is(gerr, orm.ErrNotFound) {
 			return nil, gerr
 		}
-		// Not found (or a cross-org id, impossible under physical isolation) →
-		// fall through and open a fresh conversation rather than touch a foreign row.
 	}
 	conv := orm.New[Conversation](db)
 	conv.SetId(newID())
@@ -200,9 +223,9 @@ func (s *store) appendMessage(ctx context.Context, org, convID, role, content, m
 	return m, nil
 }
 
-// listConversations returns the member's conversations that are archived, or
-// that are not: pinned first, then most recently spoken in.
-func (s *store) listConversations(ctx context.Context, org, user string, archived bool) ([]*Conversation, error) {
+// listConversations returns the conversations of the org that pass keep, those
+// archived or those not: pinned first, then most recently spoken in.
+func (s *store) listConversations(ctx context.Context, org string, archived bool, keep func(*Conversation) bool) ([]*Conversation, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
 		return nil, err
@@ -213,7 +236,7 @@ func (s *store) listConversations(ctx context.Context, org, user string, archive
 	}
 	items := all[:0]
 	for _, cv := range all {
-		if owns(cv, user) && cv.Archived == archived {
+		if cv.Org == org && keep(cv) && cv.Archived == archived {
 			items = append(items, cv)
 		}
 	}
@@ -312,25 +335,26 @@ func (s *store) touch(ctx context.Context, org, convID string) (bool, error) {
 	return true, conv.UpdateCtx(ctx)
 }
 
-// conversationMessages returns a conversation's messages in chronological order.
-func (s *store) conversationMessages(ctx context.Context, org, user, convID string) ([]*Message, error) {
+// conversationMessages returns a conversation the caller reads (reads) and its
+// messages in chronological order. Any other is not found.
+func (s *store) conversationMessages(ctx context.Context, org, user string, super bool, convID string) (*Conversation, []*Message, error) {
 	db, err := s.dbFor(org)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	conv, err := orm.Get[Conversation](db, convID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if conv.Org != org || !owns(conv, user) {
-		return nil, orm.ErrNotFound
+	if conv.Org != org || !reads(conv, user, super) {
+		return nil, nil, orm.ErrNotFound
 	}
 	items, err := orm.TypedQuery[Message](db).Filter("ConversationId=", convID).GetAll(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sort.SliceStable(items, func(i, j int) bool { return items[i].Id() < items[j].Id() })
-	return items, nil
+	return conv, items, nil
 }
 
 // whole reports whether the stored transcript is everything a round's caller
@@ -341,7 +365,7 @@ func (s *store) whole(ctx context.Context, org, user, convID string, body runReq
 	if strings.TrimSpace(body.System) != "" || len(body.Tools) > 0 {
 		return false, nil
 	}
-	held, err := s.conversationMessages(ctx, org, user, convID)
+	_, held, err := s.conversationMessages(ctx, org, user, false, convID)
 	if errors.Is(err, orm.ErrNotFound) {
 		// Deleted while the model answered: there is no transcript to be whole.
 		return false, nil
@@ -365,11 +389,30 @@ func (s *store) whole(ctx context.Context, org, user, convID string, body runReq
 	return true, nil
 }
 
-// owns reports whether a conversation is this member's to list and read: theirs,
-// or one recorded before users were kept.
+// owns reports whether a conversation is this member's: it names them. One
+// recorded with no member is nobody's, and a caller who names nobody owns
+// nothing. (Regression: a thread with no member was every member's, so every
+// customer of a shared org listed, read and wrote into the threads recorded
+// before users were kept.)
 func owns(cv *Conversation, user string) bool {
-	return cv.User == "" || cv.User == strings.TrimSpace(user)
+	u := strings.TrimSpace(user)
+	return u != "" && strings.TrimSpace(cv.User) == u
 }
+
+// reads reports whether a caller may read a conversation: its owner, or a
+// SuperAdmin for one recorded with no member (nobodys), which no member can be
+// shown to have opened. Reading is all a SuperAdmin gets: a turn, a change or a
+// share still needs the owner.
+func reads(cv *Conversation, user string, super bool) bool {
+	return owns(cv, user) || super && nobodys(cv)
+}
+
+// nobodys reports a conversation recorded with no member.
+func nobodys(cv *Conversation) bool { return strings.TrimSpace(cv.User) == "" }
+
+// errNoMember refuses a write by a caller who names nobody: the thread it opened
+// would be nobody's.
+var errNoMember = errors.New("agent: a member is required")
 
 // clampTitle derives a short, single-line conversation title.
 func clampTitle(s string) string {

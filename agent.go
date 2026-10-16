@@ -96,13 +96,17 @@ type ToolPlane interface {
 // email. Admin reports that the caller administers Org, and Person that the
 // caller is a person signed in through the identity provider under a subject
 // nobody else presents — the only callers a shared chat opens for — as the
-// host's identity provider says.
+// host's identity provider says. User is the subject a conversation is kept
+// under, so it must be one no two people present; a caller without one is
+// refused. Super reports platform authority (the host's SuperAdmin): it alone
+// reads a conversation recorded with no member, and only reads it.
 type Principal struct {
 	Org     string
 	Project string
 	User    string
 	Name    string
 	Admin   bool
+	Super   bool
 	Person  bool
 	Cred    map[string]string
 }
@@ -128,8 +132,10 @@ type Deps struct {
 	// makes: to a share, agent.share.create, agent.share.revoke or
 	// agent.share.unview (a viewer removed), each naming the share; to a
 	// conversation, agent.conversation.update (renamed, pinned or archived) or
-	// agent.conversation.delete, with share "". Optional; a nil Audit leaves the
-	// log line as the only record.
+	// agent.conversation.delete, with share "". A SuperAdmin's read of what no
+	// member owns is recorded too: agent.conversation.read.memberless naming the
+	// conversation, and agent.conversation.list.memberless naming none.
+	// Optional; a nil Audit leaves the log line as the only record.
 	Audit func(c *zip.Ctx, action, conversation, share string)
 }
 
@@ -163,8 +169,8 @@ func Mount(app *zip.App, deps Deps, completer Completer, plane ToolPlane) (*Serv
 //	POST {prefix}                     — run one tool-calling round
 //	GET  {prefix}/presets             — list the preset library
 //	POST {prefix}/conversations       — record turns in a conversation
-//	GET  {prefix}/conversations       — list the caller-org's conversations
-//	GET  {prefix}/conversations/:id   — one conversation's messages
+//	GET  {prefix}/conversations       — list the caller's own conversations
+//	GET  {prefix}/conversations/:id   — one of them, its messages
 //	PATCH  {prefix}/conversations/:id — rename, pin or archive it (its owner)
 //	DELETE {prefix}/conversations/:id — delete it, its turns and its links (its owner)
 //	POST   {prefix}/conversations/:id/shares        — make a read-only link
@@ -237,12 +243,12 @@ func (s *Service) Close() error {
 	return s.store.closeAll()
 }
 
-// caller resolves the validated principal or returns a 403 error. Org is the sole
-// authority for persistence + tool scope; a request without a non-empty org never
-// runs a round.
+// caller resolves the validated principal or returns a 403 error. Org scopes
+// persistence and tools, and User is whose conversation it is: a request that
+// names no org, or names nobody, never lists, reads, records or runs.
 func (s *Service) caller(c *zip.Ctx) (Principal, error) {
 	p, ok := s.principal(c)
-	if !ok || strings.TrimSpace(p.Org) == "" {
+	if !ok || strings.TrimSpace(p.Org) == "" || strings.TrimSpace(p.User) == "" {
 		return Principal{}, zip.ErrForbidden("a validated principal is required")
 	}
 	return p, nil
@@ -270,5 +276,5 @@ func headerPrincipal(c *zip.Ctx) (Principal, bool) {
 			cred[h] = v
 		}
 	}
-	return Principal{Org: org, User: c.User(), Name: c.Header(zip.HeaderUserName), Admin: c.IsOrgAdmin(), Person: c.User() != "", Cred: cred}, true
+	return Principal{Org: org, User: c.User(), Name: c.Header(zip.HeaderUserName), Admin: c.IsOrgAdmin(), Super: c.IsAdmin(), Person: c.User() != "", Cred: cred}, true
 }

@@ -208,20 +208,21 @@ func TestDeleteTakesTheTurnsAndTheLinks(t *testing.T) {
 // member's, another org's and one recorded with no member answer 404, and
 // nothing about it moves.
 func TestOnlyTheOwnerChangesOrDeletes(t *testing.T) {
-	app, trail := shareApp(t, t.TempDir())
+	dir := t.TempDir()
+	old := legacy(t, dir, "acme", "old", "before users were kept")
+	app, trail := shareApp(t, dir)
 	conv := recordTurns(t, app, "acme", "alice", "", inMessage{"user", "alice's"})
 	theirs := recordTurns(t, app, "other", "zed", "", inMessage{"user", "zed's"})
-	nobodys := recordTurns(t, app, "acme", "", "", inMessage{"user", "before users were kept"})
 
 	refused := []struct {
 		w    who
 		conv string
 	}{
-		{bob, conv},      // another member of the org
-		{zed, conv},      // another org, naming an id it does not hold
-		{alice, theirs},  // another org's id, asked in alice's own
-		{alice, nobodys}, // recorded with no member: nobody's to change
-		{boss, conv},     // an org admin is not the owner
+		{bob, conv},     // another member of the org
+		{zed, conv},     // another org, naming an id it does not hold
+		{alice, theirs}, // another org's id, asked in alice's own
+		{alice, old},    // recorded with no member: nobody's to change
+		{boss, conv},    // an org admin is not the owner
 	}
 	for _, r := range refused {
 		if status, _, raw := patch(t, app, r.w, r.conv, map[string]any{"pinned": true, "archived": true, "title": "taken"}); status != http.StatusNotFound {
@@ -239,8 +240,8 @@ func TestOnlyTheOwnerChangesOrDeletes(t *testing.T) {
 	}
 
 	mine := listed(t, app, alice, false)
-	if len(mine) != 2 {
-		t.Fatalf("alice lists %d", len(mine))
+	if !same(ids(mine), []string{conv}) {
+		t.Fatalf("alice lists %v; want her own alone", ids(mine))
 	}
 	for _, c := range mine {
 		if c.Pinned || c.Archived || c.Title == "taken" {

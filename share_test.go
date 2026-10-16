@@ -55,6 +55,7 @@ func shareAppWith(t *testing.T, dir string, completer *stubCompleter) (*zip.App,
 type who struct {
 	org, user, name, email string
 	admin                  bool
+	super                  bool
 }
 
 var (
@@ -86,6 +87,9 @@ func call(t *testing.T, app *zip.App, method, path string, w who, body any) (int
 		rq.Header.Set("X-User-Name", w.name)
 		if w.admin {
 			rq.Header.Set("X-User-IsOrgAdmin", "true")
+		}
+		if w.super {
+			rq.Header.Set("X-User-IsAdmin", "true")
 		}
 	}
 	resp, err := app.Fiber().Test(rq, fiber.TestConfig{Timeout: 0})
@@ -540,8 +544,9 @@ func TestOnlyTheOwnerShares(t *testing.T) {
 // empty user it was recorded under. (Regression: owns(cv, "") admitted every
 // member of the org.)
 func TestAUserlessConversationIsNobodysToShare(t *testing.T) {
-	app, _ := shareApp(t, t.TempDir())
-	conv := recordTurns(t, app, "acme", "", "", inMessage{"user", "internal q"}, inMessage{"assistant", "internal a"})
+	dir := t.TempDir()
+	conv := legacy(t, dir, "acme", "internal", "internal q")
+	app, _ := shareApp(t, dir)
 	for _, w := range []who{bob, carol, boss, {org: "acme"}} {
 		if status, raw := call(t, app, http.MethodPost, "/v1/agent/conversations/"+conv+"/shares", w, nil); status != http.StatusNotFound && status != http.StatusForbidden {
 			t.Fatalf("%q shared a userless thread: %d %s", w.user, status, raw)

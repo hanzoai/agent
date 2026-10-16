@@ -195,19 +195,32 @@ func summary(cv *Conversation) convSummary {
 
 // handleListConversations lists the caller's conversations, pinned first, then
 // most recently spoken in. Archived ones are left out; `?archived=true` lists
-// them alone. GET {prefix}/conversations.
+// them alone. `?memberless=true` lists instead the org's conversations recorded
+// with no member, for a SuperAdmin alone (403 for anyone else), and each such
+// list is audited. GET {prefix}/conversations.
 func (s *Service) handleListConversations(c *zip.Ctx) error {
 	p, err := s.caller(c)
 	if err != nil {
 		return err
 	}
-	items, err := s.store.listConversations(c.Context(), p.Org, p.User, c.Query("archived") == "true")
+	keep := func(cv *Conversation) bool { return owns(cv, p.User) }
+	memberless := c.Query("memberless") == "true"
+	if memberless {
+		if !p.Super {
+			return zip.ErrForbidden("only a SuperAdmin lists conversations recorded with no member")
+		}
+		keep = nobodys
+	}
+	items, err := s.store.listConversations(c.Context(), p.Org, c.Query("archived") == "true", keep)
 	if err != nil {
 		return zip.Errorf(http.StatusInternalServerError, "agent: list: %v", err)
 	}
 	out := make([]convSummary, 0, len(items))
 	for _, cv := range items {
 		out = append(out, summary(cv))
+	}
+	if memberless {
+		s.record(c, p, "agent.conversation.list.memberless", "", "")
 	}
 	return c.JSON(http.StatusOK, map[string]any{"conversations": out})
 }
@@ -319,6 +332,9 @@ func conversationRefusal(err error) error {
 	if errors.Is(err, orm.ErrNotFound) {
 		return zip.ErrNotFound("conversation not found")
 	}
+	if errors.Is(err, errNoMember) {
+		return zip.ErrForbidden("a validated principal is required")
+	}
 	return zip.Errorf(http.StatusInternalServerError, "agent: conversation: %v", err)
 }
 
@@ -340,9 +356,14 @@ func (s *Service) handleConversation(c *zip.Ctx) error {
 	if id == "" {
 		return zip.ErrBadRequest("conversation id required")
 	}
-	msgs, err := s.store.conversationMessages(c.Context(), p.Org, p.User, id)
+	conv, msgs, err := s.store.conversationMessages(c.Context(), p.Org, p.User, p.Super, id)
 	if err != nil {
 		return conversationRefusal(err)
+	}
+	if !owns(conv, p.User) {
+		// A SuperAdmin reading a conversation recorded with no member: a privileged
+		// read of what nobody can be shown to have written, so it is on the trail.
+		s.record(c, p, "agent.conversation.read.memberless", id, "")
 	}
 	out := make([]msgOut, 0, len(msgs))
 	for _, m := range msgs {

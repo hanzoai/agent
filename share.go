@@ -179,7 +179,7 @@ func (s *store) ownedConversation(org, user, convID string) (orm.DB, *Conversati
 	if err != nil {
 		return nil, nil, err
 	}
-	if conv.Org != org || conv.User == "" || conv.User != user {
+	if conv.Org != org || !owns(conv, user) {
 		return nil, nil, orm.ErrNotFound
 	}
 	return db, conv, nil
