@@ -66,6 +66,10 @@ caller's validated subject), never to the org:
 
 `owns` and `reads` in `store.go` are the rule; every handler goes through them.
 
+One org name, one file: `orgSlug` keeps a lowercase name as its own directory (every org IAM
+holds) and gives any other name its lowercase form plus `~` and a SHA-256 prefix of its exact
+bytes, so `Acme` and `acme` never share a store. Every read still compares `Org` exactly.
+
 ## Patterns
 - OpenAI Chat Completions API compatible (works with 100+ providers via Hanzo Router)
 - Pydantic models for configuration

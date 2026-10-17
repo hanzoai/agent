@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -147,26 +149,36 @@ func (s *store) closeAll() error {
 	return first
 }
 
-// orgSlug reduces an org id to a filesystem-safe, lowercase slug and refuses any
-// value that could traverse out of the data dir. Org is the VALIDATED principal
-// value (never a client-supplied field), but this fails closed on anything unsafe.
+// orgSlug names the directory an org's history lives in: one org name, one
+// directory, and never two. A lowercase name is its own slug, which is every
+// org IAM holds and the name its files already have. Any other name is its
+// lowercase form plus "~" and a SHA-256 prefix of its exact bytes: no lowercase
+// name carries a "~", and two names that differ only in case differ in the hash,
+// so neither can open the other's file. (Regression: the slug was the name
+// lowercased, so `Acme` and `acme` shared one file.) A value that could leave
+// the data dir, or carries whitespace a caller would trim, is refused. Org is
+// the VALIDATED principal value (never a client-supplied field), but this fails
+// closed on anything unsafe.
 func orgSlug(org string) (string, error) {
-	org = strings.TrimSpace(org)
 	if org == "" {
 		return "", fmt.Errorf("agent: empty org")
 	}
-	slug := strings.ToLower(org)
-	for _, r := range slug {
+	lower := strings.ToLower(org)
+	for _, r := range lower {
 		switch {
 		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
 		default:
 			return "", fmt.Errorf("agent: unsafe org %q", org)
 		}
 	}
-	if slug == "." || slug == ".." || strings.Contains(slug, "..") {
+	if lower == "." || lower == ".." || strings.Contains(lower, "..") {
 		return "", fmt.Errorf("agent: unsafe org %q", org)
 	}
-	return slug, nil
+	if lower == org {
+		return org, nil
+	}
+	sum := sha256.Sum256([]byte(org))
+	return lower + "~" + hex.EncodeToString(sum[:8]), nil
 }
 
 // loadOrCreateConversation returns the member's conversation for id (in the

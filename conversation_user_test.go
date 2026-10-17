@@ -257,3 +257,42 @@ func mustDB(t *testing.T, s *store, org string) orm.DB {
 	}
 	return db
 }
+
+// Two orgs whose names differ only in case are two orgs: each keeps its history
+// in a file of its own, and a member of one, under the same user id, lists, reads
+// and writes none of the other's. A lowercase name keeps the file it always had.
+// (Regression: the slug lowercased the name, so `Acme` and `acme` shared a file.)
+func TestOrgsThatDifferInCaseShareNothing(t *testing.T) {
+	for _, c := range []struct{ org, slug string }{{"acme", "acme"}, {"hanzo", "hanzo"}, {"a.b_c-1", "a.b_c-1"}} {
+		if got, err := orgSlug(c.org); err != nil || got != c.slug {
+			t.Fatalf("orgSlug(%q) = %q, %v; want %q (an existing org keeps its file)", c.org, got, err, c.slug)
+		}
+	}
+	upper, _ := orgSlug("Acme")
+	shout, _ := orgSlug("ACME")
+	if upper == "acme" || shout == "acme" || upper == shout {
+		t.Fatalf("slugs collide: Acme=%q ACME=%q acme=%q", upper, shout, "acme")
+	}
+	for _, bad := range []string{"", " acme", "acme ", "../x", "a/b", "..", "ac me"} {
+		if _, err := orgSlug(bad); err == nil {
+			t.Fatalf("orgSlug(%q) was accepted", bad)
+		}
+	}
+
+	app, _ := shareApp(t, t.TempDir())
+	low := who{org: "acme", user: "alice", name: "Alice"}
+	up := who{org: "Acme", user: "alice", name: "Alice"}
+	conv := recordTurns(t, app, low.org, low.user, "", inMessage{"user", "lowercase acme's words"})
+	if got := listed(t, app, up, false); len(got) != 0 {
+		t.Fatalf("Acme lists acme's: %v", ids(got))
+	}
+	if status, _ := call(t, app, http.MethodGet, "/v1/agent/conversations/"+conv, up, nil); status != http.StatusNotFound {
+		t.Fatalf("Acme opens acme's conversation: %d", status)
+	}
+	if got := recordTurns(t, app, up.org, up.user, conv, inMessage{"user", "Acme writes"}); got == conv {
+		t.Fatal("Acme wrote into acme's conversation")
+	}
+	if got := listed(t, app, low, false); len(got) != 1 || got[0].ID != conv {
+		t.Fatalf("acme lists %v; want its one", ids(got))
+	}
+}
