@@ -168,6 +168,11 @@ func (s *store) index() (orm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("agent: open share index: %w", err)
 	}
+	if s.shares != nil {
+		if err := s.carryShares(db); err != nil {
+			return nil, fmt.Errorf("agent: carry the share index: %w", err)
+		}
+	}
 	s.keys = db
 	return db, nil
 }
