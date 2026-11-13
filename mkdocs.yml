@@ -34,6 +34,11 @@ nav:
           - multi_agent.md
           - models.md
           - config.md
+    - Extras:
+          - extras-tee.md
+          - extras-marketplace.md
+          - extras-zap.md
+          - extras-cli.md
     - API Reference:
           - Agents:
                 - ref/index.md

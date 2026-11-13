@@ -24,6 +24,19 @@ agent/
 - **Docs**: MkDocs
 - **Build**: uv, Makefile
 
+## Optional extras (docs/extras-*.md)
+`pip install "hanzo-agent[tee|marketplace|zap|cli|web3|full]"`. Each of the first four has a page; the pages
+state what the code does, run against the code, and list what is broken. Status on main:
+
+| Extra | Module | Imports | Notes |
+|---|---|---|---|
+| `tee` | `agents.extensions.tee` | yes | mock executor only (`exec` in-process); `verify()` checks signature is non-empty; `create_attestation_verifier_tool()` raises; `cryptography` is not imported |
+| `marketplace` | `agents.extensions.marketplace` | **no** | wrong relative import of `Web3Agent` (lives in `extensions/web3`), `__init__` exports an undefined `create_marketplace_tools`; in-memory book, `aiohttp`/`redis` unused |
+| `zap` | `agents.zap` | yes | client for a ZAP gateway over length-prefixed JSON (not Cap'n Proto); `create_zap_tools()` returns tools on a closed connection; `list_resources()` raises `TypeError` |
+| `cli` | `agents.extensions.cli` | **no** | imports the removed `hanzo_agents.core`; `click`/`rich` unused; no console script |
+
+When one of these is fixed, delete its "Known gaps" lines in the page.
+
 ## Build & Run
 ```bash
 uv sync --all-extras        # Install with all extras
