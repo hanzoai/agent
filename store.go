@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -80,10 +81,14 @@ type store struct {
 	byOrg   map[string]orm.DB
 	// keys is the share index, {dataDir}/shares.db (share.go), opened on first use.
 	keys orm.DB
+	// open and shares are the host's databases (Deps.Open, Deps.Shares); nil means
+	// agent's own files under dataDir.
+	open   func(org string) (*sql.DB, error)
+	shares func() (*sql.DB, error)
 }
 
-func newStore(dataDir string) *store {
-	return &store{dataDir: dataDir, byOrg: map[string]orm.DB{}}
+func newStore(dataDir string, open func(string) (*sql.DB, error), shares func() (*sql.DB, error)) *store {
+	return &store{dataDir: dataDir, byOrg: map[string]orm.DB{}, open: open, shares: shares}
 }
 
 // dbFor returns the org's DB, opening + migrating it on first use.
@@ -97,13 +102,25 @@ func (s *store) dbFor(org string) (orm.DB, error) {
 	if db, ok := s.byOrg[slug]; ok {
 		return db, nil
 	}
-	path := filepath.Join(s.dataDir, "orgs", slug, "agent.db")
-	db, err := orm.OpenSQLite(&ormdb.SQLiteDBConfig{
-		Path:   path,
-		Config: ormdb.SQLiteConfig{BusyTimeout: 5000, JournalMode: "WAL"},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("agent: open org db: %w", err)
+	var db orm.DB
+	if s.open != nil {
+		raw, err := s.open(org)
+		if err != nil {
+			return nil, fmt.Errorf("agent: open org db: %w", err)
+		}
+		if db, err = orm.AdaptSQL(raw); err != nil {
+			return nil, fmt.Errorf("agent: open org db: %w", err)
+		}
+	} else {
+		path := filepath.Join(s.dataDir, "orgs", slug, "agent.db")
+		var err error
+		db, err = orm.OpenSQLite(&ormdb.SQLiteDBConfig{
+			Path:   path,
+			Config: ormdb.SQLiteConfig{BusyTimeout: 5000, JournalMode: "WAL"},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("agent: open org db: %w", err)
+		}
 	}
 	s.byOrg[slug] = db
 	if n, err := memberless(db); err == nil && n > 0 {

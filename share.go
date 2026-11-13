@@ -35,6 +35,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -151,10 +152,19 @@ func (s *store) index() (orm.DB, error) {
 	if s.keys != nil {
 		return s.keys, nil
 	}
-	db, err := orm.OpenSQLite(&ormdb.SQLiteDBConfig{
-		Path:   filepath.Join(s.dataDir, "shares.db"),
-		Config: ormdb.SQLiteConfig{BusyTimeout: 5000, JournalMode: "WAL"},
-	})
+	var db orm.DB
+	var err error
+	if s.shares != nil {
+		var raw *sql.DB
+		if raw, err = s.shares(); err == nil {
+			db, err = orm.AdaptSQL(raw)
+		}
+	} else {
+		db, err = orm.OpenSQLite(&ormdb.SQLiteDBConfig{
+			Path:   filepath.Join(s.dataDir, "shares.db"),
+			Config: ormdb.SQLiteConfig{BusyTimeout: 5000, JournalMode: "WAL"},
+		})
+	}
 	if err != nil {
 		return nil, fmt.Errorf("agent: open share index: %w", err)
 	}

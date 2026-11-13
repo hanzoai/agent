@@ -14,7 +14,7 @@ import (
 // naming no member, with one turn. It returns the conversation's id.
 func legacy(t *testing.T, dir, org, title, turn string) string {
 	t.Helper()
-	s := newStore(dir)
+	s := newStore(dir, nil, nil)
 	defer s.closeAll()
 	db, err := s.dbFor(org)
 	if err != nil {
@@ -204,7 +204,7 @@ func TestConversationsAreTheMembers(t *testing.T) {
 	dir := t.TempDir()
 	const org = "acme"
 	old := legacy(t, dir, org, "before users were kept", "old words")
-	s := newStore(dir)
+	s := newStore(dir, nil, nil)
 	defer s.closeAll()
 	alice, err := s.loadOrCreateConversation(ctx, org, "alice", "", "alice asks")
 	if err != nil {

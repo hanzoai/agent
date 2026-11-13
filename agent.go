@@ -22,6 +22,7 @@ package agent
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -137,6 +138,14 @@ type Deps struct {
 	// conversation, and agent.conversation.list.memberless naming none.
 	// Optional; a nil Audit leaves the log line as the only record.
 	Audit func(c *zip.Ctx, action, conversation, share string)
+	// Open, when set, is where an org's conversations live: it answers the org's
+	// database, which the host owns and closes (agent only borrows it). Unset,
+	// agent keeps an SQLite file per org under DataDir. org is the validated org
+	// name; the host maps it to its own namespace.
+	Open func(org string) (*sql.DB, error)
+	// Shares, when set, is where the share index lives (hash to org, and the
+	// viewers), under the same contract as Open. Unset, it is {DataDir}/shares.db.
+	Shares func() (*sql.DB, error)
 }
 
 // Service is the mounted orchestrator handle. Its handlers are plain zip
@@ -209,7 +218,7 @@ func MountAt(app *zip.App, prefix string, deps Deps, completer Completer, plane 
 	s := &Service{
 		log:       luxlog.Default().New("subsystem", "agent"),
 		model:     strings.TrimSpace(deps.Model),
-		store:     newStore(deps.DataDir),
+		store:     newStore(deps.DataDir, deps.Open, deps.Shares),
 		completer: completer,
 		plane:     plane,
 		principal: resolve,
