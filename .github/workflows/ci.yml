@@ -33,6 +33,10 @@ jobs:
   go:
     runs-on: [linux-amd64]
     timeout-minutes: 30
+    env:
+      # Only the two modules not served by proxy.golang.org; public modules stay
+      # verified against sum.golang.org.
+      GOPRIVATE: github.com/luxfi/crypto,github.com/zap-proto/mcp
     steps:
       - uses: actions/checkout@v4
 
@@ -40,6 +44,23 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      # github.com/luxfi/crypto and github.com/zap-proto/mcp are private on
+      # GitHub and mirrored publicly on git.hanzo.ai; use a fresh global config
+      # so runner state and checkout extraheaders cannot shadow the rewrite.
+      - name: Route private Go modules to git.hanzo.ai
+        run: |
+          set -euo pipefail
+          cfg="${RUNNER_TEMP}/gitconfig-go"
+          : > "${cfg}"
+          GIT_CONFIG_GLOBAL="${cfg}" git config --global \
+            url."https://git.hanzo.ai/luxfi/crypto".insteadOf "https://github.com/luxfi/crypto"
+          GIT_CONFIG_GLOBAL="${cfg}" git config --global \
+            url."https://git.hanzo.ai/zap-proto/mcp".insteadOf "https://github.com/zap-proto/mcp"
+          {
+            echo "GIT_CONFIG_GLOBAL=${cfg}"
+            echo "GIT_CONFIG_NOSYSTEM=1"
+          } >> "${GITHUB_ENV}"
 
       # gofmt reports on stdout and exits 0, so the file list is the check.
       - name: gofmt
