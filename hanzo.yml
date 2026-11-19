@@ -1,10 +1,16 @@
 # hanzoai/agent — the agent runtime: a Go module at the root and a Python SDK
 # (uv) beside it.
 #
-# No `images:`. ghcr.io/hanzoai/agent is built by
-# .github/workflows/deploy.yml from Dockerfile.sdk — the sole producer of that
-# image, restored there for exactly that reason. Declaring `images:` here would
-# make it the second.
+# ghcr.io/hanzoai/agent:sdk-* is built from Dockerfile.sdk via hanzoai/ci's
+# build door (mode: delegate), since the rootless git-runner pods carry no
+# /var/run/docker.sock for local buildx/binfmt.
+images:
+  - name: agent-sdk
+    context: .
+    dockerfile: Dockerfile.sdk
+    repo: ghcr.io/hanzoai/agent
+    tag-suffix: sdk
+    platforms: [linux/amd64, linux/arm64]
 #
 # The Go half only. That is measured, not assumed: on this tree `go build`,
 # `go vet` and `go test ./...` all pass, while `make sync` cannot resolve
