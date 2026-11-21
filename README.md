@@ -2,6 +2,8 @@
 
 # Hanzo Agent SDK
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/agent&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/agent&ref=main&action=edit) [![Deploy with Hanzo](https://hanzo.app/badges/deploy-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/agent&ref=main&action=deploy)
+
 `hanzo-agent` runs agents in Python. An agent is a model reached over an
 OpenAI-compatible `/v1` API, its instructions, and the Python functions it may
 call as tools. It installs as `hanzo-agent` and imports as `agents`.
