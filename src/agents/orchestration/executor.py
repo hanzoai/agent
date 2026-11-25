@@ -5,18 +5,19 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from collections import deque
+from copy import copy
+from dataclasses import dataclass, field, replace
+from typing import Any, Dict, List
 
 from ..exceptions import AgentsException
 from ..logger import logger
 from ..network.network import AgentNetwork
-from ..result import RunResult
-from ..run_context import RunContextWrapper, TContext
+from ..run_context import TContext
 from ..state.store import StateStore
 from ..tracing import custom_span
-from .ui_stream import UIStreamer, StreamUpdate, UpdateType
-from .workflow import Workflow, WorkflowStep, StepType
+from .ui_stream import StreamUpdate, UIStreamer, UpdateType
+from .workflow import StepType, Workflow, WorkflowStep
 
 
 @dataclass
@@ -63,6 +64,10 @@ class ExecutionResult:
         return 0.0
 
 
+class _NestedStepFailed(AgentsException):
+    """A child exhausted its own retry budget or could not run."""
+
+
 class WorkflowExecutor:
     """Executes workflows with proper orchestration."""
     
@@ -90,8 +95,7 @@ class WorkflowExecutor:
         self.max_retries = max_retries
         self.execution_id = str(uuid.uuid4())
         self.ui_streamer: UIStreamer | None = None
-        self._step_outputs: Dict[str, Any] = {}
-        self._completed_steps: set[str] = set()
+        self._result: ExecutionResult | None = None
         
     def set_ui_streamer(self, streamer: UIStreamer) -> None:
         """Set UI streamer for updates."""
@@ -111,77 +115,59 @@ class WorkflowExecutor:
         Returns:
             Execution result
         """
-        # Validate workflow
-        errors = self.workflow.validate()
-        if errors:
-            return ExecutionResult(
-                workflow_id=self.workflow.id,
-                execution_id=self.execution_id,
-                success=False,
-                error=f"Workflow validation failed: {'; '.join(errors)}",
-                total_steps=len(self.workflow.steps),
-            )
-            
-        # Initialize result
+        workflow = self._expand_parallel_steps()
+        errors = workflow.validate()
         result = ExecutionResult(
-            workflow_id=self.workflow.id,
+            workflow_id=workflow.id,
             execution_id=self.execution_id,
             success=True,
-            total_steps=len(self.workflow.steps),
+            total_steps=len(workflow.steps),
         )
-        
-        # Create execution context
-        exec_context = ExecutionContext(
-            input=input,
-            context=context,
-            executor=self,
-        )
-        
-        # Send start update
+        self._result = result
+        if errors:
+            result.success = False
+            result.error = f"Workflow validation failed: {'; '.join(errors)}"
+            return result
+
         await self._send_update(
             UpdateType.WORKFLOW_START,
             {
-                "workflow_id": self.workflow.id,
-                "workflow_name": self.workflow.name,
-                "total_steps": len(self.workflow.steps),
+                "workflow_id": workflow.id,
+                "workflow_name": workflow.name,
+                "total_steps": result.total_steps,
             },
         )
-        
+
         try:
-            # Get execution order
-            execution_batches = self.workflow.get_execution_order()
-            
-            # Execute batches
-            for batch in execution_batches:
-                # Execute steps in parallel within batch
-                batch_tasks = []
-                
-                for step_id in batch:
-                    if step_id in self._completed_steps:
-                        continue
-                        
-                    step = self.workflow.steps[step_id]
-                    task = self._execute_step(step, exec_context, result)
-                    batch_tasks.append(task)
-                    
-                # Wait for batch to complete
-                if batch_tasks:
-                    await asyncio.gather(*batch_tasks, return_exceptions=True)
-                    
-            # Set final output
-            if self.workflow.entry_point:
-                result.output = self._step_outputs.get(self.workflow.entry_point)
-                
+            exec_context = ExecutionContext(
+                input=input,
+                context=context,
+                workflow=workflow,
+                result=result,
+                descendants=self._step_descendants(workflow),
+            )
+            outcomes = await self._execute_batches(list(workflow.steps), exec_context)
+            for outcome in outcomes.values():
+                if outcome is not None and not outcome.success:
+                    result.success = False
+                    result.error = f"Step '{outcome.step_id}' failed: {outcome.error}"
+                    break
+
+            entry = result.step_results.get(workflow.entry_point) if workflow.entry_point else None
+            if entry is not None and entry.success:
+                result.output = entry.output
+
+        except asyncio.CancelledError:
+            result.success = False
+            result.error = "Workflow cancelled"
+            raise
         except Exception as e:
             logger.error(f"Workflow execution failed: {e}")
             result.success = False
             result.error = str(e)
-            
         finally:
             result.end_time = time.time()
-            result.steps_completed = len(self._completed_steps)
-            
-            # Send completion update
+            result.steps_completed = sum(step.success for step in result.step_results.values())
             await self._send_update(
                 UpdateType.WORKFLOW_COMPLETE,
                 {
@@ -191,19 +177,121 @@ class WorkflowExecutor:
                     "error": result.error,
                 },
             )
-            
+
         return result
-        
+
+    def _expand_parallel_steps(self) -> Workflow:
+        """Resolve children from both parallel builders in a per-run workflow copy."""
+        workflow = copy(self.workflow)
+        workflow.steps = self.workflow.steps.copy()
+        pending = deque(workflow.steps.values())
+        while pending:
+            step = pending.popleft()
+            if (
+                step.type != StepType.PARALLEL
+                or "step_ids" in step.config
+                or "steps" not in step.config
+            ):
+                continue
+
+            children = step.config["steps"]
+            for child in children:
+                if child.id not in workflow.steps:
+                    workflow.steps[child.id] = child
+                    pending.append(child)
+            config = {**step.config, "step_ids": [child.id for child in children]}
+            workflow.steps[step.id] = replace(step, config=config)
+        return workflow
+
+    @staticmethod
+    def _step_descendants(workflow: Workflow) -> dict[str, set[str]]:
+        """Collect inline children and error handlers under their owners."""
+        descendants: dict[str, set[str]] = {}
+        visiting: set[str] = set()
+
+        def collect(step_id: str) -> set[str]:
+            if step_id in visiting:
+                raise AgentsException(f"Circular nested step reference at '{step_id}'")
+            if step_id in descendants:
+                return descendants[step_id]
+
+            visiting.add(step_id)
+            step = workflow.steps[step_id]
+            children = [step.on_error] if step.on_error else []
+            if step.type == StepType.PARALLEL:
+                children.extend(step.config["step_ids"])
+            elif step.type == StepType.CONDITIONAL:
+                children.append(step.config["if_true"])
+                if step.config.get("if_false"):
+                    children.append(step.config["if_false"])
+            elif step.type == StepType.LOOP:
+                children.append(step.config["body"])
+
+            nested = set()
+            for child_id in children:
+                if child_id in workflow.steps:
+                    nested.add(child_id)
+                    nested.update(collect(child_id))
+            visiting.remove(step_id)
+            descendants[step_id] = nested
+            return nested
+
+        for step_id in workflow.steps:
+            collect(step_id)
+        return descendants
+
+    @staticmethod
+    def _execution_order(step_ids: list[str], context: ExecutionContext) -> list[list[str]]:
+        """Reuse the workflow sorter after mapping nested dependencies to their owners."""
+        nested = set().union(*(context.descendants[step_id] for step_id in step_ids))
+        groups = {
+            step_id: {step_id} | context.descendants[step_id]
+            for step_id in step_ids
+            if step_id not in nested
+        }
+        owners: dict[str, set[str]] = {}
+        for owner, group in groups.items():
+            for step_id in group:
+                owners.setdefault(step_id, set()).add(owner)
+
+        scoped_workflow = copy(context.workflow)
+        scoped_workflow.steps = {}
+        for owner, group in groups.items():
+            dependencies: set[str] = set()
+            for step_id in group:
+                for dependency in context.workflow.steps[step_id].depends_on:
+                    dependencies.update(owners.get(dependency, ()))
+            dependencies.discard(owner)
+            scoped_workflow.steps[owner] = replace(
+                context.workflow.steps[owner], depends_on=sorted(dependencies)
+            )
+        return scoped_workflow.get_execution_order()
+
+    async def _execute_batches(
+        self, step_ids: list[str], context: ExecutionContext
+    ) -> dict[str, StepResult | None]:
+        outcomes: dict[str, StepResult | None] = {}
+        for batch in self._execution_order(step_ids, context):
+            outcomes.update(dict.fromkeys(batch))
+            steps = [context.workflow.steps[step_id] for step_id in batch]
+            tasks = [
+                self._execute_step(step, context)
+                for step in steps
+                if context.dependencies_succeeded(step)
+            ]
+            for outcome in await asyncio.gather(*tasks, return_exceptions=True):
+                if isinstance(outcome, BaseException):
+                    raise outcome
+                outcomes[outcome.step_id] = outcome
+        return outcomes
+
     async def _execute_step(
         self,
         step: WorkflowStep,
         context: ExecutionContext,
-        result: ExecutionResult,
-    ) -> None:
+    ) -> StepResult:
         """Execute a single step."""
-        step_result = StepResult(step_id=step.id)
-        
-        # Send step start update
+        step_result = StepResult(step_id=step.id, success=False)
         await self._send_update(
             UpdateType.STEP_START,
             {
@@ -212,56 +300,38 @@ class WorkflowExecutor:
                 "step_type": step.type.value,
             },
         )
-        
+
         try:
-            # Execute based on step type
-            if step.type == StepType.AGENT:
-                output = await self._execute_agent_step(step, context)
-            elif step.type == StepType.PARALLEL:
-                output = await self._execute_parallel_step(step, context)
-            elif step.type == StepType.CONDITIONAL:
-                output = await self._execute_conditional_step(step, context)
-            elif step.type == StepType.LOOP:
-                output = await self._execute_loop_step(step, context)
-            elif step.type == StepType.TRANSFORM:
-                output = await self._execute_transform_step(step, context)
-            elif step.type == StepType.WAIT:
-                output = await self._execute_wait_step(step, context)
-            else:
-                raise AgentsException(f"Unknown step type: {step.type}")
-                
-            # Store output
-            self._step_outputs[step.id] = output
-            self._completed_steps.add(step.id)
-            
-            step_result.success = True
-            step_result.output = output
-            
-        except Exception as e:
-            logger.error(f"Step {step.id} failed: {e}")
-            step_result.success = False
-            step_result.error = str(e)
-            
-            # Retry if configured
-            if self.retry_failed and step_result.retries < self.max_retries:
-                step_result.retries += 1
-                logger.info(f"Retrying step {step.id} (attempt {step_result.retries})")
-                
-                # Recursive retry
-                await asyncio.sleep(2 ** step_result.retries)  # Exponential backoff
-                await self._execute_step(step, context, result)
-                return
-                
-            # Handle error step
-            if step.on_error and step.on_error in self.workflow.steps:
-                error_step = self.workflow.steps[step.on_error]
-                await self._execute_step(error_step, context, result)
-                
+            while True:
+                try:
+                    step_result.output = await self._execute_step_attempt(step, context)
+                except Exception as e:
+                    logger.error(f"Step {step.id} failed: {e}")
+                    if (
+                        isinstance(e, _NestedStepFailed)
+                        or not self.retry_failed
+                        or step_result.retries >= self.max_retries
+                    ):
+                        step_result.error = str(e)
+                        break
+                    retry = step_result.retries + 1
+                    logger.info(f"Retrying step {step.id} (retry {retry})")
+                    await asyncio.sleep(2 ** retry)
+                    step_result.retries = retry
+                else:
+                    step_result.success = True
+                    break
+
+            if not step_result.success and step.on_error is not None:
+                handler = context.workflow.steps.get(step.on_error)
+                if handler is not None:
+                    await self._execute_step(handler, context)
+        except asyncio.CancelledError:
+            step_result.error = step_result.error or "Step cancelled"
+            raise
         finally:
             step_result.end_time = time.time()
-            result.step_results[step.id] = step_result
-            
-            # Send step complete update
+            context.result.step_results[step.id] = step_result
             await self._send_update(
                 UpdateType.STEP_COMPLETE,
                 {
@@ -271,7 +341,24 @@ class WorkflowExecutor:
                     "error": step_result.error,
                 },
             )
-            
+        return step_result
+
+    async def _execute_step_attempt(self, step: WorkflowStep, context: ExecutionContext) -> Any:
+        if step.type == StepType.AGENT:
+            return await self._execute_agent_step(step, context)
+        if step.type == StepType.PARALLEL:
+            return await self._execute_parallel_step(step, context)
+        if step.type == StepType.CONDITIONAL:
+            return await self._execute_conditional_step(step, context)
+        if step.type == StepType.LOOP:
+            return await self._execute_loop_step(step, context)
+        if step.type == StepType.TRANSFORM:
+            return await self._execute_transform_step(step, context)
+        if step.type == StepType.WAIT:
+            await self._execute_wait_step(step, context)
+            return None
+        raise AgentsException(f"Unknown step type: {step.type}")
+
     async def _execute_agent_step(
         self,
         step: WorkflowStep,
@@ -282,7 +369,7 @@ class WorkflowExecutor:
         agent_name = config["agent_name"]
         
         # Get input
-        step_input = context.get_step_input(step.id)
+        step_input = context.get_step_input(step)
         
         # Apply input transform if provided
         if transform := config.get("input_transform"):
@@ -312,26 +399,16 @@ class WorkflowExecutor:
     ) -> List[Any]:
         """Execute parallel steps."""
         step_ids = step.config["step_ids"]
-        
-        # Execute sub-steps in parallel
-        tasks = []
-        for step_id in step_ids:
-            if step_id in self.workflow.steps:
-                sub_step = self.workflow.steps[step_id]
-                task = self._execute_step(sub_step, context, None)
-                tasks.append(task)
-                
-        # Wait for all to complete
-        await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Collect outputs
-        outputs = []
-        for step_id in step_ids:
-            if step_id in self._step_outputs:
-                outputs.append(self._step_outputs[step_id])
-                
-        return outputs
-        
+        try:
+            outcomes = await self._execute_batches(step_ids, context)
+        except Exception as e:
+            raise _NestedStepFailed(str(e)) from e
+        return [
+            self._child_output(step_id, outcomes[step_id])
+            for step_id in step_ids
+            if step_id in outcomes
+        ]
+
     async def _execute_conditional_step(
         self,
         step: WorkflowStep,
@@ -343,7 +420,7 @@ class WorkflowExecutor:
         if_false = step.config.get("if_false")
         
         # Evaluate condition
-        step_input = context.get_step_input(step.id)
+        step_input = context.get_step_input(step)
         
         if callable(condition):
             result = condition(step_input)
@@ -351,17 +428,10 @@ class WorkflowExecutor:
             # Simple expression evaluation
             result = eval(condition, {"input": step_input})
             
-        # Execute appropriate branch
-        if result and if_true in self.workflow.steps:
-            branch_step = self.workflow.steps[if_true]
-            await self._execute_step(branch_step, context, None)
-            return self._step_outputs.get(if_true)
-        elif not result and if_false and if_false in self.workflow.steps:
-            branch_step = self.workflow.steps[if_false]
-            await self._execute_step(branch_step, context, None)
-            return self._step_outputs.get(if_false)
-            
-        return None
+        selected = if_true if result else if_false
+        if selected is None:
+            return None
+        return await self._execute_child(selected, context)
         
     async def _execute_loop_step(
         self,
@@ -374,7 +444,7 @@ class WorkflowExecutor:
         max_iterations = step.config.get("max_iterations")
         
         # Get items to loop over
-        step_input = context.get_step_input(step.id)
+        step_input = context.get_step_input(step)
         
         if callable(over):
             items = over(step_input)
@@ -386,22 +456,32 @@ class WorkflowExecutor:
         if max_iterations:
             items = items[:max_iterations]
             
-        # Execute body for each item
         outputs = []
-        
         for i, item in enumerate(items):
-            if body in self.workflow.steps:
-                # Set loop context
-                context.set_loop_item(item, i)
-                
-                body_step = self.workflow.steps[body]
-                await self._execute_step(body_step, context, None)
-                
-                if body in self._step_outputs:
-                    outputs.append(self._step_outputs[body])
-                    
+            iteration = replace(context, _loop_item=item, _loop_index=i)
+            outputs.append(await self._execute_child(body, iteration))
         return outputs
-        
+
+    async def _execute_child(self, step_id: str, context: ExecutionContext) -> Any:
+        step = context.workflow.steps.get(step_id)
+        if step is None:
+            raise _NestedStepFailed(f"Unknown nested step '{step_id}'")
+        if not context.dependencies_succeeded(step):
+            raise _NestedStepFailed(f"Dependencies of step '{step_id}' did not succeed")
+        try:
+            outcome = await self._execute_step(step, context)
+        except Exception as e:
+            raise _NestedStepFailed(f"Step '{step_id}' failed: {e}") from e
+        return self._child_output(step_id, outcome)
+
+    @staticmethod
+    def _child_output(step_id: str, outcome: StepResult | None) -> Any:
+        if outcome is None:
+            raise _NestedStepFailed(f"Step '{step_id}' did not run")
+        if not outcome.success:
+            raise _NestedStepFailed(f"Step '{step_id}' failed: {outcome.error}")
+        return outcome.output
+
     async def _execute_transform_step(
         self,
         step: WorkflowStep,
@@ -409,7 +489,7 @@ class WorkflowExecutor:
     ) -> Any:
         """Execute transform step."""
         transform = step.config["transform"]
-        step_input = context.get_step_input(step.id)
+        step_input = context.get_step_input(step)
         
         if callable(transform):
             return transform(step_input)
@@ -438,14 +518,22 @@ class WorkflowExecutor:
             
     def get_status(self) -> Dict[str, Any]:
         """Get current execution status."""
+        result = self._result
+        outputs = {}
+        if result is not None:
+            outputs = {
+                step_id: outcome.output
+                for step_id, outcome in result.step_results.items()
+                if outcome.success
+            }
         return {
             "execution_id": self.execution_id,
             "workflow_id": self.workflow.id,
             "workflow_name": self.workflow.name,
-            "steps_completed": len(self._completed_steps),
-            "total_steps": len(self.workflow.steps),
-            "completed_steps": list(self._completed_steps),
-            "outputs": self._step_outputs,
+            "steps_completed": len(outputs),
+            "total_steps": result.total_steps if result is not None else len(self.workflow.steps),
+            "completed_steps": list(outputs),
+            "outputs": outputs,
         }
 
 
@@ -454,39 +542,32 @@ class ExecutionContext:
     """Context for workflow execution."""
     
     input: Any
-    context: TContext | None
-    executor: WorkflowExecutor
+    context: Any
+    workflow: Workflow
+    result: ExecutionResult
+    descendants: dict[str, set[str]]
     _loop_item: Any = None
-    _loop_index: int = 0
-    
-    def get_step_input(self, step_id: str) -> Any:
+    _loop_index: int | None = None
+
+    def dependencies_succeeded(self, step: WorkflowStep) -> bool:
+        return all(
+            step_id in self.result.step_results and self.result.step_results[step_id].success
+            for step_id in step.depends_on
+        )
+
+    def get_step_input(self, step: WorkflowStep) -> Any:
         """Get input for a step."""
-        step = self.executor.workflow.steps[step_id]
-        
-        # If step has dependencies, use their outputs
         if step.depends_on:
-            # Single dependency: use its output directly
-            if len(step.depends_on) == 1:
-                dep_id = step.depends_on[0]
-                if dep_id in self.executor._step_outputs:
-                    return self.executor._step_outputs[dep_id]
-                    
-            # Multiple dependencies: collect as list
-            else:
-                outputs = []
-                for dep_id in step.depends_on:
-                    if dep_id in self.executor._step_outputs:
-                        outputs.append(self.executor._step_outputs[dep_id])
+            outputs = [
+                self.result.step_results[step_id].output
+                for step_id in step.depends_on
+                if step_id in self.result.step_results and self.result.step_results[step_id].success
+            ]
+            if len(step.depends_on) > 1:
                 return outputs
-                
-        # Check if in loop context
-        if self._loop_item is not None:
+            if outputs:
+                return outputs[0]
+
+        if self._loop_index is not None:
             return self._loop_item
-            
-        # Default to workflow input
         return self.input
-        
-    def set_loop_item(self, item: Any, index: int) -> None:
-        """Set current loop item."""
-        self._loop_item = item
-        self._loop_index = index
