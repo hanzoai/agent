@@ -92,25 +92,45 @@ async def test_mocked_multi_agent_handoff_and_tool_loop() -> None:
 
 
 def test_autonomous_bug_solver_wires_hanzo_provider_and_workflow_steps() -> None:
-    """Bug solver attaches HanzoModelProvider models and chains TestWriter before QualityReviewer."""
+    """Bug solver attaches HanzoModelProvider models and wires the review refinement gate."""
     from agents import OpenAIChatCompletionsModel
+    from agents.orchestration.workflow import StepType
     from examples import autonomous_bug_solver as abs_mod
 
     for node in abs_mod.bug_solver_network.nodes.values():
         assert isinstance(node.agent.model, OpenAIChatCompletionsModel)
         assert node.agent.model._client is abs_mod.model_provider.client
 
-    steps = list(abs_mod.bug_solving_workflow.steps.values())
-    agent_order = [step.config["agent_name"] for step in steps]
-    assert agent_order == [
+    primary_steps = [
+        abs_mod.analyze_step,
+        abs_mod.design_step,
+        abs_mod.fix_step,
+        abs_mod.test_step,
+        abs_mod.review_step,
+    ]
+    assert [step.config["agent_name"] for step in primary_steps] == [
         "BugAnalyzer",
         "SolutionDesigner",
         "CodeFixer",
         "TestWriter",
         "QualityReviewer",
     ]
-    for prev, curr in zip(steps, steps[1:]):
+    for prev, curr in zip(primary_steps, primary_steps[1:]):
         assert curr.depends_on == [prev.id]
+
+    assert abs_mod.refinement_gate.type == StepType.CONDITIONAL
+    assert abs_mod.refinement_gate.depends_on == [abs_mod.review_step.id]
+    assert abs_mod.refinement_gate.config["if_true"] == abs_mod.refinement_pipeline.id
+    assert abs_mod.refinement_gate.config["if_false"] is None
+    assert abs_mod.refinement_pipeline.type == StepType.PARALLEL
+    assert abs_mod.refinement_pipeline.config["step_ids"] == [
+        abs_mod.refine_fix_step.id,
+        abs_mod.refine_test_step.id,
+        abs_mod.re_review_step.id,
+    ]
+    assert abs_mod.refine_fix_step.depends_on == [abs_mod.review_step.id]
+    assert abs_mod.refine_test_step.depends_on == [abs_mod.refine_fix_step.id]
+    assert abs_mod.re_review_step.depends_on == [abs_mod.refine_test_step.id]
 
 
 @pytest.mark.asyncio
@@ -150,7 +170,7 @@ async def test_fix_and_test_serializes_json_and_runs_tests(tmp_path: Path, monke
 
 @pytest.mark.asyncio
 async def test_solve_bug_runs_workflow_with_mocked_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """solve_bug executes all five workflow steps using WorkflowExecutor."""
+    """solve_bug executes the five primary workflow steps when QualityReviewer approves."""
     from unittest.mock import AsyncMock
     from types import SimpleNamespace
     from examples import autonomous_bug_solver as abs_mod
@@ -159,6 +179,8 @@ async def test_solve_bug_runs_workflow_with_mocked_network(monkeypatch: pytest.M
 
     async def fake_network_run(input, *, starting_agent=None, context=None, **kwargs):
         called_agents.append(starting_agent)
+        if starting_agent == "QualityReviewer":
+            return SimpleNamespace(final_output="APPROVED: all checks pass")
         return SimpleNamespace(final_output=f"{starting_agent} done")
 
     monkeypatch.setattr(abs_mod.bug_solver_network, "run", AsyncMock(side_effect=fake_network_run))
@@ -172,4 +194,55 @@ async def test_solve_bug_runs_workflow_with_mocked_network(monkeypatch: pytest.M
         "TestWriter",
         "QualityReviewer",
     ]
+
+
+@pytest.mark.asyncio
+async def test_solve_bug_refines_when_quality_reviewer_requests_changes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """solve_bug runs refinement steps when changes are requested and fails if still rejected."""
+    from unittest.mock import AsyncMock
+    from types import SimpleNamespace
+    from examples import autonomous_bug_solver as abs_mod
+
+    called_agents: list[str] = []
+    review_calls = 0
+
+    async def fake_run_then_approve(input, *, starting_agent=None, context=None, **kwargs):
+        nonlocal review_calls
+        called_agents.append(starting_agent)
+        if starting_agent == "QualityReviewer":
+            review_calls += 1
+            if review_calls == 1:
+                return SimpleNamespace(final_output="CHANGES_REQUESTED: handle empty list")
+            return SimpleNamespace(final_output="APPROVED: fixed")
+        return SimpleNamespace(final_output=f"{starting_agent} done")
+
+    monkeypatch.setattr(abs_mod.bug_solver_network, "run", AsyncMock(side_effect=fake_run_then_approve))
+    approved_result = await abs_mod.solve_bug("ValueError: boom")
+    assert approved_result.success is True
+    assert called_agents == [
+        "BugAnalyzer",
+        "SolutionDesigner",
+        "CodeFixer",
+        "TestWriter",
+        "QualityReviewer",
+        "CodeFixer",
+        "TestWriter",
+        "QualityReviewer",
+    ]
+
+    called_agents.clear()
+
+    async def fake_run_always_reject(input, *, starting_agent=None, context=None, **kwargs):
+        called_agents.append(starting_agent)
+        if starting_agent == "QualityReviewer":
+            return SimpleNamespace(final_output="CHANGES_REQUESTED: still broken")
+        return SimpleNamespace(final_output=f"{starting_agent} done")
+
+    monkeypatch.setattr(abs_mod.bug_solver_network, "run", AsyncMock(side_effect=fake_run_always_reject))
+    rejected_result = await abs_mod.solve_bug("ValueError: boom")
+    assert rejected_result.success is False
+    assert "QualityReviewer" in (rejected_result.error or "")
+    assert len(called_agents) == 8
 

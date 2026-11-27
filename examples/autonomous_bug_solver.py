@@ -32,6 +32,7 @@ from agents.network import (
     create_network,
 )
 from agents.orchestration import Step, Workflow, WorkflowExecutor
+from agents.orchestration.workflow import StepType, WorkflowStep
 from agents.state import InMemoryStateStore
 
 # Configure Hanzo backend
@@ -285,6 +286,7 @@ quality_reviewer = Agent(
     2. Check for potential issues
     3. Verify tests are adequate
     4. Ensure code quality standards
+    5. Conclude with "APPROVED" if everything passes, or "CHANGES_REQUESTED: <issues>" if work remains
     
     Be constructive but thorough in your review.""",
     tools=[read_file, run_tests],
@@ -326,6 +328,22 @@ bug_solver_network = create_network(
 
 # ==================== Workflow ====================
 
+_REVIEW_CHANGE_MARKERS = (
+    "changes_requested",
+    "requests changes",
+    "request changes",
+    "needs changes",
+    "needs work",
+    "not approved",
+)
+
+
+def review_requests_changes(review_output: Any) -> bool:
+    """Return True when the quality reviewer asks for follow-up changes."""
+    text = str(review_output or "").lower()
+    return any(marker in text for marker in _REVIEW_CHANGE_MARKERS)
+
+
 # Define the bug-solving workflow using Workflow + Step
 bug_solving_workflow = Workflow(
     name="Autonomous Bug Solver",
@@ -341,8 +359,44 @@ test_step.depends_on = [fix_step.id]
 review_step = Step.agent("QualityReviewer", "Review the complete fix and tests")
 review_step.depends_on = [test_step.id]
 
-for _step in (analyze_step, design_step, fix_step, test_step, review_step):
+refine_fix_step = Step.agent("CodeFixer", "Address reviewer feedback and refine the fix")
+refine_fix_step.depends_on = [review_step.id]
+refine_test_step = Step.agent("TestWriter", "Update and run regression tests for the refined fix")
+refine_test_step.depends_on = [refine_fix_step.id]
+re_review_step = Step.agent("QualityReviewer", "Re-review the refined fix and updated tests")
+re_review_step.depends_on = [refine_test_step.id]
+
+for _step in (
+    analyze_step,
+    design_step,
+    fix_step,
+    test_step,
+    review_step,
+    refine_fix_step,
+    refine_test_step,
+    re_review_step,
+):
     bug_solving_workflow.add_step(_step)
+
+refinement_pipeline = WorkflowStep(
+    name="RefinementPipeline",
+    type=StepType.PARALLEL,
+    config={"step_ids": [refine_fix_step.id, refine_test_step.id, re_review_step.id]},
+    depends_on=[review_step.id],
+)
+bug_solving_workflow.add_step(refinement_pipeline)
+
+refinement_gate = WorkflowStep(
+    name="RefinementCheck",
+    type=StepType.CONDITIONAL,
+    config={
+        "condition": review_requests_changes,
+        "if_true": refinement_pipeline.id,
+        "if_false": None,
+    },
+    depends_on=[review_step.id],
+)
+bug_solving_workflow.add_step(refinement_gate)
 bug_solving_workflow.entry_point = analyze_step.id
 
 
@@ -362,6 +416,17 @@ async def solve_bug(error_message: str, context: Dict[str, Any] | None = None):
         f"Analyze and fix the following error:\n{error_message}",
         context=initial_state,
     )
+    final_review_id = (
+        re_review_step.id if re_review_step.id in result.step_results else review_step.id
+    )
+    final_review = result.step_results.get(final_review_id)
+    if (
+        result.success
+        and final_review is not None
+        and review_requests_changes(final_review.output)
+    ):
+        result.success = False
+        result.error = "QualityReviewer still requested changes after refinement"
     print(f"Workflow success: {result.success}")
     if result.error:
         print(f"Workflow error: {result.error}")
