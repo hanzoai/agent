@@ -8,6 +8,8 @@ guided tour, this shows how multiple specialized agents can work together
 to understand, diagnose, and fix bugs in code.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import os
@@ -361,6 +363,11 @@ async def solve_bug(error_message: str, context: Dict[str, Any] | None = None):
         context=initial_state,
     )
     print(f"Workflow success: {result.success}")
+    if result.error:
+        print(f"Workflow error: {result.error}")
+    for step_id, step_result in result.step_results.items():
+        if step_result.output is not None:
+            print(f"[{step_id}] {step_result.output}")
     return result
 
 
