@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 import os
 
-from openai import AsyncHanzo AI
+from openai import AsyncOpenAI
 
 from agents import (
     Agent,
     Model,
     ModelProvider,
-    Hanzo AIChatCompletionsModel,
+    OpenAIChatCompletionsModel,
     RunConfig,
     Runner,
     function_tool,
@@ -32,13 +32,13 @@ others. Steps:
 2. Create a ModelProvider that uses the custom client.
 3. Use the ModelProvider in calls to Runner.run(), only when we want to use the custom LLM provider.
 """
-client = AsyncHanzo AI(base_url=BASE_URL, api_key=API_KEY)
+client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY)
 set_tracing_disabled(disabled=True)
 
 
 class CustomModelProvider(ModelProvider):
     def get_model(self, model_name: str | None) -> Model:
-        return Hanzo AIChatCompletionsModel(model=model_name or MODEL_NAME, openai_client=client)
+        return OpenAIChatCompletionsModel(model=model_name or MODEL_NAME, openai_client=client)
 
 
 CUSTOM_MODEL_PROVIDER = CustomModelProvider()
