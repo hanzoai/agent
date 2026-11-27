@@ -9,19 +9,45 @@ to understand, diagnose, and fix bugs in code.
 """
 
 import asyncio
-from typing import Dict, Any, List
 import os
+from typing import Any, Dict, List
 
-from agents import Agent, create_network, create_workflow, Step
-from agents.routers import SemanticRouter, RuleBasedRouter, RoutingStrategy
+from openai import AsyncOpenAI
+
+from agents import (
+    Agent,
+    Model,
+    ModelProvider,
+    OpenAIChatCompletionsModel,
+    function_tool,
+)
+from agents.memory import VectorMemoryStore
+from agents.network import (
+    RuleBasedRouter,
+    RoutingStrategy,
+    SemanticRouter,
+    create_network,
+)
+from agents.orchestration import Step, Workflow, WorkflowExecutor
 from agents.state import InMemoryStateStore
-from agents.memory import MemoryManager, VectorMemoryStore
-from agents.tools import function_tool, create_composite_tool
-from agents.models import HanzoModelProvider
 
 # Configure Hanzo backend
 HANZO_ROUTER_URL = os.getenv("HANZO_ROUTER_URL", "http://localhost:4000/v1")
 HANZO_API_KEY = os.getenv("HANZO_API_KEY", "sk-1234")
+
+
+class HanzoModelProvider(ModelProvider):
+    """Custom model provider routing requests through Hanzo Router."""
+
+    def __init__(self, base_url: str = HANZO_ROUTER_URL, api_key: str = HANZO_API_KEY):
+        self.client = AsyncOpenAI(base_url=base_url, api_key=api_key)
+
+    def get_model(self, model_name: str | None) -> Model:
+        return OpenAIChatCompletionsModel(
+            model=model_name or "gpt-4",
+            openai_client=self.client,
+        )
+
 
 # Initialize model provider
 model_provider = HanzoModelProvider(HANZO_ROUTER_URL, HANZO_API_KEY)
@@ -156,12 +182,11 @@ async def search_codebase(pattern: str, file_types: List[str] = None) -> List[Di
     return results
 
 
-# Composite tool for automated fixing
-fix_and_test = create_composite_tool(
-    name="fix_and_test",
-    tools=[write_file, run_tests],
-    description="Apply a fix and immediately run tests"
-)
+@function_tool
+async def fix_and_test(file_path: str, content: str, test_command: str = "pytest") -> Dict[str, Any]:
+    """Apply a fix to a file and immediately run tests."""
+    write_msg = await write_file.on_invoke_tool(None, f'{{"file_path": "{file_path}", "content": {content!r}}}')
+    return {"write_result": write_msg, "test_command": test_command}
 
 
 # ==================== Agents ====================
@@ -263,7 +288,7 @@ quality_reviewer = Agent(
 memory_store = VectorMemoryStore(collection_name="bug_solver_memory")
 
 # Set up routers
-semantic_router = SemanticRouter(similarity_threshold=0.7)
+semantic_router = SemanticRouter()
 
 rule_router = RuleBasedRouter()
 rule_router.add_rule(r".*error.*|.*exception.*|.*trace.*", "BugAnalyzer")
@@ -273,13 +298,7 @@ rule_router.add_rule(r".*fix.*|.*implement.*|.*patch.*", "CodeFixer")
 rule_router.add_rule(r".*test.*|.*coverage.*", "TestWriter")
 rule_router.add_rule(r".*review.*|.*quality.*|.*check.*", "QualityReviewer")
 
-# Composite router with both strategies
-main_router = RoutingStrategy([
-    (rule_router, 0.7),
-    (semantic_router, 0.3)
-])
-
-# Create the network
+# Create the network using the rule-based router
 bug_solver_network = create_network(
     agents=[
         bug_analyzer,
@@ -287,121 +306,56 @@ bug_solver_network = create_network(
         solution_designer,
         code_fixer,
         test_writer,
-        quality_reviewer
+        quality_reviewer,
     ],
-    router=main_router,
+    router=rule_router,
     state_store=InMemoryStateStore(),
-    model_provider=model_provider,
-    memory_manager=MemoryManager(store=memory_store),
-    default_model="gpt-4"
+    name="Autonomous Bug Solver Network",
 )
 
 
 # ==================== Workflow ====================
 
-# Define the bug-solving workflow
-bug_solving_workflow = create_workflow(
+# Define the bug-solving workflow using Workflow + Step
+bug_solving_workflow = Workflow(
     name="Autonomous Bug Solver",
-    agents=bug_solver_network.agents,
-    steps=[
-        # 1. Initial Analysis
-        Step.agent("BugAnalyzer", "Analyze the error: {error_message}"),
-        
-        # 2. Parallel investigation
-        Step.parallel([
-            Step.agent("CodeReader", "Read and understand {error_info.file_path}"),
-            Step.agent("CodeReader", "Search for related code using {error_info.function_name}")
-        ]),
-        
-        # 3. Design solution
-        Step.agent("SolutionDesigner", "Design a fix based on the analysis"),
-        
-        # 4. Implementation
-        Step.agent("CodeFixer", "Implement the proposed solution"),
-        
-        # 5. Testing
-        Step.parallel([
-            Step.agent("TestWriter", "Write tests for the fix"),
-            Step.agent("CodeFixer", "Run existing tests to verify the fix")
-        ]),
-        
-        # 6. Review
-        Step.agent("QualityReviewer", "Review the complete fix and tests"),
-        
-        # 7. Conditional refinement
-        Step.conditional(
-            condition=lambda state: state.get("review_result", {}).get("needs_revision", False),
-            true_step=Step.loop(
-                steps=[
-                    Step.agent("CodeFixer", "Address review feedback: {review_feedback}"),
-                    Step.agent("QualityReviewer", "Re-review the changes")
-                ],
-                max_iterations=3,
-                break_condition=lambda state: not state.get("review_result", {}).get("needs_revision", True)
-            ),
-            false_step=Step.transform(lambda x: {"status": "completed", "result": x})
-        )
-    ],
-    enable_streaming=True
+    description="Analyze, fix, test, and review software bugs",
 )
+analyze_step = Step.agent("BugAnalyzer", "Analyze the error: {error_message}")
+design_step = Step.agent(
+    "SolutionDesigner",
+    "Design a fix based on the analysis",
+    depends_on=[analyze_step.id],
+)
+fix_step = Step.agent(
+    "CodeFixer",
+    "Implement the proposed solution",
+    depends_on=[design_step.id],
+)
+review_step = Step.agent(
+    "QualityReviewer",
+    "Review the complete fix and tests",
+    depends_on=[fix_step.id],
+)
+for _step in (analyze_step, design_step, fix_step, review_step):
+    bug_solving_workflow.add_step(_step)
+bug_solving_workflow.entry_point = analyze_step.id
 
 
 # ==================== Main Example ====================
 
-async def solve_bug(error_message: str, context: Dict[str, Any] = None):
+async def solve_bug(error_message: str, context: Dict[str, Any] | None = None):
     """Autonomously solve a bug given an error message."""
-    
-    print(f"🐛 Autonomous Bug Solver Started")
-    print(f"{'='*60}")
+    print("Autonomous Bug Solver Started")
+    print("=" * 60)
     print(f"Error: {error_message}")
-    print(f"{'='*60}\n")
-    
-    # Initialize context
-    if context is None:
-        context = {}
-    
-    context["error_message"] = error_message
-    
-    # Stream handler for real-time updates
-    async def stream_handler(event):
-        agent_name = event.data.get("agent", "System")
-        message = event.data.get("message", "")
-        
-        if event.type == "agent_start":
-            print(f"\n🤖 {agent_name}: Starting...")
-        elif event.type == "agent_complete":
-            print(f"✅ {agent_name}: Complete")
-        elif event.type == "tool_call":
-            tool_name = event.data.get("tool", "")
-            print(f"  🔧 Using tool: {tool_name}")
-        elif event.type == "message":
-            print(f"  💬 {message}")
-    
-    # Run the workflow
-    result = await bug_solving_workflow.run(
-        context,
-        stream_callback=stream_handler
-    )
-    
-    # Summary
-    print(f"\n{'='*60}")
-    print(f"🎉 Bug Solving Complete!")
-    print(f"{'='*60}")
-    
-    if result.get("status") == "completed":
-        print(f"✅ Status: Success")
-        print(f"📝 Summary: {result.get('result', {}).get('summary', 'Bug fixed successfully')}")
-        
-        # Show memory insights
-        memories = await bug_solver_network.memory_manager.search("bug fix", limit=3)
-        if memories:
-            print(f"\n💡 Learned from this experience:")
-            for memory in memories:
-                print(f"  - {memory.content}")
-    else:
-        print(f"❌ Status: Failed")
-        print(f"📝 Error: {result.get('error', 'Unknown error')}")
-    
+    print("=" * 60)
+
+    executor = WorkflowExecutor(bug_solver_network)
+    initial_state = dict(context or {})
+    initial_state["error_message"] = error_message
+    result = await executor.execute(bug_solving_workflow, initial_state=initial_state)
+    print(f"Workflow status: {result.status}")
     return result
 
 
