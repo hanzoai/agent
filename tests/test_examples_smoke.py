@@ -89,3 +89,87 @@ async def test_mocked_multi_agent_handoff_and_tool_loop() -> None:
     result = await Runner.run(triage, input="Check router health")
     assert result.last_agent == specialist
     assert result.final_output == "router is healthy"
+
+
+def test_autonomous_bug_solver_wires_hanzo_provider_and_workflow_steps() -> None:
+    """Bug solver attaches HanzoModelProvider models and chains TestWriter before QualityReviewer."""
+    from agents import OpenAIChatCompletionsModel
+    from examples import autonomous_bug_solver as abs_mod
+
+    for node in abs_mod.bug_solver_network.nodes.values():
+        assert isinstance(node.agent.model, OpenAIChatCompletionsModel)
+        assert node.agent.model._client is abs_mod.model_provider.client
+
+    steps = list(abs_mod.bug_solving_workflow.steps.values())
+    agent_order = [step.config["agent_name"] for step in steps]
+    assert agent_order == [
+        "BugAnalyzer",
+        "SolutionDesigner",
+        "CodeFixer",
+        "TestWriter",
+        "QualityReviewer",
+    ]
+    for prev, curr in zip(steps, steps[1:]):
+        assert curr.depends_on == [prev.id]
+
+
+@pytest.mark.asyncio
+async def test_fix_and_test_serializes_json_and_runs_tests(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """fix_and_test safely serializes quotes/newlines and awaits run_tests."""
+    from types import SimpleNamespace
+    from examples import autonomous_bug_solver as abs_mod
+
+    target = tmp_path / "sample.py"
+    sample_code = 'def greet():\n    print("x")\n'
+
+    def fake_run(cmd, capture_output=True, text=True, timeout=30):
+        return SimpleNamespace(returncode=0, stdout=f"ran {' '.join(cmd)}", stderr="")
+
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    raw = await abs_mod.fix_and_test.on_invoke_tool(
+        None,
+        json.dumps(
+            {
+                "file_path": str(target),
+                "content": sample_code,
+                "test_command": "pytest -q",
+            }
+        ),
+    )
+    payload = ast.literal_eval(raw) if isinstance(raw, str) else raw
+    assert target.read_text(encoding="utf-8") == sample_code
+    assert "successfully" in payload["write_result"]
+    test_res = payload["test_result"]
+    if isinstance(test_res, str):
+        test_res = ast.literal_eval(test_res)
+    assert test_res["success"] is True
+    assert test_res["stdout"] == "ran pytest -q"
+
+
+@pytest.mark.asyncio
+async def test_solve_bug_runs_workflow_with_mocked_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    """solve_bug executes all five workflow steps using WorkflowExecutor."""
+    from unittest.mock import AsyncMock
+    from types import SimpleNamespace
+    from examples import autonomous_bug_solver as abs_mod
+
+    called_agents: list[str] = []
+
+    async def fake_network_run(input, *, starting_agent=None, context=None, **kwargs):
+        called_agents.append(starting_agent)
+        return SimpleNamespace(final_output=f"{starting_agent} done")
+
+    monkeypatch.setattr(abs_mod.bug_solver_network, "run", AsyncMock(side_effect=fake_network_run))
+
+    result = await abs_mod.solve_bug("ValueError: boom")
+    assert result.success is True
+    assert called_agents == [
+        "BugAnalyzer",
+        "SolutionDesigner",
+        "CodeFixer",
+        "TestWriter",
+        "QualityReviewer",
+    ]
+

@@ -9,6 +9,7 @@ to understand, diagnose, and fix bugs in code.
 """
 
 import asyncio
+import json
 import os
 from typing import Any, Dict, List
 
@@ -185,8 +186,15 @@ async def search_codebase(pattern: str, file_types: List[str] = None) -> List[Di
 @function_tool
 async def fix_and_test(file_path: str, content: str, test_command: str = "pytest") -> Dict[str, Any]:
     """Apply a fix to a file and immediately run tests."""
-    write_msg = await write_file.on_invoke_tool(None, f'{{"file_path": "{file_path}", "content": {content!r}}}')
-    return {"write_result": write_msg, "test_command": test_command}
+    write_msg = await write_file.on_invoke_tool(
+        None,
+        json.dumps({"file_path": file_path, "content": content}),
+    )
+    test_result = await run_tests.on_invoke_tool(
+        None,
+        json.dumps({"test_command": test_command}),
+    )
+    return {"write_result": write_msg, "test_result": test_result}
 
 
 # ==================== Agents ====================
@@ -203,7 +211,7 @@ bug_analyzer = Agent(
     
     Be thorough and systematic in your analysis.""",
     tools=[analyze_stack_trace, read_file, search_codebase],
-    model="gpt-4"
+    model=model_provider.get_model("gpt-4"),
 )
 
 # Code Reader Agent
@@ -218,7 +226,7 @@ code_reader = Agent(
     
     Focus on understanding the code's intent and implementation.""",
     tools=[read_file, search_codebase],
-    model="gpt-3.5-turbo"  # Faster for simple reading tasks
+    model=model_provider.get_model("gpt-3.5-turbo"),  # Faster for simple reading tasks
 )
 
 # Solution Designer Agent
@@ -233,7 +241,7 @@ solution_designer = Agent(
     
     Think about edge cases, performance, and maintainability.""",
     tools=[read_file],
-    model="gpt-4"
+    model=model_provider.get_model("gpt-4"),
 )
 
 # Code Fixer Agent
@@ -248,7 +256,7 @@ code_fixer = Agent(
     
     Always test your fixes and handle edge cases.""",
     tools=[read_file, write_file, fix_and_test],
-    model="gpt-4"
+    model=model_provider.get_model("gpt-4"),
 )
 
 # Test Writer Agent
@@ -263,7 +271,7 @@ test_writer = Agent(
     
     Write clear, maintainable tests with good coverage.""",
     tools=[read_file, write_file, run_tests],
-    model="gpt-3.5-turbo"
+    model=model_provider.get_model("gpt-3.5-turbo"),
 )
 
 # Quality Reviewer Agent
@@ -278,7 +286,7 @@ quality_reviewer = Agent(
     
     Be constructive but thorough in your review.""",
     tools=[read_file, run_tests],
-    model="gpt-4"
+    model=model_provider.get_model("gpt-4"),
 )
 
 
@@ -322,22 +330,16 @@ bug_solving_workflow = Workflow(
     description="Analyze, fix, test, and review software bugs",
 )
 analyze_step = Step.agent("BugAnalyzer", "Analyze the error: {error_message}")
-design_step = Step.agent(
-    "SolutionDesigner",
-    "Design a fix based on the analysis",
-    depends_on=[analyze_step.id],
-)
-fix_step = Step.agent(
-    "CodeFixer",
-    "Implement the proposed solution",
-    depends_on=[design_step.id],
-)
-review_step = Step.agent(
-    "QualityReviewer",
-    "Review the complete fix and tests",
-    depends_on=[fix_step.id],
-)
-for _step in (analyze_step, design_step, fix_step, review_step):
+design_step = Step.agent("SolutionDesigner", "Design a fix based on the analysis")
+design_step.depends_on = [analyze_step.id]
+fix_step = Step.agent("CodeFixer", "Implement the proposed solution")
+fix_step.depends_on = [design_step.id]
+test_step = Step.agent("TestWriter", "Write regression tests for the fix")
+test_step.depends_on = [fix_step.id]
+review_step = Step.agent("QualityReviewer", "Review the complete fix and tests")
+review_step.depends_on = [test_step.id]
+
+for _step in (analyze_step, design_step, fix_step, test_step, review_step):
     bug_solving_workflow.add_step(_step)
 bug_solving_workflow.entry_point = analyze_step.id
 
@@ -351,11 +353,14 @@ async def solve_bug(error_message: str, context: Dict[str, Any] | None = None):
     print(f"Error: {error_message}")
     print("=" * 60)
 
-    executor = WorkflowExecutor(bug_solver_network)
+    executor = WorkflowExecutor(bug_solving_workflow, bug_solver_network)
     initial_state = dict(context or {})
     initial_state["error_message"] = error_message
-    result = await executor.execute(bug_solving_workflow, initial_state=initial_state)
-    print(f"Workflow status: {result.status}")
+    result = await executor.execute(
+        f"Analyze and fix the following error:\n{error_message}",
+        context=initial_state,
+    )
+    print(f"Workflow success: {result.success}")
     return result
 
 
