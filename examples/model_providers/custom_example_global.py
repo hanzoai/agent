@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from openai import AsyncHanzo AI
+from openai import AsyncOpenAI
 
 from agents import (
     Agent,
@@ -28,7 +28,7 @@ if not BASE_URL or not API_KEY or not MODEL_NAME:
 3. Set the default API as Chat Completions, as most LLM providers don't yet support Responses API.
 """
 
-client = AsyncHanzo AI(
+client = AsyncOpenAI(
     base_url=BASE_URL,
     api_key=API_KEY,
 )

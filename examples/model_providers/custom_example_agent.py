@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from openai import AsyncHanzo AI
+from openai import AsyncOpenAI
 
-from agents import Agent, Hanzo AIChatCompletionsModel, Runner, function_tool, set_tracing_disabled
+from agents import Agent, OpenAIChatCompletionsModel, Runner, function_tool, set_tracing_disabled
 
 BASE_URL = os.getenv("EXAMPLE_BASE_URL") or ""
 API_KEY = os.getenv("EXAMPLE_API_KEY") or ""
@@ -19,7 +19,7 @@ if not BASE_URL or not API_KEY or not MODEL_NAME:
 2. Create a `Model` that uses the custom client.
 3. Set the `model` on the Agent.
 """
-client = AsyncHanzo AI(base_url=BASE_URL, api_key=API_KEY)
+client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY)
 set_tracing_disabled(disabled=True)
 
 # An alternate approach that would also work:
@@ -39,7 +39,7 @@ async def main():
     agent = Agent(
         name="Assistant",
         instructions="You only respond in haikus.",
-        model=Hanzo AIChatCompletionsModel(model=MODEL_NAME, openai_client=client),
+        model=OpenAIChatCompletionsModel(model=MODEL_NAME, openai_client=client),
         tools=[get_weather],
     )
 
